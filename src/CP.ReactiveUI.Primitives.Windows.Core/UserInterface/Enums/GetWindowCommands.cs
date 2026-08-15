@@ -1,0 +1,62 @@
+// Copyright (c) 2023-2026 Chris Pulman and Contributors. All rights reserved.
+// Chris Pulman and Contributors licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for full license information.
+
+namespace CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
+
+/// <summary>
+///     Used by the user32.GetWindow function
+///     See
+///     <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms633515(v=vs.85).aspx">GetWindow function</a>
+///     The relationship between the specified window and the window whose handle is to be retrieved. This parameter can be
+///     one of the following values.
+/// </summary>
+public enum GetWindowCommands : uint
+{
+    /// <summary>
+    /// The retrieved handle identifies the window of the same type that is highest in the Z order. If the specified window is a topmost window, the handle identifies a
+    /// topmost window. If the specified window is a top-level window, the handle identifies a top-level window. If the specified window is a child window, the handle
+    /// identifies a sibling window.
+    /// </summary>
+    GW_HWNDFIRST,
+    /// <summary>
+    /// The retrieved handle identifies the window of the same type that is lowest in the Z order. If the specified window is a topmost window, the handle identifies a
+    /// topmost window. If the specified window is a top-level window, the handle identifies a top-level window. If the specified window is a child window, the handle
+    /// identifies a sibling window.
+    /// </summary>
+    GW_HWNDLAST,
+    /// <summary>
+    /// The retrieved handle identifies the window below the specified window in the Z order. If the specified window is a topmost window, the handle identifies a
+    /// topmost window. If the specified window is a top-level window, the handle identifies a top-level window. If the specified window is a child window, the handle
+    /// identifies a sibling window.
+    /// </summary>
+    GW_HWNDNEXT,
+    /// <summary>
+    /// The retrieved handle identifies the window above the specified window in the Z order. If the specified window is a topmost window, the handle identifies a
+    /// topmost window. If the specified window is a top-level window, the handle identifies a top-level window. If the specified window is a child window, the handle
+    /// identifies a sibling window.
+    /// </summary>
+    GW_HWNDPREV,
+    /// <summary>
+    /// The retrieved handle identifies the specified window's owner window, if any. For more information, see Owned Windows: An overlapped or pop-up window can be
+    /// owned by another overlapped or pop-up window. Being owned places several constraints on a window. An owned window is always above its owner in the z-order. The
+    /// system automatically destroys an owned window when its owner is destroyed. An owned window is hidden when its owner is minimized. Only an overlapped or pop-up
+    /// window can be an owner window; a child window cannot be an owner window. An application creates an owned window by specifying the owner's window handle as the
+    /// parentWindowHandle parameter of CreateWindowEx when it creates a window with the WS_OVERLAPPED or WS_POPUP style. The parentWindowHandle parameter must identify an overlapped
+    /// or pop-up window. If parentWindowHandle identifies a child window, the system assigns ownership to the top-level parent window of the child window. After creating an
+    /// owned window, an application cannot transfer ownership of the window to another window. Dialog boxes and message boxes are owned windows by default. An
+    /// application specifies the owner window when calling a function that creates a dialog box or message box. An application can use the GetWindow function with the
+    /// GW_OWNER flag to retrieve a handle to a window's owner.
+    /// </summary>
+    GW_OWNER,
+    /// <summary>
+    /// The retrieved handle identifies the child window at the top of the Z order, if the specified window is a parent window; otherwise, the retrieved handle is NULL.
+    /// The function examines only child windows of the specified window. It does not examine descendant windows.
+    /// </summary>
+    GW_CHILD,
+    /// <summary>
+    /// The retrieved handle identifies the enabled popup window owned by the specified window (the search uses the first such window found using GW_HWNDNEXT);
+    /// otherwise, if there are no enabled popup windows, the retrieved handle is that of the specified window.
+    /// </summary>
+    GW_ENABLEDPOPUP
+}

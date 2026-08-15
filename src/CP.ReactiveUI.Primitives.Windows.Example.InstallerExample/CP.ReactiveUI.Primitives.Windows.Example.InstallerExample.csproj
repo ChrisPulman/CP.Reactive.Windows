@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+		<OutputType>WinExe</OutputType>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<UseWPF>true</UseWPF>
+		<UseWindowsForms>true</UseWindowsForms>
+		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+		<ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Using Include="System" />
+		<Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" Alias="Kernel32" />
+	</ItemGroup>
+</Project>

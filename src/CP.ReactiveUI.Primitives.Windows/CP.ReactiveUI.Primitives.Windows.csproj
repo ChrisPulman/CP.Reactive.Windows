@@ -1,0 +1,80 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Composable Windows desktop capabilities with observable messages, input, device, clipboard, display, power, and lifecycle state.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageTags>windows desktop observable reactive</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <PackageReference Include="log4net" />
+    <PackageReference Include="ReactiveUI.Primitives" />
+    <PackageReference Include="System.ComponentModel.Annotations" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.Drawing" />
+    <Using Include="System.Drawing.Imaging" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.InteropServices.Marshalling.GeneratedComInterfaceAttribute" Alias="GeneratedComInterface" Condition="'$(TargetFrameworkIdentifier)' != '.NETFramework'" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="log4net" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Apps" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Mouse" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Lifecycle.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Media.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Power.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Extensions" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs" />
+    <Using Include="ReactiveUI.Primitives" />
+    <Using Include="ReactiveUI.Primitives.Disposables" />
+    <Using Include="ReactiveUI.Primitives.Signals" />
+    <Using Include="ReactiveUI.Primitives.Signals.Signal" Alias="ReactiveSignal" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs.Input" Alias="DesktopInput" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" Alias="User32" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals.NativeMethods" Alias="ClipboardNativeMethods" />
+    <Using Include="System.Windows.Media.Color" Alias="MediaColor" />
+    <Using Include="System.Drawing.Color" Alias="DrawingColor" />
+  </ItemGroup>
+</Project>

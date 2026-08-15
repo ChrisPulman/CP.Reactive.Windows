@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/.codex-diagnostics
+/.codex-recovery
+/.codex-tools
+
+# Local build diagnostics
+/build-errors*.txt
