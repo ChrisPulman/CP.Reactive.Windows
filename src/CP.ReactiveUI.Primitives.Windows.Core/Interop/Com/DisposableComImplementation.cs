@@ -6,11 +6,42 @@ namespace CP.ReactiveUI.Primitives.Windows.Interop.Com;
 
 /// <summary>Implementation of IDisposableCom for internal COM lifetime management.</summary>
 /// <typeparam name="T">Type of the COM object.</typeparam>
-/// <param name="obj">The COM object to release.</param>
-internal sealed class DisposableComImplementation<T>(T obj) : IDisposableCom<T>
+internal sealed class DisposableComImplementation<T> : IDisposableCom<T>
 {
+    /// <summary>Determines whether the wrapped value is a COM object.</summary>
+    private readonly Func<T, bool> _isComObject;
+
+    /// <summary>Releases the wrapped COM object.</summary>
+    private readonly Func<T, int> _releaseComObject;
+
+    /// <summary>Initializes a new instance of the <see cref="DisposableComImplementation{T}" /> class.</summary>
+    /// <param name="obj">The object to wrap.</param>
+    internal DisposableComImplementation(T obj)
+        : this(
+            obj,
+            static value => Marshal.IsComObject(value),
+            static value => Marshal.ReleaseComObject(value))
+    {
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="DisposableComImplementation{T}" /> class.</summary>
+    /// <param name="obj">The object to wrap.</param>
+    /// <param name="isComObject">Determines whether the wrapped value is a COM object.</param>
+    /// <param name="releaseComObject">Releases the wrapped COM object.</param>
+    internal DisposableComImplementation(
+        T obj,
+        Func<T, bool> isComObject,
+        Func<T, int> releaseComObject)
+    {
+        Throw.IfNull(isComObject);
+        Throw.IfNull(releaseComObject);
+        ComObject = obj;
+        _isComObject = isComObject;
+        _releaseComObject = releaseComObject;
+    }
+
     /// <inheritdoc />
-    public T ComObject { get; private set; } = obj;
+    public T ComObject { get; private set; }
 
     /// <summary>Cleans up the COM object.</summary>
     public void Dispose() => Dispose(disposing: true);
@@ -23,9 +54,9 @@ internal sealed class DisposableComImplementation<T>(T obj) : IDisposableCom<T>
         {
             if (
                 !EqualityComparer<T>.Default.Equals(ComObject, default(T))
-                && Marshal.IsComObject(ComObject))
+                && _isComObject(ComObject))
             {
-                _ = Marshal.ReleaseComObject(ComObject);
+                _ = _releaseComObject(ComObject);
             }
 
             ComObject = default;

@@ -17,7 +17,9 @@ public static partial class OleAut32Api
     /// <summary>OLE Automation operations used by this process.</summary>
     private static OleAut32Operations _operations = new(
         NativeMethods.GetActiveObject,
-        Ole32Api.ClassIdFromProgId);
+        Ole32Api.ClassIdFromProgId,
+        Marshal.GetObjectForIUnknown,
+        Marshal.Release);
 
     /// <summary>Gets the active instance of the COM object with the specified GUID.</summary>
     /// <typeparam name="T">Type for the instance.</typeparam>
@@ -36,11 +38,11 @@ public static partial class OleAut32Api
 
         try
         {
-            return DisposableCom.Create(materializer(Marshal.GetObjectForIUnknown(activeObject)));
+            return DisposableCom.Create(materializer(_operations.GetObjectForIUnknown(activeObject)));
         }
         finally
         {
-            _ = Marshal.Release(activeObject);
+            _ = _operations.Release(activeObject);
         }
     }
 
@@ -76,12 +78,31 @@ public static partial class OleAut32Api
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(
         GetActiveObjectOperation getActiveObject,
-        Func<string, Guid> classIdFromProgId)
+        Func<string, Guid> classIdFromProgId) =>
+        OverrideOperationsForTesting(
+            getActiveObject,
+            classIdFromProgId,
+            Marshal.GetObjectForIUnknown,
+            Marshal.Release);
+
+    /// <summary>Overrides every OLE Automation operation for deterministic tests.</summary>
+    /// <param name="getActiveObject">The replacement active-object operation.</param>
+    /// <param name="classIdFromProgId">The replacement program-identifier conversion operation.</param>
+    /// <param name="getObjectForIUnknown">The replacement object materialization operation.</param>
+    /// <param name="release">The replacement COM pointer release operation.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(
+        GetActiveObjectOperation getActiveObject,
+        Func<string, Guid> classIdFromProgId,
+        Func<IntPtr, object> getObjectForIUnknown,
+        Func<IntPtr, int> release)
     {
         Throw.IfNull(getActiveObject);
         Throw.IfNull(classIdFromProgId);
+        Throw.IfNull(getObjectForIUnknown);
+        Throw.IfNull(release);
         OleAut32Operations operations = _operations;
-        _operations = new(getActiveObject, classIdFromProgId);
+        _operations = new(getActiveObject, classIdFromProgId, getObjectForIUnknown, release);
         return Scope.Create(
             operations,
             static previous => _operations = previous);
@@ -119,9 +140,13 @@ public static partial class OleAut32Api
     /// <summary>Composes OLE Automation operations without invoking them during construction.</summary>
     /// <param name="getActiveObject">The active-object operation.</param>
     /// <param name="classIdFromProgId">The program-identifier conversion operation.</param>
+    /// <param name="getObjectForIUnknown">The object materialization operation.</param>
+    /// <param name="release">The COM pointer release operation.</param>
     private sealed class OleAut32Operations(
         GetActiveObjectOperation getActiveObject,
-        Func<string, Guid> classIdFromProgId)
+        Func<string, Guid> classIdFromProgId,
+        Func<IntPtr, object> getObjectForIUnknown,
+        Func<IntPtr, int> release)
     {
         /// <summary>Invokes the configured active-object operation.</summary>
         /// <param name="classId">The class identifier.</param>
@@ -137,5 +162,15 @@ public static partial class OleAut32Api
         /// <param name="progId">The program identifier.</param>
         /// <returns>The configured class identifier.</returns>
         public Guid ClassIdFromProgId(string progId) => classIdFromProgId(progId);
+
+        /// <summary>Materializes the configured COM pointer.</summary>
+        /// <param name="unknown">The COM interface pointer.</param>
+        /// <returns>The materialized object.</returns>
+        public object GetObjectForIUnknown(IntPtr unknown) => getObjectForIUnknown(unknown);
+
+        /// <summary>Releases the configured COM pointer.</summary>
+        /// <param name="unknown">The COM interface pointer.</param>
+        /// <returns>The remaining reference count.</returns>
+        public int Release(IntPtr unknown) => release(unknown);
     }
 }

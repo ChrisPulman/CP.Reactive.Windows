@@ -28,6 +28,9 @@ public sealed class CoverageFinalKernelTests
     /// <summary>Defines a fake registry handle value.</summary>
     private const int RegistryHandleValue = 0x1234;
 
+    /// <summary>Defines a fake active COM object pointer value.</summary>
+    private const int ActiveObjectPointerValue = 0x5678;
+
     /// <summary>Defines the expected one-item count.</summary>
     private const int SingleCount = 1;
 
@@ -164,14 +167,48 @@ public sealed class CoverageFinalKernelTests
         await Assert.That(OleAut32Api.GetActiveObject(ProgramId, static activeObject => activeObject)).IsNull();
         await Assert.That(() => OleAut32Api.GetActiveObject<object>(ref classId, null)).Throws<ArgumentNullException>();
 
+        using (OleAut32Api.OverrideOperationsForTesting(
+            GetActiveObjectWithoutPointer,
+            static _ => ClassId,
+            static _ => new object(),
+            static _ => Success))
+        {
+            await Assert.That(OleAut32Api.GetActiveObject(ProgramId)).IsNull();
+        }
+
         var comObject = new object();
-        var disposable = new DisposableComImplementation<object>(comObject);
+        var releasedPointer = IntPtr.Zero;
+        using (OleAut32Api.OverrideOperationsForTesting(
+            GetActiveObjectSuccess,
+            static _ => ClassId,
+            _ => comObject,
+            pointer =>
+            {
+                releasedPointer = pointer;
+                return Success;
+            }))
+        {
+            using var activeObject = OleAut32Api.GetActiveObject(ProgramId);
+            await Assert.That(activeObject.ComObject).IsEqualTo(comObject);
+        }
+
+        var releaseCalls = 0;
+        var disposable = new DisposableComImplementation<object>(
+            comObject,
+            static _ => true,
+            _ =>
+            {
+                releaseCalls++;
+                return Success;
+            });
 
         disposable.Dispose(disposing: false);
         await Assert.That(disposable.ComObject).IsEqualTo(comObject);
 
         disposable.Dispose();
         await Assert.That(disposable.ComObject).IsNull();
+        await Assert.That(releasedPointer).IsEqualTo(new(ActiveObjectPointerValue));
+        await Assert.That(releaseCalls).IsEqualTo(SingleCount);
     }
 
     /// <summary>Creates successful PSAPI operations.</summary>
@@ -389,6 +426,36 @@ public sealed class CoverageFinalKernelTests
         GC.KeepAlive(reserved);
         activeObject = IntPtr.Zero;
         return HResult.Fail;
+    }
+
+    /// <summary>Simulates a successful active-object lookup without returning an object.</summary>
+    /// <param name="classId">The class identifier.</param>
+    /// <param name="reserved">The reserved pointer.</param>
+    /// <param name="activeObject">The active object pointer.</param>
+    /// <returns>A successful HRESULT.</returns>
+    private static HResult GetActiveObjectWithoutPointer(
+        ref Guid classId,
+        IntPtr reserved,
+        out IntPtr activeObject)
+    {
+        GC.KeepAlive(reserved);
+        activeObject = IntPtr.Zero;
+        return HResult.Ok;
+    }
+
+    /// <summary>Simulates a successful active-object lookup.</summary>
+    /// <param name="classId">The class identifier.</param>
+    /// <param name="reserved">The reserved pointer.</param>
+    /// <param name="activeObject">The active object pointer.</param>
+    /// <returns>A successful HRESULT.</returns>
+    private static HResult GetActiveObjectSuccess(
+        ref Guid classId,
+        IntPtr reserved,
+        out IntPtr activeObject)
+    {
+        GC.KeepAlive(reserved);
+        activeObject = new(ActiveObjectPointerValue);
+        return HResult.Ok;
     }
 
     /// <summary>Collects observable notifications for assertion.</summary>
