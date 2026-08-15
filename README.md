@@ -26,7 +26,7 @@ The lean and `.Reactive` desktop packages compile the same source. The lean buil
 
 ## Requirements
 
-The packages target `net462`, `net472`, `net48`, `net481`, `net10.0-windows`, and `net11.0-windows`. They are intended for Windows desktop processes and use Windows Forms/WPF-capable TFMs where required by the underlying operating-system feature.
+The packages target `net462`, `net472`, `net48`, `net481`, `net10.0-windows`, and `net11.0-windows`. Stable local and Visual Studio builds select the four .NET Framework targets plus `net10.0-windows`; the `net11.0-windows` preview target is enabled explicitly for preview-SDK and CI builds. They are intended for Windows desktop processes and use Windows Forms/WPF-capable TFMs where required by the underlying operating-system feature.
 
 The implementation logs through Apache `log4net`. Libraries never configure appenders on the consumer's behalf. Configure the repository once in the application startup path when diagnostic output is required:
 
@@ -853,13 +853,36 @@ Choose one desktop variant per consumer project. Reference `CP.ReactiveUI.Primit
 
 ## Quality Gates For Contributors
 
-The repository solution is `sln\CP.ReactiveUI.Primitives.Windows.slnx`.
+The repository solution is `src\CP.ReactiveUI.Primitives.Windows.slnx`.
 
-Build with warnings as errors:
+Use NUKE for the standard local build. It uses only SDK targets supported by a stable Visual Studio installation:
 
 ```powershell
-dotnet build .\sln\CP.ReactiveUI.Primitives.Windows.slnx -c Release --no-restore `
+.\build.cmd Compile --Configuration Release
+```
+
+The equivalent direct solution build is:
+
+```powershell
+dotnet build .\src\CP.ReactiveUI.Primitives.Windows.slnx -c Release `
   -p:TreatWarningsAsErrors=true -p:WarningsAsErrors=true
+```
+
+To validate and package the complete target-framework surface, install a .NET 11 preview SDK (and use a preview-capable Visual Studio configuration), then opt in explicitly:
+
+```powershell
+.\build.cmd Compile --Configuration Release `
+  --EnableDotNet11PreviewTargetFrameworks true
+```
+
+The BuildOnly CI workflow installs both .NET 10 and the .NET 11 preview SDK, enables the preview target automatically, runs the NUKE compile target, and executes the lean and Reactive shared-source TUnit hosts sequentially through Microsoft Testing Platform with Cobertura coverage. It also runs the .NET 11 preview test host. A stable Visual Studio installation does not select `net11.0-windows`, preventing `NETSDK1045`; the preview target remains part of CI and release validation.
+
+Run the strict direct build with warnings as errors when diagnosing MSBuild behavior:
+
+```powershell
+dotnet build .\src\CP.ReactiveUI.Primitives.Windows.slnx -c Release --no-restore `
+  -p:TreatWarningsAsErrors=true -p:WarningsAsErrors=true `
+  -p:CodeAnalysisTreatWarningsAsErrors=true
 ```
 
 Run TUnit tests through Microsoft Testing Platform with the repository coverage configuration:

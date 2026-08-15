@@ -4,6 +4,6 @@
              xmlns:local="clr-namespace:CP.ReactiveUI.Primitives.Windows.Example.InstallerExample"
              StartupUri="InstallerWindow.xaml">
     <Application.Resources>
-         
+
     </Application.Resources>
 </Application>

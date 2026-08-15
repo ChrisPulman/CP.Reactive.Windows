@@ -4,8 +4,6 @@
 
 using System.Windows.Media;
 using CP.ReactiveUI.Primitives.Windows.Native.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Internal;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
 
 namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 

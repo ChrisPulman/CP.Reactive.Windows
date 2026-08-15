@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Drawing;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
 
 namespace CP.ReactiveUI.Primitives.Windows.Native.Internal;
 

@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 namespace CP.ReactiveUI.Primitives.Windows.Native.Internal;
 
 /// <summary>Internal numeric representation shared by native rectangle operations.</summary>

@@ -405,6 +405,8 @@ FodyWeavers.xsd
 /.codex-temp/
 /.codex-verify/
 /reactive-diagnostics/
+/.nuke/temp/
+/output/
 
 # Local build diagnostics
 /build-errors*.txt

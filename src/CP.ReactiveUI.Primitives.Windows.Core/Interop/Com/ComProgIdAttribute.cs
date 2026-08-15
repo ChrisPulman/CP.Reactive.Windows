@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 namespace CP.ReactiveUI.Primitives.Windows.Interop.Com;
 
 /// <summary>An attribute to specify the ProgID of the COM class to create.</summary>

@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Globalization;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-
 namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 
 /// <summary>This implements a TypeConverter for the NativeRect structur.</summary>

@@ -8,15 +8,13 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
+    <RootNamespace>CP.ReactiveUI.Primitives.Windows</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove=".codex-diagnostics\**\*.cs;.codex-recovery\**\*.cs" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
     <PackageReference Include="log4net" />
-    <PackageReference
-      Include="Microsoft.Bcl.HashCode"
-      Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'"
-    />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'" />
     <PackageReference Include="ReactiveUI.Primitives" />
     <InternalsVisibleTo Include="CP.ReactiveUI.Primitives.Windows" />
     <InternalsVisibleTo Include="CP.ReactiveUI.Primitives.Windows.Reactive" />
@@ -52,9 +50,6 @@
     <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations" />
     <Using Include="System.Runtime.InteropServices.ComTypes.DISPPARAMS" Alias="DISPPARAMS" />
     <Using Include="System.Runtime.InteropServices.ComTypes.EXCEPINFO" Alias="EXCEPINFO" />
-    <Using
-      Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.GdiBitmap"
-      Alias="GdiBitmap"
-    />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.GdiBitmap" Alias="GdiBitmap" />
   </ItemGroup>
 </Project>

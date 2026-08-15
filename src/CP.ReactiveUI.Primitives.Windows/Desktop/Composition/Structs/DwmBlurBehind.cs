@@ -3,9 +3,9 @@
 // See the LICENSE file in the project root for full license information.
 
 #if REACTIVE_SHIM
-namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition;
+namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Structs;
 #else
-namespace CP.ReactiveUI.Primitives.Windows.Desktop.Composition;
+namespace CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Structs;
 #endif
 /// <summary>
 /// See

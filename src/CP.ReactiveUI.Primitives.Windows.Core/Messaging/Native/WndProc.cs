@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations;
-
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Native;
 
 /// <summary>Represents a method that processes messages sent to a window in a Windows application.</summary>

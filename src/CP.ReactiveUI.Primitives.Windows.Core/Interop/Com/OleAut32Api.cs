@@ -2,12 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
 using CP.ReactiveUI.Primitives.Windows.Native.Enums;
 using CP.ReactiveUI.Primitives.Windows.Native.Extensions;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
 
 namespace CP.ReactiveUI.Primitives.Windows.Interop.Com;
 

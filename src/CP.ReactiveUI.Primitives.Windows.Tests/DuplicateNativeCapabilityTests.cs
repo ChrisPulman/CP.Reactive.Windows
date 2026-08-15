@@ -141,7 +141,7 @@ public class DuplicateNativeCapabilityTests
         while (directory is not null)
         {
             var sourcePath = Path.Combine(directory.FullName, "src");
-            var solutionPath = Path.Combine(directory.FullName, "sln", "CP.ReactiveUI.Primitives.Windows.slnx");
+            var solutionPath = Path.Combine(sourcePath, "CP.ReactiveUI.Primitives.Windows.slnx");
             if (Directory.Exists(sourcePath) && File.Exists(solutionPath))
             {
                 return sourcePath;

@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations;
 
 /// <summary>Extension methods for <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations.WindowsMessages" />.</summary>

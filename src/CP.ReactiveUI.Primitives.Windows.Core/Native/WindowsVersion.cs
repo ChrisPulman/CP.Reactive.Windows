@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Threading;
-
 namespace CP.ReactiveUI.Primitives.Windows.Native;
 
 /// <summary>Extension methods to test the windows version.</summary>

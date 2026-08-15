@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
-
 namespace CP.ReactiveUI.Primitives.Windows.Interop.Com;
 
 /// <summary>A factory for IDisposableCom.</summary>
