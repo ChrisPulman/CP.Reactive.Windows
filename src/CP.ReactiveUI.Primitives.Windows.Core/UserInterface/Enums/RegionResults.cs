@@ -9,10 +9,13 @@ public enum RegionResults
 {
     /// <summary>The specified window does not have a region, or an error occurred while attempting to return the region.</summary>
     Error,
+
     /// <summary>The region is empty.</summary>
     NullRegion,
+
     /// <summary>The region is a single rectangle.</summary>
     SimpleRegion,
+
     /// <summary>The region is more than one rectangle.</summary>
-    ComplexRegion
+    ComplexRegion,
 }

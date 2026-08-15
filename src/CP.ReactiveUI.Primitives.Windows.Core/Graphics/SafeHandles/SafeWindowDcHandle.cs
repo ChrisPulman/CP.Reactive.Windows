@@ -14,16 +14,18 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
 public class SafeWindowDcHandle : SafeHandleZeroOrMinusOneIsInvalid
 {
     /// <summary>Stores the active window device-context implementation.</summary>
-    private static IWindowDcHandleApi _api = new WindowDcHandleOperations(User32Api.GetWindowDC, User32Api.GetDC, User32Api.GetDesktopWindow, User32Api.ReleaseDC);
+    private static IWindowDcHandleApi _api = new WindowDcHandleOperations(
+        User32Api.GetWindowDC,
+        User32Api.GetDC,
+        User32Api.GetDesktopWindow,
+        User32Api.ReleaseDC);
 
     /// <summary>Stores the window that owns the device context.</summary>
     private readonly IntPtr _windowHandle;
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeWindowDcHandle" /> class.</summary>
     public SafeWindowDcHandle()
-        : base(ownsHandle: true)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeWindowDcHandle" /> class from an existing handle.</summary>
     /// <param name="windowHandle">The window that owns the device context.</param>
@@ -60,7 +62,8 @@ public class SafeWindowDcHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     /// <summary>Creates a safe device-context handle for the desktop.</summary>
     /// <returns>A safe handle for the desktop device context.</returns>
-    public static SafeWindowDcHandle FromDesktop() => FromWindow(Volatile.Read(ref _api).GetDesktopWindow());
+    public static SafeWindowDcHandle FromDesktop() =>
+        FromWindow(Volatile.Read(ref _api).GetDesktopWindow());
 
     /// <summary>Atomically replaces the window device-context implementation.</summary>
     /// <param name="replacement">The replacement implementation.</param>
@@ -72,5 +75,6 @@ public class SafeWindowDcHandle : SafeHandleZeroOrMinusOneIsInvalid
     }
 
     /// <inheritdoc />
-    protected override bool ReleaseHandle() => Volatile.Read(ref _api).ReleaseDc(_windowHandle, handle);
+    protected override bool ReleaseHandle() =>
+        Volatile.Read(ref _api).ReleaseDc(_windowHandle, handle);
 }

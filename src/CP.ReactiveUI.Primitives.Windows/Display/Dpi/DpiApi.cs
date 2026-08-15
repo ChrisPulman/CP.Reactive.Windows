@@ -52,7 +52,13 @@ public static class DpiApi
     /// <param name="clientRect">The desired client rectangle.</param>
     /// <param name="style">The window style of the window.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style) => AdjustWindowRect(clientRect, style, hasMenu: false, ExtendedWindowStyleFlags.None, NativeDpiMethods.GetDpiForSystem());
+    public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style) =>
+        AdjustWindowRect(
+            clientRect,
+            style,
+            hasMenu: false,
+            ExtendedWindowStyleFlags.None,
+            NativeDpiMethods.GetDpiForSystem());
 
     /// <summary>
     /// Calculates the required size of the window rectangle, based on the desired size of the client rectangle and the
@@ -62,7 +68,8 @@ public static class DpiApi
     /// <param name="style">The window style of the window.</param>
     /// <param name="hasMenu">Indicates whether the window has a menu.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style, bool hasMenu) => AdjustWindowRect(clientRect, style, hasMenu, ExtendedWindowStyleFlags.None, NativeDpiMethods.GetDpiForSystem());
+    public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style, bool hasMenu) =>
+        AdjustWindowRect(clientRect, style, hasMenu, ExtendedWindowStyleFlags.None, NativeDpiMethods.GetDpiForSystem());
 
     /// <summary>
     /// Calculates the required size of the window rectangle, based on the desired size of the client rectangle and the
@@ -73,7 +80,12 @@ public static class DpiApi
     /// <param name="hasMenu">Indicates whether the window has a menu.</param>
     /// <param name="extendedStyle">The extended window style of the window.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style, bool hasMenu, ExtendedWindowStyleFlags extendedStyle) => AdjustWindowRect(clientRect, style, hasMenu, extendedStyle, NativeDpiMethods.GetDpiForSystem());
+    public static NativeRect? AdjustWindowRect(
+        NativeRect clientRect,
+        WindowStyleFlags style,
+        bool hasMenu,
+        ExtendedWindowStyleFlags extendedStyle) =>
+        AdjustWindowRect(clientRect, style, hasMenu, extendedStyle, NativeDpiMethods.GetDpiForSystem());
 
     /// <summary>
     /// Calculates the required size of the window rectangle, based on the desired size of the client rectangle and the
@@ -88,12 +100,7 @@ public static class DpiApi
     public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style, bool hasMenu, ExtendedWindowStyleFlags extendedStyle, uint dpi)
     {
         NativeRect rect = clientRect;
-        if (!NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi))
-        {
-            return null;
-        }
-
-        return rect;
+        return NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi) ? rect : null;
     }
 
     /// <summary>
@@ -104,7 +111,11 @@ public static class DpiApi
     /// <param name="style">The window style of the window.</param>
     /// <param name="windowHandle">Handle to the window. The DPI of this window will be used for scaling.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRectForWindow(NativeRect clientRect, WindowStyleFlags style, IntPtr windowHandle) => AdjustWindowRectForWindow(clientRect, style, windowHandle, hasMenu: false, ExtendedWindowStyleFlags.None);
+    public static NativeRect? AdjustWindowRectForWindow(
+        NativeRect clientRect,
+        WindowStyleFlags style,
+        IntPtr windowHandle) =>
+        AdjustWindowRectForWindow(clientRect, style, windowHandle, hasMenu: false, ExtendedWindowStyleFlags.None);
 
     /// <summary>
     /// Calculates the required size of the window rectangle for a specific window, based on the desired size of the client
@@ -115,7 +126,12 @@ public static class DpiApi
     /// <param name="windowHandle">Handle to the window. The DPI of this window will be used for scaling.</param>
     /// <param name="hasMenu">Indicates whether the window has a menu.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRectForWindow(NativeRect clientRect, WindowStyleFlags style, IntPtr windowHandle, bool hasMenu) => AdjustWindowRectForWindow(clientRect, style, windowHandle, hasMenu, ExtendedWindowStyleFlags.None);
+    public static NativeRect? AdjustWindowRectForWindow(
+        NativeRect clientRect,
+        WindowStyleFlags style,
+        IntPtr windowHandle,
+        bool hasMenu) =>
+        AdjustWindowRectForWindow(clientRect, style, windowHandle, hasMenu, ExtendedWindowStyleFlags.None);
 
     /// <summary>
     /// Calculates the required size of the window rectangle for a specific window, based on the desired size of the client
@@ -127,16 +143,16 @@ public static class DpiApi
     /// <param name="hasMenu">Indicates whether the window has a menu.</param>
     /// <param name="extendedStyle">The extended window style of the window.</param>
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
-    public static NativeRect? AdjustWindowRectForWindow(NativeRect clientRect, WindowStyleFlags style, IntPtr windowHandle, bool hasMenu, ExtendedWindowStyleFlags extendedStyle)
+    public static NativeRect? AdjustWindowRectForWindow(
+        NativeRect clientRect,
+        WindowStyleFlags style,
+        IntPtr windowHandle,
+        bool hasMenu,
+        ExtendedWindowStyleFlags extendedStyle)
     {
         uint dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
         NativeRect rect = clientRect;
-        if (!NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi))
-        {
-            return null;
-        }
-
-        return rect;
+        return NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi) ? rect : null;
     }
 
     /// <summary>

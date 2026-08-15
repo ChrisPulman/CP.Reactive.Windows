@@ -16,27 +16,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 /// </summary>
 public readonly record struct KeyboardInput
 {
-    /// <summary>
-    ///     Gets a virtual-key code. The code must be a value in the range 1 to 254.
-    ///     If the flags member specifies KEYEVENTF_UNICODE, wVk must be 0.
-    /// </summary>
-    public VirtualKeyCode VirtualKeyCode => (VirtualKeyCode)_virtualKeyCode;
-
-    /// <summary>
-    ///     Gets a hardware scan code for the key. If KeyEventFlags specifies Unicode, ScanCode specifies a Unicode character which
-    ///     is to be sent to the foreground application.
-    /// </summary>
-    public ushort ScanCode => _scanCode;
-
-    /// <summary>Gets various aspects of a keystroke. This member can be certain combinations of the following values.</summary>
-    public KeyEventFlags KeyEventFlags => _keyEventFlags;
-
-    /// <summary>Gets the time stamp for the event, in milliseconds. If this parameter is zero, the system will provide its own time stamp.</summary>
-    public uint Timestamp => _timestamp;
-
-    /// <summary>Gets native extra information associated with the keystroke.</summary>
-    internal UIntPtr ExtraInfo => _extraInfo;
-
     /// <summary>Stores the native virtual-key code.</summary>
     private readonly ushort _virtualKeyCode;
 
@@ -66,6 +45,27 @@ public readonly record struct KeyboardInput
         _extraInfo = UIntPtr.Zero;
     }
 
+    /// <summary>
+    ///     Gets a virtual-key code. The code must be a value in the range 1 to 254.
+    ///     If the flags member specifies KEYEVENTF_UNICODE, wVk must be 0.
+    /// </summary>
+    public VirtualKeyCode VirtualKeyCode => (VirtualKeyCode)_virtualKeyCode;
+
+    /// <summary>
+    ///     Gets a hardware scan code for the key. If KeyEventFlags specifies Unicode, ScanCode specifies a Unicode character which
+    ///     is to be sent to the foreground application.
+    /// </summary>
+    public ushort ScanCode => _scanCode;
+
+    /// <summary>Gets various aspects of a keystroke. This member can be certain combinations of the following values.</summary>
+    public KeyEventFlags KeyEventFlags => _keyEventFlags;
+
+    /// <summary>Gets the time stamp for the event, in milliseconds. If this parameter is zero, the system will provide its own time stamp.</summary>
+    public uint Timestamp => _timestamp;
+
+    /// <summary>Gets native extra information associated with the keystroke.</summary>
+    internal UIntPtr ExtraInfo => _extraInfo;
+
     /// <summary>Create a KeyboardInput for a key press (up / down).</summary>
     /// <param name="virtualKeyCode">Value from VirtualKeyCodes.</param>
     /// <returns>KeyboardInput[].</returns>
@@ -75,11 +75,11 @@ public readonly record struct KeyboardInput
     /// <param name="virtualKeyCode">Value from VirtualKeyCodes.</param>
     /// <param name="timestamp">The optional timestamp.</param>
     /// <returns>KeyboardInput[].</returns>
-    public static KeyboardInput[] ForKeyPress(VirtualKeyCode virtualKeyCode, uint? timestamp) => new KeyboardInput[2]
-        {
+    public static KeyboardInput[] ForKeyPress(VirtualKeyCode virtualKeyCode, uint? timestamp) =>
+        [
             ForKeyDown(virtualKeyCode, timestamp),
-            ForKeyUp(virtualKeyCode, timestamp)
-        };
+            ForKeyUp(virtualKeyCode, timestamp),
+        ];
 
     /// <summary>Create a KeyboardInput for a key down.</summary>
     /// <param name="virtualKeyCode">Value from VirtualKeyCodes.</param>
@@ -92,7 +92,7 @@ public readonly record struct KeyboardInput
     /// <returns>KeyboardInput.</returns>
     public static KeyboardInput ForKeyDown(VirtualKeyCode virtualKeyCode, uint? timestamp)
     {
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(virtualKeyCode, 0, KeyEventFlags.None, messageTime);
     }
 
@@ -107,7 +107,7 @@ public readonly record struct KeyboardInput
     /// <returns>KeyboardInput.</returns>
     public static KeyboardInput ForKeyUp(VirtualKeyCode virtualKeyCode, uint? timestamp)
     {
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(virtualKeyCode, 0, KeyEventFlags.KeyUp, messageTime);
     }
 }

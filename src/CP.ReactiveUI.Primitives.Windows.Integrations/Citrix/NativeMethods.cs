@@ -52,7 +52,11 @@ internal static partial class NativeMethods
     /// <param name="bytesReturned">The number of bytes returned.</param>
     /// <returns><see langword="true"/> when the query succeeds.</returns>
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+#if NETFRAMEWORK
+    [DllImport("WFAPI", CharSet = CharSet.Unicode, EntryPoint = "WFQuerySessionInformationW", ExactSpelling = true)]
+#else
     [LibraryImport("WFAPI", EntryPoint = "WFQuerySessionInformationW")]
+#endif
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static
 #if NETFRAMEWORK
@@ -73,7 +77,11 @@ internal static partial class NativeMethods
     /// <param name="eventFlags">The event flags that occurred.</param>
     /// <returns><see langword="true"/> when an event is returned.</returns>
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+#if NETFRAMEWORK
+    [DllImport("WFAPI", ExactSpelling = true)]
+#else
     [LibraryImport("WFAPI")]
+#endif
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static
 #if NETFRAMEWORK

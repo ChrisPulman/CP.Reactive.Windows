@@ -16,18 +16,23 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Display;
 /// <summary>Provides current display topology snapshots and change notifications.</summary>
 public static class DisplayTopology
 {
+    /// <summary>Creates the shared display-change message stream.</summary>
+    private static Func<IObservable<WindowMessage>> _windowMessages = SharedMessageWindow.ObserveWindowMessages;
+
+    /// <summary>Retrieves the current display snapshot.</summary>
+    private static Func<IReadOnlyList<DisplayInfo>> _snapshotProvider = User32Api.EnumDisplays;
+
     /// <summary>Gets the bounds of the complete virtual desktop.</summary>
     public static NativeRect ScreenBounds => CalculateScreenBounds(GetSnapshot());
 
     /// <summary>Gets a fresh snapshot of all displays known to Windows.</summary>
     /// <returns>The current display snapshot.</returns>
-    public static IReadOnlyList<DisplayInfo> GetSnapshot() => User32Api.EnumDisplays();
+    public static IReadOnlyList<DisplayInfo> GetSnapshot() => _snapshotProvider();
 
     /// <summary>Observes display topology, beginning with the current snapshot.</summary>
     /// <returns>A stream containing the current and subsequent display snapshots.</returns>
-    public static IObservable<IReadOnlyList<DisplayInfo>> ObserveChanges() => (from _ in SharedMessageWindow.ObserveWindowMessages()
-            where _.Msg == WindowsMessages.WM_DISPLAYCHANGE
-            select GetSnapshot()).StartWith(GetSnapshot());
+    public static IObservable<IReadOnlyList<DisplayInfo>> ObserveChanges() =>
+        ObserveChangesCore(_windowMessages(), _snapshotProvider);
 
     /// <summary>Gets the display bounds containing the specified point.</summary>
     /// <param name="point">The virtual-desktop point.</param>
@@ -78,5 +83,35 @@ public static class DisplayTopology
 
             return new(left, top, right - left, bottom - top);
         }
+    }
+
+    /// <summary>Creates a topology stream from deterministic message and snapshot sources.</summary>
+    /// <param name="windowMessages">The source window messages.</param>
+    /// <param name="snapshotProvider">The display snapshot provider.</param>
+    /// <returns>A stream containing the current and subsequent display snapshots.</returns>
+    internal static IObservable<IReadOnlyList<DisplayInfo>> ObserveChangesCore(
+        IObservable<WindowMessage> windowMessages,
+        Func<IReadOnlyList<DisplayInfo>> snapshotProvider) =>
+        (from message in windowMessages
+         where message.Msg == WindowsMessages.WM_DISPLAYCHANGE
+         select snapshotProvider()).StartWith(snapshotProvider());
+
+    /// <summary>Exchanges topology sources for deterministic tests.</summary>
+    /// <param name="windowMessages">The replacement message-source factory.</param>
+    /// <param name="snapshotProvider">The replacement snapshot provider.</param>
+    /// <returns>A scope that restores the original sources.</returns>
+    internal static IDisposable ExchangeSources(
+        Func<IObservable<WindowMessage>> windowMessages,
+        Func<IReadOnlyList<DisplayInfo>> snapshotProvider)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(windowMessages);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(snapshotProvider);
+        Func<IObservable<WindowMessage>> previousWindowMessages = _windowMessages;
+        Func<IReadOnlyList<DisplayInfo>> previousSnapshotProvider = _snapshotProvider;
+        _windowMessages = windowMessages;
+        _snapshotProvider = snapshotProvider;
+        return Scope.Create(
+            Tuple.Create(previousWindowMessages, previousSnapshotProvider),
+            static previous => (_windowMessages, _snapshotProvider) = (previous.Item1, previous.Item2));
     }
 }

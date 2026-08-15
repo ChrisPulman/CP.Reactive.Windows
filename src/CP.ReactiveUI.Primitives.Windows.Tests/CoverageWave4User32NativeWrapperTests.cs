@@ -186,6 +186,26 @@ public sealed class CoverageWave4User32NativeWrapperTests
         await Assert.That(failedOpen.CloseCount).IsEqualTo(0);
     }
 
+    /// <summary>Exercises the public input-desktop constructor with composed operations only.</summary>
+    /// <returns>A task representing the asynchronous test.</returns>
+    [Test]
+    public async Task SafeCurrentInputDesktopHandle_DefaultConstructor_UsesOverriddenOperationsAsync()
+    {
+        const int DesktopHandleValue = 3;
+        var operations = new DesktopOperationProbe((IntPtr)DesktopHandleValue, true);
+
+        using (SafeCurrentInputDesktopHandle.OverrideDefaultOperationsForTesting(
+            operations.Open,
+            operations.Set,
+            operations.Close))
+        using (var handle = new SafeCurrentInputDesktopHandle())
+        {
+            await Assert.That(handle.IsInvalid).IsFalse();
+        }
+
+        await Assert.That(operations.CloseCount).IsEqualTo(1);
+    }
+
     /// <summary>Provides deterministic input-desktop operation results.</summary>
     private sealed class DesktopOperationProbe
     {

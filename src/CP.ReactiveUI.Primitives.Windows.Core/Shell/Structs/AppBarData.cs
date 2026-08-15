@@ -21,53 +21,6 @@ public struct AppBarData : IEquatable<AppBarData>
     /// <summary>The message-specific parameter value.</summary>
     private int _parameter;
 
-    /// <summary>Native appbar data layout.</summary>
-    internal readonly struct NativeAppBarData : IEquatable<NativeAppBarData>
-    {
-        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Shell.Structs.AppBarData.NativeAppBarData" /> struct.</summary>
-        /// <param name="windowHandle">The appbar window handle.</param>
-        /// <param name="callbackMessageIdentifier">The callback message identifier.</param>
-        /// <param name="edge">The appbar edge.</param>
-        /// <param name="bounds">The appbar bounds.</param>
-        /// <param name="parameter">The message-specific parameter.</param>
-        internal NativeAppBarData(IntPtr windowHandle, uint callbackMessageIdentifier, AppBarEdges edge, NativeRect bounds, int parameter)
-        {
-            Size = Marshal.SizeOf<NativeAppBarData>();
-            WindowHandle = windowHandle;
-            CallbackMessageIdentifier = callbackMessageIdentifier;
-            Edge = edge;
-            Bounds = bounds;
-            Parameter = parameter;
-        }
-
-        /// <summary>Gets the size of the structure.</summary>
-        internal int Size { get; }
-
-        /// <summary>Gets the appbar window handle.</summary>
-        internal IntPtr WindowHandle { get; }
-
-        /// <summary>Gets the appbar callback message identifier.</summary>
-        internal uint CallbackMessageIdentifier { get; }
-
-        /// <summary>Gets the appbar edge.</summary>
-        internal AppBarEdges Edge { get; }
-
-        /// <summary>Gets the appbar bounds.</summary>
-        internal NativeRect Bounds { get; }
-
-        /// <summary>Gets the message-specific parameter.</summary>
-        internal int Parameter { get; }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj) => obj is NativeAppBarData other && Equals(other);
-
-        /// <inheritdoc />
-        public bool Equals(NativeAppBarData other) => Size == other.Size && WindowHandle == other.WindowHandle && CallbackMessageIdentifier == other.CallbackMessageIdentifier && Edge == other.Edge && Bounds.Equals(other.Bounds) && Parameter == other.Parameter;
-
-        /// <inheritdoc />
-        public override int GetHashCode() => HashCode.Combine(Size, WindowHandle, CallbackMessageIdentifier, Edge, Bounds, Parameter);
-    }
-
     /// <summary>Gets or sets the application-defined message identifier.</summary>
     public uint CallbackMessageIdentifier { get; set; }
 
@@ -121,14 +74,20 @@ public struct AppBarData : IEquatable<AppBarData>
     public override readonly bool Equals(object obj) => obj is AppBarData other && Equals(other);
 
     /// <inheritdoc />
-    public readonly bool Equals(AppBarData other) => _windowHandle == other._windowHandle && _parameter == other._parameter && CallbackMessageIdentifier == other.CallbackMessageIdentifier && AppBarEdge == other.AppBarEdge && Bounds.Equals(other.Bounds);
+    public readonly bool Equals(AppBarData other) =>
+        _windowHandle == other._windowHandle
+        && _parameter == other._parameter
+        && CallbackMessageIdentifier == other.CallbackMessageIdentifier
+        && AppBarEdge == other.AppBarEdge
+        && Bounds.Equals(other.Bounds);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => 0;
 
     /// <summary>Converts the public data to the native layout.</summary>
     /// <returns>The native appbar data.</returns>
-    internal readonly NativeAppBarData ToNative() => new(_windowHandle, CallbackMessageIdentifier, AppBarEdge, Bounds, _parameter);
+    internal readonly NativeAppBarData ToNative() =>
+        new(_windowHandle, CallbackMessageIdentifier, AppBarEdge, Bounds, _parameter);
 
     /// <summary>Copies native results back to the public data.</summary>
     /// <param name="data">The native appbar data.</param>
@@ -139,5 +98,70 @@ public struct AppBarData : IEquatable<AppBarData>
         AppBarEdge = data.Edge;
         Bounds = data.Bounds;
         _parameter = data.Parameter;
+    }
+
+    /// <summary>Native appbar data layout.</summary>
+    internal readonly struct NativeAppBarData : IEquatable<NativeAppBarData>
+    {
+        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Shell.Structs.AppBarData.NativeAppBarData" /> struct.</summary>
+        /// <param name="windowHandle">The appbar window handle.</param>
+        /// <param name="callbackMessageIdentifier">The callback message identifier.</param>
+        /// <param name="edge">The appbar edge.</param>
+        /// <param name="bounds">The appbar bounds.</param>
+        /// <param name="parameter">The message-specific parameter.</param>
+        internal NativeAppBarData(
+            IntPtr windowHandle,
+            uint callbackMessageIdentifier,
+            AppBarEdges edge,
+            NativeRect bounds,
+            int parameter)
+        {
+            Size = Marshal.SizeOf<NativeAppBarData>();
+            WindowHandle = windowHandle;
+            CallbackMessageIdentifier = callbackMessageIdentifier;
+            Edge = edge;
+            Bounds = bounds;
+            Parameter = parameter;
+        }
+
+        /// <summary>Gets the size of the structure.</summary>
+        internal int Size { get; }
+
+        /// <summary>Gets the appbar window handle.</summary>
+        internal IntPtr WindowHandle { get; }
+
+        /// <summary>Gets the appbar callback message identifier.</summary>
+        internal uint CallbackMessageIdentifier { get; }
+
+        /// <summary>Gets the appbar edge.</summary>
+        internal AppBarEdges Edge { get; }
+
+        /// <summary>Gets the appbar bounds.</summary>
+        internal NativeRect Bounds { get; }
+
+        /// <summary>Gets the message-specific parameter.</summary>
+        internal int Parameter { get; }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj) => obj is NativeAppBarData other && Equals(other);
+
+        /// <inheritdoc />
+        public bool Equals(NativeAppBarData other) =>
+            Size == other.Size
+            && WindowHandle == other.WindowHandle
+            && CallbackMessageIdentifier == other.CallbackMessageIdentifier
+            && Edge == other.Edge
+            && Bounds.Equals(other.Bounds)
+            && Parameter == other.Parameter;
+
+        /// <inheritdoc />
+        public override int GetHashCode() =>
+            HashCode.Combine(
+                Size,
+                WindowHandle,
+                CallbackMessageIdentifier,
+                Edge,
+                Bounds,
+                Parameter);
     }
 }

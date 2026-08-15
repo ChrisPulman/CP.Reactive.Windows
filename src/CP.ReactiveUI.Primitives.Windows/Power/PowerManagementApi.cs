@@ -13,56 +13,12 @@ namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power;
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Power;
 #endif
 /// <summary>Provides access to Windows power management API functions.</summary>
+#if NETFRAMEWORK
 public static class PowerManagementApi
+#else
+public static partial class PowerManagementApi
+#endif
 {
-    /// <summary>Contains native methods used by power-management APIs.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>The Powrprof library name.</summary>
-        private const string PowrprofDll = "powrprof.dll";
-
-        /// <summary>The User32 library name.</summary>
-        private const string User32Dll = "user32.dll";
-
-        /// <summary>Suspends the system by transitioning it to sleep mode or hibernation.</summary>
-        /// <param name="hibernate">A value indicating whether the system should hibernate.</param>
-        /// <param name="forceCritical">A value indicating whether the system should suspend immediately.</param>
-        /// <param name="disableWakeEvent">A value indicating whether wake events should be disabled.</param>
-        /// <returns><c>true</c> if the function succeeds, otherwise <c>false</c>.</returns>
-        [DllImport("powrprof.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool SetSuspendState([MarshalAs(UnmanagedType.Bool)] bool hibernate, [MarshalAs(UnmanagedType.Bool)] bool forceCritical, [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent);
-
-        /// <summary>Logs off the interactive user, shuts down the system, or shuts down and restarts the system.</summary>
-        /// <param name="flags">The shutdown type.</param>
-        /// <param name="reason">The reason for initiating the shutdown.</param>
-        /// <returns><c>true</c> if the function succeeds, otherwise <c>false</c>.</returns>
-        [DllImport("user32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        public static extern bool ExitWindowsEx(ExitWindowsFlags flags, uint reason);
-    }
-
-    /// <summary>Composes power-management operations without invoking them during construction.</summary>
-    /// <param name="setSuspendState">The suspend-state operation.</param>
-    /// <param name="exitWindows">The exit-Windows operation.</param>
-    private sealed class PowerManagementOperations(Func<bool, bool, bool, bool> setSuspendState, Func<ExitWindowsFlags, uint, bool> exitWindows)
-    {
-        /// <summary>Invokes the configured exit-Windows operation.</summary>
-        /// <param name="flags">The exit flags.</param>
-        /// <param name="reason">The exit reason.</param>
-        /// <returns>The configured operation result.</returns>
-        public bool ExitWindows(ExitWindowsFlags flags, uint reason) => exitWindows(flags, reason);
-
-        /// <summary>Invokes the configured suspend-state operation.</summary>
-        /// <param name="hibernate">A value indicating whether hibernation is requested.</param>
-        /// <param name="forceCritical">A value indicating whether the transition is forced.</param>
-        /// <param name="disableWakeEvent">A value indicating whether wake events are disabled.</param>
-        /// <returns>The configured operation result.</returns>
-        public bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent) => setSuspendState(hibernate, forceCritical, disableWakeEvent);
-    }
-
     /// <summary>Power-management operations used by this process.</summary>
     private static PowerManagementOperations _operations = new(NativeMethods.SetSuspendState, NativeMethods.ExitWindowsEx);
 
@@ -82,7 +38,11 @@ public static class PowerManagementApi
     /// If <c>true</c>, the system disables all wake events. If <c>false</c>, enabled wake events remain enabled.
     /// </param>
     /// <returns><c>true</c> if the function succeeds, otherwise <c>false</c>.</returns>
-    public static bool SetSuspendState([MarshalAs(UnmanagedType.Bool)] bool hibernate, [MarshalAs(UnmanagedType.Bool)] bool forceCritical, [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent) => _operations.SetSuspendState(hibernate, forceCritical, disableWakeEvent);
+    public static bool SetSuspendState(
+        [MarshalAs(UnmanagedType.Bool)] bool hibernate,
+        [MarshalAs(UnmanagedType.Bool)] bool forceCritical,
+        [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent) =>
+        _operations.SetSuspendState(hibernate, forceCritical, disableWakeEvent);
 
     /// <summary>
     /// Logs off the interactive user, shuts down the system, or shuts down and restarts the system.
@@ -187,9 +147,84 @@ public static class PowerManagementApi
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(exitWindows);
         PowerManagementOperations operations = _operations;
         _operations = new(setSuspendState, exitWindows);
-        return Scope.Create(operations, delegate(PowerManagementOperations previous)
+        return Scope.Create(operations, static previous =>
         {
             _operations = previous;
         });
+    }
+
+    /// <summary>Contains native methods used by power-management APIs.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
+    {
+        /// <summary>The Powrprof library name.</summary>
+        private const string PowrprofDll = "powrprof.dll";
+
+        /// <summary>The User32 library name.</summary>
+        private const string User32Dll = "user32.dll";
+
+        /// <summary>Suspends the system by transitioning it to sleep mode or hibernation.</summary>
+        /// <param name="hibernate">A value indicating whether the system should hibernate.</param>
+        /// <param name="forceCritical">A value indicating whether the system should suspend immediately.</param>
+        /// <param name="disableWakeEvent">A value indicating whether wake events should be disabled.</param>
+        /// <returns><c>true</c> if the function succeeds, otherwise <c>false</c>.</returns>
+#if NETFRAMEWORK
+        [DllImport(PowrprofDll, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetSuspendState(
+            [MarshalAs(UnmanagedType.Bool)] bool hibernate,
+            [MarshalAs(UnmanagedType.Bool)] bool forceCritical,
+            [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent);
+#else
+        [LibraryImport(PowrprofDll, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetSuspendState(
+            [MarshalAs(UnmanagedType.Bool)] bool hibernate,
+            [MarshalAs(UnmanagedType.Bool)] bool forceCritical,
+            [MarshalAs(UnmanagedType.Bool)] bool disableWakeEvent);
+#endif
+
+        /// <summary>Logs off the interactive user, shuts down the system, or shuts down and restarts the system.</summary>
+        /// <param name="flags">The shutdown type.</param>
+        /// <param name="reason">The reason for initiating the shutdown.</param>
+        /// <returns><c>true</c> if the function succeeds, otherwise <c>false</c>.</returns>
+#if NETFRAMEWORK
+        [DllImport(User32Dll, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool ExitWindowsEx(ExitWindowsFlags flags, uint reason);
+#else
+        [LibraryImport(User32Dll, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool ExitWindowsEx(ExitWindowsFlags flags, uint reason);
+#endif
+    }
+
+    /// <summary>Composes power-management operations without invoking them during construction.</summary>
+    /// <param name="setSuspendState">The suspend-state operation.</param>
+    /// <param name="exitWindows">The exit-Windows operation.</param>
+    private sealed class PowerManagementOperations(
+        Func<bool, bool, bool, bool> setSuspendState,
+        Func<ExitWindowsFlags, uint, bool> exitWindows)
+    {
+        /// <summary>Invokes the configured exit-Windows operation.</summary>
+        /// <param name="flags">The exit flags.</param>
+        /// <param name="reason">The exit reason.</param>
+        /// <returns>The configured operation result.</returns>
+        public bool ExitWindows(ExitWindowsFlags flags, uint reason) => exitWindows(flags, reason);
+
+        /// <summary>Invokes the configured suspend-state operation.</summary>
+        /// <param name="hibernate">A value indicating whether hibernation is requested.</param>
+        /// <param name="forceCritical">A value indicating whether the transition is forced.</param>
+        /// <param name="disableWakeEvent">A value indicating whether wake events are disabled.</param>
+        /// <returns>The configured operation result.</returns>
+        public bool SetSuspendState(bool hibernate, bool forceCritical, bool disableWakeEvent) =>
+            setSuspendState(hibernate, forceCritical, disableWakeEvent);
     }
 }

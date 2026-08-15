@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
@@ -17,6 +16,24 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 /// </summary>
 public readonly record struct KeyboardLowLevelHookStruct
 {
+    /// <summary>Stores the raw virtual-key code.</summary>
+    private readonly uint _virtualKeyCode;
+
+    /// <summary>Initializes a new instance of the <see cref="KeyboardLowLevelHookStruct"/> struct.</summary>
+    /// <param name="virtualKeyCode">The raw virtual-key code.</param>
+    /// <param name="scanCode">The hardware scan code.</param>
+    /// <param name="flags">The extended key flags.</param>
+    /// <param name="timeStamp">The message timestamp.</param>
+    /// <param name="extraInfo">The additional native information.</param>
+    internal KeyboardLowLevelHookStruct(uint virtualKeyCode, uint scanCode, ExtendedKeyFlags flags, uint timeStamp, UIntPtr extraInfo)
+    {
+        _virtualKeyCode = virtualKeyCode;
+        ScanCode = scanCode;
+        Flags = flags;
+        TimeStamp = timeStamp;
+        ExtraInfo = extraInfo;
+    }
+
     /// <summary>Gets a virtual-key code. The code must be a value in the range 1 to 254.</summary>
     public VirtualKeyCode VirtualKeyCode => (VirtualKeyCode)checked((int)_virtualKeyCode);
 
@@ -38,37 +55,14 @@ public readonly record struct KeyboardLowLevelHookStruct
     /// <summary>Gets additional native information associated with the message.</summary>
     internal UIntPtr ExtraInfo { get; }
 
-    /// <summary>Stores the raw virtual-key code.</summary>
-    private readonly uint _virtualKeyCode;
-
-    /// <summary>Initializes a new instance of the <see cref="KeyboardLowLevelHookStruct"/> struct.</summary>
-	/// <param name="virtualKeyCode">The raw virtual-key code.</param>
-	/// <param name="scanCode">The hardware scan code.</param>
-	/// <param name="flags">The extended key flags.</param>
-	/// <param name="timeStamp">The message timestamp.</param>
-	/// <param name="extraInfo">The additional native information.</param>
-    internal KeyboardLowLevelHookStruct(uint virtualKeyCode, uint scanCode, ExtendedKeyFlags flags, uint timeStamp, UIntPtr extraInfo)
-    {
-        _virtualKeyCode = virtualKeyCode;
-        ScanCode = scanCode;
-        Flags = flags;
-        TimeStamp = timeStamp;
-        ExtraInfo = extraInfo;
-    }
+    /// <inheritdoc/>
+    public override int GetHashCode() => HashCode.Combine(_virtualKeyCode, ScanCode, Flags, TimeStamp, ExtraInfo);
 
     /// <inheritdoc/>
-    [CompilerGenerated]
-    public override int GetHashCode() => (((((((EqualityComparer<uint>.Default.GetHashCode(_virtualKeyCode) * -1_521_134_295) + EqualityComparer<uint>.Default.GetHashCode(ScanCode)) * -1_521_134_295) + EqualityComparer<ExtendedKeyFlags>.Default.GetHashCode(Flags)) * -1_521_134_295) + EqualityComparer<uint>.Default.GetHashCode(TimeStamp)) * -1_521_134_295) + EqualityComparer<UIntPtr>.Default.GetHashCode(ExtraInfo);
-
-    /// <inheritdoc/>
-    [CompilerGenerated]
-    public bool Equals(KeyboardLowLevelHookStruct other)
-    {
-        if (EqualityComparer<uint>.Default.Equals(_virtualKeyCode, other._virtualKeyCode) && EqualityComparer<uint>.Default.Equals(ScanCode, other.ScanCode) && EqualityComparer<ExtendedKeyFlags>.Default.Equals(Flags, other.Flags) && EqualityComparer<uint>.Default.Equals(TimeStamp, other.TimeStamp))
-        {
-            return EqualityComparer<UIntPtr>.Default.Equals(ExtraInfo, other.ExtraInfo);
-        }
-
-        return false;
-    }
+    public bool Equals(KeyboardLowLevelHookStruct other) =>
+        EqualityComparer<uint>.Default.Equals(_virtualKeyCode, other._virtualKeyCode)
+        && EqualityComparer<uint>.Default.Equals(ScanCode, other.ScanCode)
+        && EqualityComparer<ExtendedKeyFlags>.Default.Equals(Flags, other.Flags)
+        && EqualityComparer<uint>.Default.Equals(TimeStamp, other.TimeStamp)
+        && EqualityComparer<UIntPtr>.Default.Equals(ExtraInfo, other.ExtraInfo);
 }

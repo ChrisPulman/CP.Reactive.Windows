@@ -9,16 +9,22 @@ public enum GpUnit
 {
     /// <summary>Specifies a nonphysical world-coordinate unit.</summary>
     UnitWorld,
+
     /// <summary>Specifies a variable unit used only for page transforms.</summary>
     UnitDisplay,
+
     /// <summary>Specifies a device pixel.</summary>
     UnitPixel,
+
     /// <summary>Specifies one printer point, or one seventy-second of an inch.</summary>
     UnitPoint,
+
     /// <summary>Specifies one inch.</summary>
     UnitInch,
+
     /// <summary>Specifies one three-hundredth of an inch.</summary>
     UnitDocument,
+
     /// <summary>Specifies one millimeter.</summary>
-    UnitMillimeter
+    UnitMillimeter,
 }

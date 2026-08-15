@@ -12,8 +12,10 @@ public enum AppBarStates
 {
     /// <summary>ABS_MANUAL - No automatic function.</summary>
     None = 0,
+
     /// <summary>ABS_AUTOHIDE - Autohides the AppBar.</summary>
     AutoHide = 1,
+
     /// <summary>ABS_ALWAYSONTOP - Make sure the AppBar is always on top.</summary>
-    AllwaysOnTop = 2
+    AllwaysOnTop = 2,
 }

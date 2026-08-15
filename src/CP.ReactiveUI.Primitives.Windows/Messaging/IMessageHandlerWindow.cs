@@ -13,6 +13,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>Abstracts the message-handler window for deterministic tests.</summary>
 internal interface IMessageHandlerWindow
 {
+    /// <summary>Occurs when the message-handler window is disposed.</summary>
+    event EventHandler Disposed;
+
     /// <summary>Gets the message-handler window handle.</summary>
     long Handle { get; }
 
@@ -21,9 +24,6 @@ internal interface IMessageHandlerWindow
 
     /// <summary>Gets the native WPF source.</summary>
     HwndSource Source { get; }
-
-    /// <summary>Occurs when the message-handler window is disposed.</summary>
-    event EventHandler Disposed;
 
     /// <summary>Adds a window-message hook.</summary>
     /// <param name="hook">The hook to add.</param>

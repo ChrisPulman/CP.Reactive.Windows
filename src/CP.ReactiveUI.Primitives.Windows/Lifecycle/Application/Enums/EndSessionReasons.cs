@@ -23,5 +23,5 @@ public enum EndSessionReasons : uint
     /// <summary>A critical system event requires the application to close.</summary>
     ENDSESSION_CRITICAL = 0x40000000U,
     /// <summary>The user is logging off.</summary>
-    ENDSESSION_LOGOFF = 0x80000000U
+    ENDSESSION_LOGOFF = 0x80000000U,
 }

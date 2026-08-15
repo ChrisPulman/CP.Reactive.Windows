@@ -15,9 +15,7 @@ public class SafeSelectObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeSelectObjectHandle" /> class.</summary>
     public SafeSelectObjectHandle()
-        : base(ownsHandle: true)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeSelectObjectHandle" /> class and selects an object.</summary>
     /// <param name="deviceContextHandle">The device context in which to select the object.</param>

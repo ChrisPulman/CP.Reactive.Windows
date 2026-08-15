@@ -13,18 +13,44 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 public class NativeRectFloatTypeConverter : TypeConverter
 {
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string nativeRectFStringValue)
         {
             string[] xywh = nativeRectFStringValue.Split(',');
-            if (xywh.Length == 4 && float.TryParse(xywh[0], NumberStyles.Number, CultureInfo.InvariantCulture, out var x) && float.TryParse(xywh[1], NumberStyles.Number, CultureInfo.InvariantCulture, out var y) && float.TryParse(xywh[2], NumberStyles.Number, CultureInfo.InvariantCulture, out var w) && float.TryParse(xywh[3], NumberStyles.Number, CultureInfo.InvariantCulture, out var h))
+            if (
+                xywh.Length == 4
+                && float.TryParse(
+                    xywh[0],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var x)
+                && float.TryParse(
+                    xywh[1],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var y)
+                && float.TryParse(
+                    xywh[2],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var w)
+                && float.TryParse(
+                    xywh[3],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var h))
             {
                 return new NativeRectFloat(x, y, w, h);
             }
@@ -34,5 +60,17 @@ public class NativeRectFloatTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType != typeof(string) || !(value is NativeRectFloat nativeRectF) ? base.ConvertTo(context, culture, value, destinationType) : string.Join(",", nativeRectF.Left.ToString(CultureInfo.InvariantCulture), nativeRectF.Top.ToString(CultureInfo.InvariantCulture), nativeRectF.Width.ToString(CultureInfo.InvariantCulture), nativeRectF.Height.ToString(CultureInfo.InvariantCulture));
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType) =>
+        destinationType != typeof(string) || !(value is NativeRectFloat nativeRectF)
+            ? base.ConvertTo(context, culture, value, destinationType)
+            : string.Join(
+                ",",
+                nativeRectF.Left.ToString(CultureInfo.InvariantCulture),
+                nativeRectF.Top.ToString(CultureInfo.InvariantCulture),
+                nativeRectF.Width.ToString(CultureInfo.InvariantCulture),
+                nativeRectF.Height.ToString(CultureInfo.InvariantCulture));
 }

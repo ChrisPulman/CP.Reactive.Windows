@@ -10,4 +10,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="filename">Output file name buffer.</param>
 /// <param name="size">Output buffer size.</param>
 /// <returns>Number of copied characters.</returns>
-internal unsafe delegate int GetModuleFileNameOperation(nint processHandle, nint moduleHandle, char* filename, int size);
+internal unsafe delegate int GetModuleFileNameOperation(
+    nint processHandle,
+    nint moduleHandle,
+    char* filename,
+    int size);

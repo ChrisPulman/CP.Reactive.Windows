@@ -17,6 +17,16 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals;
 /// <summary>Provides internal clipboard native information helpers.</summary>
 internal static class ClipboardInfoExtensions
 {
+    /// <summary>Native clipboard memory operations used by this type.</summary>
+    private static ClipboardInfoOperations _operations = new(
+        NativeMethods.GetClipboardData,
+        NativeMethods.IsClipboardFormatAvailable,
+        Kernel32Api.GlobalAlloc,
+        Kernel32Api.GlobalLock,
+        NativeMethods.GlobalFree);
+
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="clipboardAccessToken">The extended instance.</param>
     extension(IClipboardAccessToken clipboardAccessToken)
     {
         /// <summary>Tries to create clipboard native information for reading.</summary>
@@ -67,6 +77,7 @@ internal static class ClipboardInfoExtensions
             IntPtr memoryPtr = _operations.GlobalLock(globalHandle);
             if (memoryPtr == IntPtr.Zero)
             {
+                _ = _operations.GlobalFree(globalHandle);
                 throw new Win32Exception();
             }
 
@@ -80,7 +91,9 @@ internal static class ClipboardInfoExtensions
         internal ClipboardNativeInfo WriteInfo(uint formatId, long size)
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            IntPtr globalHandle = _operations.GlobalAlloc(GlobalMemorySettings.Movable | GlobalMemorySettings.ZeroInit, new(checked((ulong)size)));
+            IntPtr globalHandle = _operations.GlobalAlloc(
+                GlobalMemorySettings.Movable | GlobalMemorySettings.ZeroInit,
+                new(checked((ulong)size)));
             if (globalHandle == IntPtr.Zero)
             {
                 throw new Win32Exception();
@@ -89,6 +102,7 @@ internal static class ClipboardInfoExtensions
             IntPtr memoryPtr = _operations.GlobalLock(globalHandle);
             if (memoryPtr == IntPtr.Zero)
             {
+                _ = _operations.GlobalFree(globalHandle);
                 throw new Win32Exception();
             }
 
@@ -96,18 +110,71 @@ internal static class ClipboardInfoExtensions
         }
     }
 
+    /// <summary>Overrides native clipboard information operations for deterministic tests.</summary>
+    /// <param name="getClipboardData">The replacement clipboard-data query operation.</param>
+    /// <param name="isFormatAvailable">The replacement format availability query operation.</param>
+    /// <param name="globalAlloc">The replacement global allocation operation.</param>
+    /// <param name="globalLock">The replacement global lock operation.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(
+        Func<uint, IntPtr> getClipboardData,
+        Func<uint, bool> isFormatAvailable,
+        Func<GlobalMemorySettings, UIntPtr, IntPtr> globalAlloc,
+        Func<IntPtr, IntPtr> globalLock) =>
+        OverrideOperationsForTesting(
+            getClipboardData,
+            isFormatAvailable,
+            globalAlloc,
+            globalLock,
+            NativeMethods.GlobalFree);
+
+    /// <summary>Overrides native clipboard information operations for deterministic tests.</summary>
+    /// <param name="getClipboardData">The replacement clipboard-data query operation.</param>
+    /// <param name="isFormatAvailable">The replacement format availability query operation.</param>
+    /// <param name="globalAlloc">The replacement global allocation operation.</param>
+    /// <param name="globalLock">The replacement global lock operation.</param>
+    /// <param name="globalFree">The replacement global free operation.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(
+        Func<uint, IntPtr> getClipboardData,
+        Func<uint, bool> isFormatAvailable,
+        Func<GlobalMemorySettings, UIntPtr, IntPtr> globalAlloc,
+        Func<IntPtr, IntPtr> globalLock,
+        Func<IntPtr, IntPtr> globalFree)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getClipboardData);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isFormatAvailable);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalAlloc);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalLock);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalFree);
+        ClipboardInfoOperations operations = _operations;
+        _operations = new(getClipboardData, isFormatAvailable, globalAlloc, globalLock, globalFree);
+        return Scope.Create(operations, static previous => _operations = previous);
+    }
+
     /// <summary>Composes clipboard native memory operations without invoking them during construction.</summary>
     /// <param name="getClipboardData">The clipboard-data query operation.</param>
     /// <param name="isFormatAvailable">The format availability query operation.</param>
     /// <param name="globalAlloc">The global allocation operation.</param>
     /// <param name="globalLock">The global lock operation.</param>
-    private sealed class ClipboardInfoOperations(Func<uint, IntPtr> getClipboardData, Func<uint, bool> isFormatAvailable, Func<GlobalMemorySettings, UIntPtr, IntPtr> globalAlloc, Func<IntPtr, IntPtr> globalLock)
+    /// <param name="globalFree">The global free operation.</param>
+    private sealed class ClipboardInfoOperations(
+        Func<uint, IntPtr> getClipboardData,
+        Func<uint, bool> isFormatAvailable,
+        Func<GlobalMemorySettings, UIntPtr, IntPtr> globalAlloc,
+        Func<IntPtr, IntPtr> globalLock,
+        Func<IntPtr, IntPtr> globalFree)
     {
         /// <summary>Allocates global memory.</summary>
         /// <param name="settings">The global memory settings.</param>
         /// <param name="size">The allocation size.</param>
         /// <returns>The allocated memory handle.</returns>
         public IntPtr GlobalAlloc(GlobalMemorySettings settings, UIntPtr size) => globalAlloc(settings, size);
+
+        /// <summary>Frees global memory.</summary>
+        /// <param name="globalHandle">The global memory handle.</param>
+        /// <returns><see cref="F:System.IntPtr.Zero" /> when the memory was released.</returns>
+        public IntPtr GlobalFree(IntPtr globalHandle) => globalFree(globalHandle);
 
         /// <summary>Locks global memory.</summary>
         /// <param name="globalHandle">The global memory handle.</param>
@@ -123,28 +190,5 @@ internal static class ClipboardInfoExtensions
         /// <param name="formatId">The clipboard format identifier.</param>
         /// <returns><see langword="true" /> when the format is available.</returns>
         public bool IsFormatAvailable(uint formatId) => isFormatAvailable(formatId);
-    }
-
-    /// <summary>Native clipboard memory operations used by this type.</summary>
-    private static ClipboardInfoOperations _operations = new(NativeMethods.GetClipboardData, NativeMethods.IsClipboardFormatAvailable, Kernel32Api.GlobalAlloc, Kernel32Api.GlobalLock);
-
-    /// <summary>Overrides native clipboard information operations for deterministic tests.</summary>
-    /// <param name="getClipboardData">The replacement clipboard-data query operation.</param>
-    /// <param name="isFormatAvailable">The replacement format availability query operation.</param>
-    /// <param name="globalAlloc">The replacement global allocation operation.</param>
-    /// <param name="globalLock">The replacement global lock operation.</param>
-    /// <returns>A scope that restores the previous operations.</returns>
-    internal static IDisposable OverrideOperationsForTesting(Func<uint, IntPtr> getClipboardData, Func<uint, bool> isFormatAvailable, Func<GlobalMemorySettings, UIntPtr, IntPtr> globalAlloc, Func<IntPtr, IntPtr> globalLock)
-    {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getClipboardData);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isFormatAvailable);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalAlloc);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalLock);
-        ClipboardInfoOperations operations = _operations;
-        _operations = new(getClipboardData, isFormatAvailable, globalAlloc, globalLock);
-        return Scope.Create(operations, delegate(ClipboardInfoOperations previous)
-        {
-            _operations = previous;
-        });
     }
 }

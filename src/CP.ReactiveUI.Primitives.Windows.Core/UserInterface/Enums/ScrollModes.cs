@@ -9,10 +9,13 @@ public enum ScrollModes
 {
     /// <summary>Send message to the window with an absolute position.</summary>
     AbsoluteWindowMessage,
+
     /// <summary>Send message to the window for page up or down.</summary>
     WindowsMessage,
+
     /// <summary>Send a mousewheel event.</summary>
     MouseWheel,
+
     /// <summary>Send page up or down as key press.</summary>
-    KeyboardPageUpDown
+    KeyboardPageUpDown,
 }

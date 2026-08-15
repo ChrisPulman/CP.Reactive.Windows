@@ -29,7 +29,7 @@ internal class IShellItem : ComObject
     internal virtual unsafe string GetDisplayName(ShellItemDisplayName displayName)
     {
         IntPtr name = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, ShellItemDisplayName, out IntPtr, int>)(void*)GetMethod(5))(base.Handle, displayName, out name));
+        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, ShellItemDisplayName, out IntPtr, int>)(void*)GetMethod(GetDisplayNameSlot))(Handle, displayName, out name));
         try
         {
             return Marshal.PtrToStringUni(name);

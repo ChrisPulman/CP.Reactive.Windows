@@ -85,5 +85,5 @@ public enum HookTypes
     ///     Installs a hook procedure that monitors low-level mouse input events. For more information, see the
     ///     LowLevelMouseProc hook procedure.
     /// </summary>
-    WH_MOUSE_LL
+    WH_MOUSE_LL,
 }

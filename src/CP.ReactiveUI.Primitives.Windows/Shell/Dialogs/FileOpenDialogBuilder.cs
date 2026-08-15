@@ -145,5 +145,13 @@ public sealed class FileOpenDialogBuilder
     /// <param name="ownerHandle">The owner window handle.</param>
     /// <param name="executor">The dialog executor.</param>
     /// <returns>A <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult" /> describing the outcome.</returns>
-    internal FileDialogResult ShowDialog(IntPtr ownerHandle, IFileDialogExecutor executor) => executor.ShowOpen(new(ownerHandle.ToInt64(), _title, _initialDirectory, _defaultExtension, _filters.ToArray(), _places.ToArray(), _allowMultiSelect));
+    internal FileDialogResult ShowDialog(IntPtr ownerHandle, IFileDialogExecutor executor) =>
+        executor.ShowOpen(new(
+            ownerHandle.ToInt64(),
+            _title,
+            _initialDirectory,
+            _defaultExtension,
+            _filters.ToArray(),
+            _places.ToArray(),
+            _allowMultiSelect));
 }

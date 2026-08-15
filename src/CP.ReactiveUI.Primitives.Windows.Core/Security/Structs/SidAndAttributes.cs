@@ -45,7 +45,8 @@ internal readonly struct SidAndAttributes : IEquatable<SidAndAttributes>
     }
 
     /// <inheritdoc />
-    public bool Equals(SidAndAttributes other) => _sid == other._sid && _attributes == other._attributes;
+    public bool Equals(SidAndAttributes other) =>
+        _sid == other._sid && _attributes == other._attributes;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is SidAndAttributes other && Equals(other);

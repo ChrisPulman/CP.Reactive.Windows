@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Enums;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Structs;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Final deterministic coverage for DWM, device notifications, and display topology.</summary>

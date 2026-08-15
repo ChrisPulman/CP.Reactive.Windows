@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Enums;
 #else
@@ -16,5 +14,5 @@ public enum DwmSetIconicLivePreviewFlags
     /// <summary>No iconic live preview flags are set.</summary>
     None = 0,
     /// <summary>Displays a frame around the provided bitmap.</summary>
-    DisplayFrame = 1
+    DisplayFrame = 1,
 }

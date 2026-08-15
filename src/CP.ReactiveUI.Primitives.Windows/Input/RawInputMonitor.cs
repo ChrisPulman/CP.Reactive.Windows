@@ -15,6 +15,61 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input;
 /// <summary>Reactive access to RawInput.</summary>
 public static class RawInputMonitor
 {
+    /// <summary>The cached shared raw-input observable.</summary>
+    private static IObservable<RawInputEventArgs> _rawInputObservable;
+
+    /// <summary>
+    /// Gets the shared observable for Raw Input.
+    /// Multiple subscribers will share the same underlying hook, and the hook
+    /// is automatically disposed when the subscriber count reaches zero.
+    /// </summary>
+    /// <param name="devices">The raw input device types to register.</param>
+    /// <returns>A shared stream of raw input events.</returns>
+    public static IObservable<RawInputEventArgs> ObserveRawInput(params RawInputDevices[] devices)
+    {
+        if (_rawInputObservable is not null)
+        {
+            return _rawInputObservable;
+        }
+
+        Func<IObserver<RawInputEventArgs>, IDisposable> createObservable = observer =>
+        {
+            IDisposable messageSubscription = Infrastructure.MessageSource.Messages
+                .Where(static windowsMessage => windowsMessage.Msg == WindowsMessages.WM_INPUT)
+                .Subscribe(windowsMessage =>
+            {
+                windowsMessage.Handled = true;
+                int dataSize = Marshal.SizeOf<RawInput>();
+                if (RawInputApi.GetRawInputData((nint)windowsMessage.LParam, RawInputDataCommands.Input, out var data, ref dataSize, Marshal.SizeOf<RawInputHeader>()) != -1)
+                {
+                    Notify(observer, new RawInputEventArgs { IsForeground = (checked((int)windowsMessage.WParam) == 0), RawInput = data });
+                }
+            });
+            IDisposable registrationSubscription = (from windowHandle in Infrastructure.MessageSource.ObserveHandleChanges()
+                                                    where windowHandle != 0
+                                                    select windowHandle).Take(1).Subscribe(windowHandle =>
+                                                {
+                                                    RawInputApi.RegisterRawInput((nint)windowHandle, RawInputDeviceFlags.InputSink | RawInputDeviceFlags.DeviceNotify, devices);
+                                                });
+            return new ActionDisposable(() =>
+            {
+                _rawInputObservable = null;
+                registrationSubscription.Dispose();
+                messageSubscription.Dispose();
+            });
+        };
+        _rawInputObservable = ReactiveSignal.CreateSafe(createObservable).Publish().RefCount();
+        return _rawInputObservable;
+    }
+
+    /// <summary>Resets the cached raw-input observable for deterministic tests.</summary>
+    internal static void ResetForTesting() => _rawInputObservable = null;
+
+    /// <summary>Forwards a raw-input event to an observer.</summary>
+    /// <param name="observer">The observer receiving the event.</param>
+    /// <param name="eventArgs">The raw-input event data.</param>
+    private static void Notify(IObserver<RawInputEventArgs> observer, RawInputEventArgs eventArgs) => observer.OnNext(eventArgs);
+
     /// <summary>Raw-input monitor infrastructure shared by the raw-input monitor types.</summary>
     internal static class Infrastructure
     {
@@ -36,7 +91,7 @@ public static class RawInputMonitor
             IRawInputMessageSource messageSource2 = _messageSource;
             _messageSource = messageSource;
             ResetMonitorCaches();
-            return Scope.Create(messageSource2, delegate(IRawInputMessageSource source)
+            return Scope.Create(messageSource2, static source =>
             {
                 _messageSource = source;
                 ResetMonitorCaches();
@@ -60,51 +115,4 @@ public static class RawInputMonitor
         /// <inheritdoc />
         public IObservable<long> ObserveHandleChanges() => SharedMessageWindow.ObserveHandleChanges();
     }
-
-    /// <summary>The cached shared raw-input observable.</summary>
-    private static IObservable<RawInputEventArgs> _rawInputObservable;
-
-    /// <summary>
-    /// Gets the shared observable for Raw Input.
-    /// Multiple subscribers will share the same underlying hook, and the hook
-    /// is automatically disposed when the subscriber count reaches zero.
-    /// </summary>
-    /// <param name="devices">The raw input device types to register.</param>
-    /// <returns>A shared stream of raw input events.</returns>
-    public static IObservable<RawInputEventArgs> ObserveRawInput(params RawInputDevices[] devices)
-    {
-        if (_rawInputObservable is not null)
-        {
-            return _rawInputObservable;
-        }
-
-        _rawInputObservable = ReactiveSignal.CreateSafe(delegate(IObserver<RawInputEventArgs> observer)
-        {
-            IDisposable messageSubscription = Infrastructure.MessageSource.Messages.Where((windowsMessage) => windowsMessage.Msg == WindowsMessages.WM_INPUT).Subscribe(delegate(WindowMessage windowsMessage)
-            {
-                windowsMessage.Handled = true;
-                int dataSize = Marshal.SizeOf<RawInput>();
-                if (RawInputApi.GetRawInputData((nint)windowsMessage.LParam, RawInputDataCommands.Input, out var data, ref dataSize, Marshal.SizeOf<RawInputHeader>()) != -1)
-                {
-                    observer.OnNext(new RawInputEventArgs { IsForeground = (checked((int)windowsMessage.WParam) == 0), RawInput = data });
-                }
-            });
-            IDisposable registrationSubscription = (from windowHandle in Infrastructure.MessageSource.ObserveHandleChanges()
-                where windowHandle != 0
-                select windowHandle).Take(1).Subscribe(delegate(long windowHandle)
-            {
-                RawInputApi.RegisterRawInput((nint)windowHandle, RawInputDeviceFlags.InputSink | RawInputDeviceFlags.DeviceNotify, devices);
-            });
-            return new ActionDisposable(delegate
-            {
-                _rawInputObservable = null;
-                registrationSubscription.Dispose();
-                messageSubscription.Dispose();
-            });
-        }).Publish().RefCount();
-        return _rawInputObservable;
-    }
-
-    /// <summary>Resets the cached raw-input observable for deterministic tests.</summary>
-    internal static void ResetForTesting() => _rawInputObservable = null;
 }

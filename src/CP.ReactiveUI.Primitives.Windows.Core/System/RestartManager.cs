@@ -55,7 +55,10 @@ public sealed class RestartManager : IDisposable
     /// <param name="sessionHandle">Restart Manager session handle.</param>
     /// <param name="sessionKey">Restart Manager session key.</param>
     /// <param name="sessionApi">Restart Manager API implementation.</param>
-    internal RestartManager(int sessionHandle, string sessionKey, IRestartManagerSessionApi sessionApi)
+    internal RestartManager(
+        int sessionHandle,
+        string sessionKey,
+        IRestartManagerSessionApi sessionApi)
     {
         Throw.IfNull(sessionApi);
         _sessionHandle = sessionHandle;
@@ -69,7 +72,8 @@ public sealed class RestartManager : IDisposable
     /// <summary>Creates a new Restart Manager session.</summary>
     /// <returns>A new RestartManager instance.</returns>
     /// <exception cref="T:System.ComponentModel.Win32Exception">Thrown when the session could not be started.</exception>
-    public static RestartManager CreateSession() => CreateSession(NativeRestartManagerSessionApi.Instance);
+    public static RestartManager CreateSession() =>
+        CreateSession(NativeRestartManagerSessionApi.Instance);
 
     /// <summary>Ends the Restart Manager session and releases resources.</summary>
     public void Dispose()
@@ -95,7 +99,14 @@ public sealed class RestartManager : IDisposable
         ThrowIfDisposed();
         if (filenames is not null && filenames.Length != 0)
         {
-            int result = _sessionApi.RegisterResources(_sessionHandle, checked((uint)filenames.Length), filenames, 0U, null, 0U, null);
+            int result = _sessionApi.RegisterResources(
+                _sessionHandle,
+                checked((uint)filenames.Length),
+                filenames,
+                0U,
+                null,
+                0U,
+                null);
             if (result != 0)
             {
                 throw new Win32Exception(result, "Failed to register files with Restart Manager");
@@ -118,10 +129,19 @@ public sealed class RestartManager : IDisposable
         ThrowIfDisposed();
         if (processes is not null && processes.Length != 0)
         {
-            int result = _sessionApi.RegisterResources(_sessionHandle, 0U, null, checked((uint)processes.Length), processes, 0U, null);
+            int result = _sessionApi.RegisterResources(
+                _sessionHandle,
+                0U,
+                null,
+                checked((uint)processes.Length),
+                processes,
+                0U,
+                null);
             if (result != 0)
             {
-                throw new Win32Exception(result, "Failed to register processes with Restart Manager");
+                throw new Win32Exception(
+                    result,
+                    "Failed to register processes with Restart Manager");
             }
         }
     }
@@ -135,10 +155,19 @@ public sealed class RestartManager : IDisposable
         ThrowIfDisposed();
         if (serviceNames is not null && serviceNames.Length != 0)
         {
-            int result = _sessionApi.RegisterResources(_sessionHandle, 0U, null, 0U, null, checked((uint)serviceNames.Length), serviceNames);
+            int result = _sessionApi.RegisterResources(
+                _sessionHandle,
+                0U,
+                null,
+                0U,
+                null,
+                checked((uint)serviceNames.Length),
+                serviceNames);
             if (result != 0)
             {
-                throw new Win32Exception(result, "Failed to register services with Restart Manager");
+                throw new Win32Exception(
+                    result,
+                    "Failed to register services with Restart Manager");
             }
         }
     }
@@ -151,8 +180,13 @@ public sealed class RestartManager : IDisposable
     {
         ThrowIfDisposed();
         uint processInfoCount = 0U;
-        int result = _sessionApi.GetList(_sessionHandle, out var processInfoNeeded, ref processInfoCount, null, out var rebootReasons);
-        if (result is not 0 and not 234)
+        int result = _sessionApi.GetList(
+            _sessionHandle,
+            out var processInfoNeeded,
+            ref processInfoCount,
+            null,
+            out var rebootReasons);
+        if (result is not 0 and not ErrorMoreData)
         {
             throw new Win32Exception(result, "Failed to get list size from Restart Manager");
         }
@@ -164,7 +198,12 @@ public sealed class RestartManager : IDisposable
 
         RmProcessInfo[] processInfo = new RmProcessInfo[processInfoNeeded];
         processInfoCount = processInfoNeeded;
-        result = _sessionApi.GetList(_sessionHandle, out processInfoNeeded, ref processInfoCount, processInfo, out rebootReasons);
+        result = _sessionApi.GetList(
+            _sessionHandle,
+            out processInfoNeeded,
+            ref processInfoCount,
+            processInfo,
+            out rebootReasons);
         if (result != 0)
         {
             throw new Win32Exception(result, "Failed to get process list from Restart Manager");
@@ -182,8 +221,13 @@ public sealed class RestartManager : IDisposable
     {
         ThrowIfDisposed();
         uint processInfoCount = 0U;
-        int result = _sessionApi.GetList(_sessionHandle, out var processInfoNeeded, ref processInfoCount, null, out rebootReason);
-        if (result is not 0 and not 234)
+        int result = _sessionApi.GetList(
+            _sessionHandle,
+            out var processInfoNeeded,
+            ref processInfoCount,
+            null,
+            out rebootReason);
+        if (result is not 0 and not ErrorMoreData)
         {
             throw new Win32Exception(result, "Failed to get list size from Restart Manager");
         }
@@ -195,7 +239,12 @@ public sealed class RestartManager : IDisposable
 
         RmProcessInfo[] processInfo = new RmProcessInfo[processInfoNeeded];
         processInfoCount = processInfoNeeded;
-        result = _sessionApi.GetList(_sessionHandle, out processInfoNeeded, ref processInfoCount, processInfo, out rebootReason);
+        result = _sessionApi.GetList(
+            _sessionHandle,
+            out processInfoNeeded,
+            ref processInfoCount,
+            processInfo,
+            out rebootReason);
         if (result != 0)
         {
             throw new Win32Exception(result, "Failed to get process list from Restart Manager");
@@ -219,7 +268,8 @@ public sealed class RestartManager : IDisposable
     /// <param name="statusCallback">Callback to receive progress updates (0-100).</param>
     /// <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
     /// <exception cref="T:System.ComponentModel.Win32Exception">Thrown when the shutdown failed.</exception>
-    public void Shutdown(Action<uint> statusCallback) => Shutdown(RmShutdownType.RmForceShutdown, statusCallback);
+    public void Shutdown(Action<uint> statusCallback) =>
+        Shutdown(RmShutdownType.RmForceShutdown, statusCallback);
 
     /// <summary>Shuts down the applications and services using the registered resources.</summary>
     /// <param name="shutdownType">Flags controlling the shutdown behavior.</param>
@@ -244,25 +294,28 @@ public sealed class RestartManager : IDisposable
 
     /// <summary>Observes shutdown progress while shutting down applications and services using the registered resources.</summary>
     /// <returns>An observable sequence of native Restart Manager progress values from 0 to 100.</returns>
-    public IObservable<uint> ObserveShutdownProgress() => ObserveShutdownProgress(RmShutdownType.RmForceShutdown);
+    public IObservable<uint> ObserveShutdownProgress() =>
+        ObserveShutdownProgress(RmShutdownType.RmForceShutdown);
 
     /// <summary>Observes shutdown progress while shutting down applications and services using the registered resources.</summary>
     /// <param name="shutdownType">Flags controlling the shutdown behavior.</param>
     /// <returns>An observable sequence of native Restart Manager progress values from 0 to 100.</returns>
-    public IObservable<uint> ObserveShutdownProgress(RmShutdownType shutdownType) => Signal.Create(delegate(IObserver<uint> observer)
-        {
-            try
+    public IObservable<uint> ObserveShutdownProgress(RmShutdownType shutdownType) =>
+        Signal.Create<uint>(
+            observer =>
             {
-                Shutdown(shutdownType, observer.OnNext);
-                observer.OnCompleted();
-            }
-            catch (Exception error)
-            {
-                observer.OnError(error);
-            }
+                try
+                {
+                    Shutdown(shutdownType, observer.OnNext);
+                    observer.OnCompleted();
+                }
+                catch (Exception error)
+                {
+                    observer.OnError(error);
+                }
 
-            return EmptyDisposable.Instance;
-        });
+                return EmptyDisposable.Instance;
+            });
 
     /// <summary>Restarts applications and services that were shut down by the Shutdown method.</summary>
     /// <exception cref="T:System.ObjectDisposedException">Thrown when the session has been disposed.</exception>
@@ -291,20 +344,22 @@ public sealed class RestartManager : IDisposable
 
     /// <summary>Observes restart progress while restarting applications and services that were shut down by Restart Manager.</summary>
     /// <returns>An observable sequence of native Restart Manager progress values from 0 to 100.</returns>
-    public IObservable<uint> ObserveRestartProgress() => Signal.Create(delegate(IObserver<uint> observer)
-        {
-            try
+    public IObservable<uint> ObserveRestartProgress() =>
+        Signal.Create<uint>(
+            observer =>
             {
-                Restart(observer.OnNext);
-                observer.OnCompleted();
-            }
-            catch (Exception error)
-            {
-                observer.OnError(error);
-            }
+                try
+                {
+                    Restart(observer.OnNext);
+                    observer.OnCompleted();
+                }
+                catch (Exception error)
+                {
+                    observer.OnError(error);
+                }
 
-            return EmptyDisposable.Instance;
-        });
+                return EmptyDisposable.Instance;
+            });
 
     /// <summary>Checks if a reboot would be required to complete the operation.</summary>
     /// <returns>True if a reboot is required, false otherwise.</returns>
@@ -347,7 +402,9 @@ public sealed class RestartManager : IDisposable
     /// <param name="processInfo">Returned process information.</param>
     /// <param name="count">Number of valid process records.</param>
     /// <returns>The copied process information.</returns>
-    private static List<RmProcessInfo> CreateProcessInfoList(RmProcessInfo[] processInfo, uint count)
+    private static List<RmProcessInfo> CreateProcessInfoList(
+        RmProcessInfo[] processInfo,
+        uint count)
     {
         checked
         {

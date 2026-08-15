@@ -9,4 +9,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Internal;
 /// <param name="TopLeftY">The transformed top-left y-coordinate.</param>
 /// <param name="BottomRightX">The transformed bottom-right x-coordinate.</param>
 /// <param name="BottomRightY">The transformed bottom-right y-coordinate.</param>
-internal readonly record struct NativeRectangleCorners(float TopLeftX, float TopLeftY, float BottomRightX, float BottomRightY);
+internal readonly record struct NativeRectangleCorners(
+    float TopLeftX,
+    float TopLeftY,
+    float BottomRightX,
+    float BottomRightY);

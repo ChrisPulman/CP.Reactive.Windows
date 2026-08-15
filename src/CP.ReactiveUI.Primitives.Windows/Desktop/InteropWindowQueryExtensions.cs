@@ -2,14 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -18,6 +10,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 /// <summary>Query for native windows.</summary>
 public static class InteropWindowQueryExtensions
 {
+    /// <summary>Provides query predicates for a native window.</summary>
+    /// <param name="interopWindow">The native window to inspect.</param>
     extension(IInteropWindow interopWindow)
     {
         /// <summary>Check the Classname of the IInteropWindow against a list of know classes which can be ignored.</summary>
@@ -62,18 +56,17 @@ public static class InteropWindowQueryExtensions
 
             WindowInfo windowInfo = interopWindow.GetInfo();
             WindowStyleFlags windowStyle = windowInfo.Style;
-            if (((uint)windowStyle & 0x80000000U) == 0)
+            if ((windowStyle & WindowStyleFlags.WS_POPUP) == 0)
             {
                 return false;
             }
 
             ExtendedWindowStyleFlags extendedWindowStyle = windowInfo.ExtendedStyle;
-            if ((interopWindow.IsWin8App() || (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_NOREDIRECTIONBITMAP) == 0) && !interopWindow.IsBackgroundWin10App() && (windowStyle & WindowStyleFlags.WS_VISIBLE) != WindowStyleFlags.None)
-            {
-                return !interopWindow.IsMinimized();
-            }
-
-            return false;
+            return (interopWindow.IsWin8App()
+                    || (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_NOREDIRECTIONBITMAP) == 0)
+                && !interopWindow.IsBackgroundWin10App()
+                && (windowStyle & WindowStyleFlags.WS_VISIBLE) != WindowStyleFlags.None
+                && !interopWindow.IsMinimized();
         }
 
         /// <summary>Check if the window is a top level window.</summary>
@@ -107,7 +100,7 @@ public static class InteropWindowQueryExtensions
     }
 
     /// <summary>Default window classes which can be ignored.</summary>
-    private static readonly string[] DefaultIgnoreClasses = new string[3] { "Progman", "Button", "Dwm" };
+    private static readonly string[] DefaultIgnoreClasses = ["Progman", "Button", "Dwm"];
 
     /// <summary>Gets window classes which can be ignored.</summary>
     public static ConcurrentBag<string> IgnoreClasses { get; } = new(DefaultIgnoreClasses);
@@ -164,15 +157,13 @@ public static class InteropWindowQueryExtensions
     /// <returns>IEnumerable with all the top level windows.</returns>
     public static IEnumerable<IInteropWindow> GetTopWindows(IInteropWindow parent)
     {
-        IntPtr windowPtr = ((parent is null) ? User32Api.GetTopWindow(IntPtr.Zero) : User32Api.GetWindow(parent.Handle, GetWindowCommands.GW_CHILD));
-        if (windowPtr != IntPtr.Zero)
+        IntPtr windowPtr = parent is null
+            ? User32Api.GetTopWindow(IntPtr.Zero)
+            : User32Api.GetWindow(parent.Handle, GetWindowCommands.GW_CHILD);
+        while (windowPtr != IntPtr.Zero)
         {
-            do
-            {
-                yield return InteropWindowFactory.CreateFor(windowPtr);
-                windowPtr = User32Api.GetWindow(windowPtr, GetWindowCommands.GW_HWNDNEXT);
-            }
-            while (windowPtr != IntPtr.Zero);
+            yield return InteropWindowFactory.CreateFor(windowPtr);
+            windowPtr = User32Api.GetWindow(windowPtr, GetWindowCommands.GW_HWNDNEXT);
         }
     }
 
@@ -181,13 +172,12 @@ public static class InteropWindowQueryExtensions
     /// <param name="info">Window information.</param>
     /// <param name="extendedWindowStyle">Extended window style.</param>
     /// <returns>true when the style flags describe a top-level window.</returns>
-    private static bool HasTopLevelStyle(IInteropWindow interopWindow, WindowInfo info, ExtendedWindowStyleFlags extendedWindowStyle)
-    {
-        if ((extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_TOOLWINDOW) == 0 && (interopWindow.IsWin8App() || (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_NOREDIRECTIONBITMAP) == 0) && !interopWindow.IsBackgroundWin10App() && (info.Style & WindowStyleFlags.WS_VISIBLE) != WindowStyleFlags.None && interopWindow.GetCaption().Length != 0)
-        {
-            return !interopWindow.IsMinimized();
-        }
-
-        return false;
-    }
+    private static bool HasTopLevelStyle(IInteropWindow interopWindow, WindowInfo info, ExtendedWindowStyleFlags extendedWindowStyle) =>
+        (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_TOOLWINDOW) == 0
+            && (interopWindow.IsWin8App()
+                || (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_NOREDIRECTIONBITMAP) == 0)
+            && !interopWindow.IsBackgroundWin10App()
+            && (info.Style & WindowStyleFlags.WS_VISIBLE) != WindowStyleFlags.None
+            && interopWindow.GetCaption().Length != 0
+            && !interopWindow.IsMinimized();
 }

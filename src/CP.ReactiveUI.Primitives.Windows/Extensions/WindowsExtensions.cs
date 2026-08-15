@@ -2,10 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Windows;
 using System.Windows.Interop;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
@@ -15,6 +13,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 /// <summary>Extensions for WPF Windows.</summary>
 public static class WindowsExtensions
 {
+    /// <summary>Provides WPF window extension methods.</summary>
+    /// <param name="window">The window to adapt.</param>
     extension(Window window)
     {
         /// <summary>Gets the native handle of a Window.</summary>

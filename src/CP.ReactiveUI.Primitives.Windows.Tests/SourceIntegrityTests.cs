@@ -53,9 +53,7 @@ public sealed class SourceIntegrityTests
             }
 
             var content = await ReadAllTextAsync(fullPath);
-            if (content.Contains("<<<<<<<", StringComparison.Ordinal)
-                || content.Contains("=======", StringComparison.Ordinal)
-                || content.Contains(">>>>>>>", StringComparison.Ordinal))
+            if (ContainsMergeConflictMarker(content))
             {
                 failures.Add($"Merge conflict marker found in source: {relativePath}");
             }
@@ -112,6 +110,25 @@ public sealed class SourceIntegrityTests
     {
         using var reader = File.OpenText(filePath);
         return await reader.ReadToEndAsync();
+    }
+
+    /// <summary>Determines whether content contains a Git merge-conflict marker line.</summary>
+    /// <param name="content">The source text to inspect.</param>
+    /// <returns><see langword="true" /> when a merge-conflict marker line is present.</returns>
+    private static bool ContainsMergeConflictMarker(string content)
+    {
+        using var reader = new StringReader(content);
+        for (var line = reader.ReadLine(); line is not null; line = reader.ReadLine())
+        {
+            if (line.StartsWith("<<<<<<< ", StringComparison.Ordinal)
+                || line.StartsWith("=======", StringComparison.Ordinal)
+                || line.StartsWith(">>>>>>> ", StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Returns a repository-relative path using APIs available on every target framework.</summary>

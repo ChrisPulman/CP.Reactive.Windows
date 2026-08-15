@@ -24,7 +24,7 @@ public static class RawInputApi
     private const int DeviceNamePrefixLength = 4;
 
     /// <summary>The shared error message for GetRawInputDeviceInfo failures.</summary>
-    private const string GetRawInputDeviceInfoFailure = "Calling GetRawInputDeviceInfo";
+    private const string GetRawInputDeviceInfoFailureMessage = "GetRawInputDeviceInfo failed.";
 
     /// <summary>The raw-input native API used by this process.</summary>
     private static IRawInputNativeApi _nativeApi = new WindowsRawInputNativeApi();
@@ -53,17 +53,17 @@ public static class RawInputApi
     /// <param name="flags">RawInputDeviceFlags.</param>
     /// <returns>RawInputDevice filled.</returns>
     public static RawInputDevice CreateRawInputDevice(IntPtr windowHandle, RawInputDevices device, RawInputDeviceFlags flags) => device switch
-        {
-            RawInputDevices.Pointer => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Pointer, flags),
-            RawInputDevices.Mouse => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Mouse, flags),
-            RawInputDevices.Joystick => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Joystick, flags),
-            RawInputDevices.GamePad => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Gamepad, flags),
-            RawInputDevices.Keyboard => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Keyboard, flags),
-            RawInputDevices.Keypad => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Keypad, flags),
-            RawInputDevices.SystemControl => CreateRawInputDevice(windowHandle, HidUsagesGeneric.SystemControl, flags),
-            RawInputDevices.ConsumerAudioControl => CreateRawInputDevice(windowHandle, HidUsagesConsumer.ConsumerControl, flags),
-            _ => throw new NotSupportedException($"Unknown RawInputDevices: {device}"),
-        };
+    {
+        RawInputDevices.Pointer => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Pointer, flags),
+        RawInputDevices.Mouse => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Mouse, flags),
+        RawInputDevices.Joystick => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Joystick, flags),
+        RawInputDevices.GamePad => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Gamepad, flags),
+        RawInputDevices.Keyboard => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Keyboard, flags),
+        RawInputDevices.Keypad => CreateRawInputDevice(windowHandle, HidUsagesGeneric.Keypad, flags),
+        RawInputDevices.SystemControl => CreateRawInputDevice(windowHandle, HidUsagesGeneric.SystemControl, flags),
+        RawInputDevices.ConsumerAudioControl => CreateRawInputDevice(windowHandle, HidUsagesConsumer.ConsumerControl, flags),
+        _ => throw new NotSupportedException($"Unknown RawInputDevices: {device}"),
+    };
 
     /// <summary>Create RawInputDevice, to use with RegisterRawInput.</summary>
     /// <param name="windowHandle">IntPtr with the window handle which handles the messages.</param>
@@ -71,12 +71,12 @@ public static class RawInputApi
     /// <param name="flags">RawInputDeviceFlags.</param>
     /// <returns>RawInputDevice filled.</returns>
     public static RawInputDevice CreateRawInputDevice(IntPtr windowHandle, HidUsagesGeneric usage, RawInputDeviceFlags flags) => new RawInputDevice
-        {
-            TargetHwnd = windowHandle,
-            Flags = flags,
-            UsagePage = HidUsagePages.Generic,
-            Usage = checked((ushort)usage)
-        };
+    {
+        TargetHwnd = windowHandle,
+        Flags = flags,
+        UsagePage = HidUsagePages.Generic,
+        Usage = checked((ushort)usage),
+    };
 
     /// <summary>Create RawInputDevice, to use with RegisterRawInput.</summary>
     /// <param name="windowHandle">IntPtr with the window handle which handles the messages.</param>
@@ -84,12 +84,12 @@ public static class RawInputApi
     /// <param name="flags">RawInputDeviceFlags.</param>
     /// <returns>RawInputDevice filled.</returns>
     public static RawInputDevice CreateRawInputDevice(IntPtr windowHandle, HidUsagesConsumer usage, RawInputDeviceFlags flags) => new RawInputDevice
-        {
-            TargetHwnd = windowHandle,
-            Flags = flags,
-            UsagePage = HidUsagePages.Consumer,
-            Usage = checked((ushort)usage)
-        };
+    {
+        TargetHwnd = windowHandle,
+        Flags = flags,
+        UsagePage = HidUsagePages.Consumer,
+        Usage = checked((ushort)usage),
+    };
 
     /// <summary>Register the specified window to receive raw input, coming from the specified device.</summary>
     /// <param name="windowHandle">IntPtr for the window to receive the events.</param>
@@ -134,19 +134,19 @@ public static class RawInputApi
         uint pcbSize = 0U;
         if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceName, IntPtr.Zero, ref pcbSize) == uint.MaxValue)
         {
-            throw new Win32Exception("Calling GetRawInputDeviceInfo");
+            throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
         }
 
         checked
         {
             if (pcbSize != 0)
             {
-                IntPtr deviceNamePtr = Marshal.AllocHGlobal((int)pcbSize * 2);
+                IntPtr deviceNamePtr = Marshal.AllocHGlobal((int)pcbSize * UnicodeCharacterSize);
                 try
                 {
                     if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceName, deviceNamePtr, ref pcbSize) == uint.MaxValue)
                     {
-                        throw new Win32Exception("Calling GetRawInputDeviceInfo");
+                        throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
                     }
 
                     result.DeviceName = Marshal.PtrToStringUni(deviceNamePtr);
@@ -160,7 +160,7 @@ public static class RawInputApi
 
             if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceInfo, IntPtr.Zero, ref pcbSize) == uint.MaxValue)
             {
-                throw new Win32Exception("Calling GetRawInputDeviceInfo");
+                throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
             }
 
             IntPtr deviceInfoPtr = Marshal.AllocHGlobal((int)pcbSize);
@@ -168,7 +168,7 @@ public static class RawInputApi
             {
                 if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceInfo, deviceInfoPtr, ref pcbSize) == uint.MaxValue)
                 {
-                    throw new Win32Exception("Calling GetRawInputDeviceInfo");
+                    throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
                 }
 
                 result.DeviceInfo = Marshal.PtrToStructure<RawInputDeviceInfo>(deviceInfoPtr);

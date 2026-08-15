@@ -13,13 +13,20 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input;
 internal sealed class WindowsRawInputNativeApi : IRawInputNativeApi
 {
     /// <inheritdoc />
-    public uint GetRawInputDeviceList(RawInputDeviceList[] rawInputDeviceList, ref uint numDevices, uint size) => RawInputNativeMethods.GetRawInputDeviceList(rawInputDeviceList, ref numDevices, size);
+    public uint GetRawInputDeviceList(RawInputDeviceList[] rawInputDeviceList, ref uint numDevices, uint size) =>
+        RawInputNativeMethods.GetRawInputDeviceList(rawInputDeviceList, ref numDevices, size);
 
     /// <inheritdoc />
-    public uint GetRawInputDeviceInfo(IntPtr deviceHandle, RawInputDeviceInfoCommands command, IntPtr deviceName, ref uint dataSize) => RawInputNativeMethods.GetRawInputDeviceInfo(deviceHandle, command, deviceName, ref dataSize);
+    public uint GetRawInputDeviceInfo(
+        IntPtr deviceHandle,
+        RawInputDeviceInfoCommands command,
+        IntPtr deviceName,
+        ref uint dataSize) =>
+        RawInputNativeMethods.GetRawInputDeviceInfo(deviceHandle, command, deviceName, ref dataSize);
 
     /// <inheritdoc />
-    public bool RegisterRawInputDevices(RawInputDevice[] rawInputDevices, int numberOfDevices, int size) => RawInputNativeMethods.RegisterRawInputDevices(rawInputDevices, numberOfDevices, size);
+    public bool RegisterRawInputDevices(RawInputDevice[] rawInputDevices, int numberOfDevices, int size) =>
+        RawInputNativeMethods.RegisterRawInputDevices(rawInputDevices, numberOfDevices, size);
 
     /// <inheritdoc />
     public unsafe int GetRawInputData(IntPtr rawInputHandle, RawInputDataCommands command, ref RawInput data, ref int size, int headerSize)

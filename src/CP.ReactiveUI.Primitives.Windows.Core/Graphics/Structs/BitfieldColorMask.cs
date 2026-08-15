@@ -18,17 +18,30 @@ public readonly struct BitfieldColorMask : IEquatable<BitfieldColorMask>
     /// <summary>Stores the red mask.</summary>
     private readonly uint _red;
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.BitfieldColorMask" /> struct with all components set to their maximum values.</summary>
+    /// <summary>Initializes a new instance of the <see cref="BitfieldColorMask" /> struct with maximum components.</summary>
     public BitfieldColorMask()
-        : this(byte.MaxValue, byte.MaxValue, byte.MaxValue)
-    {
-    }
+        : this(byte.MaxValue, byte.MaxValue, byte.MaxValue) { }
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.BitfieldColorMask" /> struct with a red component and maximum green and blue components.</summary>
+    /// <summary>Initializes a new instance of the <see cref="BitfieldColorMask" /> struct with a red component.</summary>
     /// <param name="r">The red component.</param>
     public BitfieldColorMask(byte r)
-        : this(r, byte.MaxValue, byte.MaxValue)
+        : this(r, byte.MaxValue, byte.MaxValue) { }
+
+    /// <summary>Initializes a new instance of the <see cref="BitfieldColorMask" /> struct with red and green components.</summary>
+    /// <param name="r">The red component.</param>
+    /// <param name="g">The green component.</param>
+    public BitfieldColorMask(byte r, byte g)
+        : this(r, g, byte.MaxValue) { }
+
+    /// <summary>Initializes a new instance of the <see cref="BitfieldColorMask" /> struct.</summary>
+    /// <param name="r">The red component.</param>
+    /// <param name="g">The green component.</param>
+    /// <param name="b">The blue component.</param>
+    public BitfieldColorMask(byte r, byte g, byte b)
     {
+        _red = (uint)r << 8;
+        _green = (uint)g << 16;
+        _blue = (uint)b << 24;
     }
 
     /// <summary>Gets the blue component of the mask.</summary>
@@ -39,25 +52,6 @@ public readonly struct BitfieldColorMask : IEquatable<BitfieldColorMask>
 
     /// <summary>Gets the red component of the mask.</summary>
     public uint Red => _red;
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.BitfieldColorMask" /> struct with red and green components and a maximum blue component.</summary>
-    /// <param name="r">The red component.</param>
-    /// <param name="g">The green component.</param>
-    public BitfieldColorMask(byte r, byte g)
-        : this(r, g, byte.MaxValue)
-    {
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs.BitfieldColorMask" /> struct.</summary>
-    /// <param name="r">The red component.</param>
-    /// <param name="g">The green component.</param>
-    /// <param name="b">The blue component.</param>
-    public BitfieldColorMask(byte r, byte g, byte b)
-    {
-        _red = (uint)(r << 8);
-        _green = (uint)(g << 16);
-        _blue = (uint)(b << 24);
-    }
 
     /// <summary>Creates a color mask with all components set to their maximum values.</summary>
     /// <returns>A color mask.</returns>
@@ -100,7 +94,8 @@ public readonly struct BitfieldColorMask : IEquatable<BitfieldColorMask>
     }
 
     /// <inheritdoc />
-    public bool Equals(BitfieldColorMask other) => _blue == other._blue && _green == other._green && _red == other._red;
+    public bool Equals(BitfieldColorMask other) =>
+        _blue == other._blue && _green == other._green && _red == other._red;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is BitfieldColorMask other && Equals(other);

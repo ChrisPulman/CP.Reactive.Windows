@@ -65,10 +65,16 @@ public readonly struct Bgra32(byte r, byte g, byte b, byte a = byte.MaxValue) : 
                 }
 
                 byte alpha = source.A;
-                int inverseAlpha = 255 - alpha;
-                byte blue = (byte)unchecked(checked((source.B * alpha) + (target.B * inverseAlpha)) / 255);
-                byte green = (byte)unchecked(checked((source.G * alpha) + (target.G * inverseAlpha)) / 255);
-                byte red = (byte)unchecked(checked((source.R * alpha) + (target.R * inverseAlpha)) / 255);
+                int inverseAlpha = MaxChannelValue - alpha;
+                byte blue = (byte)
+                    unchecked(
+                        checked((source.B * alpha) + (target.B * inverseAlpha)) / MaxChannelValue);
+                byte green = (byte)
+                    unchecked(
+                        checked((source.G * alpha) + (target.G * inverseAlpha)) / MaxChannelValue);
+                byte red = (byte)
+                    unchecked(
+                        checked((source.R * alpha) + (target.R * inverseAlpha)) / MaxChannelValue);
                 target = new(red, green, blue);
             }
         }
@@ -77,7 +83,8 @@ public readonly struct Bgra32(byte r, byte g, byte b, byte a = byte.MaxValue) : 
     /// <summary>Compares this pixel with another <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.PixelFormats.Bgra32" /> for equality.</summary>
     /// <param name="other">The pixel to compare with this instance.</param>
     /// <returns>true when all channels match.</returns>
-    public bool Equals(Bgra32 other) => B == other.B && G == other.G && R == other.R && A == other.A;
+    public bool Equals(Bgra32 other) =>
+        B == other.B && G == other.G && R == other.R && A == other.A;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is Bgra32 other && Equals(other);

@@ -26,7 +26,8 @@ public struct AnimationInfo : IEquatable<AnimationInfo>
     /// <summary>Factory method to create AnimationInfo.</summary>
     /// <param name="enableAnimations">True to enable animations.</param>
     /// <returns>The initialized animation information.</returns>
-    public static AnimationInfo Create(bool enableAnimations) => new AnimationInfo { _nativeSize = checked((uint)Marshal.SizeOf<AnimationInfo>()), _minimumAnimate = (enableAnimations ? 1 : 0) };
+    public static AnimationInfo Create(bool enableAnimations) =>
+        new AnimationInfo { _nativeSize = checked((uint)Marshal.SizeOf<AnimationInfo>()), _minimumAnimate = enableAnimations ? 1 : 0 };
 
     /// <summary>Compares two AnimationInfo values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -47,7 +48,8 @@ public struct AnimationInfo : IEquatable<AnimationInfo>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(AnimationInfo other) => _nativeSize == other._nativeSize && _minimumAnimate == other._minimumAnimate;
+    public readonly bool Equals(AnimationInfo other) =>
+        _nativeSize == other._nativeSize && _minimumAnimate == other._minimumAnimate;
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is AnimationInfo other && Equals(other);

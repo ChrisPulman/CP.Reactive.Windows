@@ -10,9 +10,10 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel.Structs;
 /// <summary>See <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724833(v=vs.85).aspx">OSVERSIONINFOEX structure</a>.</summary>
 public readonly struct OsVersionInfoEx : IEquatable<OsVersionInfoEx>
 {
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Kernel.Structs.OsVersionInfoEx" /> struct.</summary>
+    /// <summary>Initializes a new instance of the <see cref="OsVersionInfoEx" /> struct.</summary>
     public OsVersionInfoEx()
     {
+        ServicePackVersion = string.Empty;
     }
 
     /// <summary>Gets the major version number of the operating system.</summary>
@@ -28,7 +29,7 @@ public readonly struct OsVersionInfoEx : IEquatable<OsVersionInfoEx>
     public int PlatformId { get; internal init; }
 
     /// <summary>Gets a null-terminated string that indicates the latest Service Pack installed on the system.</summary>
-    public string ServicePackVersion { get; internal init; } = string.Empty;
+    public string ServicePackVersion { get; internal init; }
 
     /// <summary>Gets the major version number of the latest Service Pack installed on the system.</summary>
     public short ServicePackMajor { get; internal init; }
@@ -37,10 +38,10 @@ public readonly struct OsVersionInfoEx : IEquatable<OsVersionInfoEx>
     public short ServicePackMinor { get; internal init; }
 
     /// <summary>Gets a bit mask that identifies the product suites available on the system. This member can be a combination of the following values.</summary>
-    public WindowsSuites SuiteMask { get; internal init; } = WindowsSuites.None;
+    public WindowsSuites SuiteMask { get; internal init; }
 
     /// <summary>Gets any additional information about the system.</summary>
-    public WindowsProductTypes ProductType { get; internal init; } = WindowsProductTypes.None;
+    public WindowsProductTypes ProductType { get; internal init; }
 
     /// <summary>Factory for an empty OsVersionInfoEx.</summary>
     /// <returns>An initialized OS version structure.</returns>
@@ -65,7 +66,16 @@ public readonly struct OsVersionInfoEx : IEquatable<OsVersionInfoEx>
     }
 
     /// <inheritdoc />
-    public bool Equals(OsVersionInfoEx other) => MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion && BuildNumber == other.BuildNumber && PlatformId == other.PlatformId && string.Equals(ServicePackVersion, other.ServicePackVersion, StringComparison.Ordinal) && ServicePackMajor == other.ServicePackMajor && ServicePackMinor == other.ServicePackMinor && SuiteMask == other.SuiteMask && ProductType == other.ProductType;
+    public bool Equals(OsVersionInfoEx other) =>
+        MajorVersion == other.MajorVersion
+        && MinorVersion == other.MinorVersion
+        && BuildNumber == other.BuildNumber
+        && PlatformId == other.PlatformId
+        && string.Equals(ServicePackVersion, other.ServicePackVersion, StringComparison.Ordinal)
+        && ServicePackMajor == other.ServicePackMajor
+        && ServicePackMinor == other.ServicePackMinor
+        && SuiteMask == other.SuiteMask
+        && ProductType == other.ProductType;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is OsVersionInfoEx other && Equals(other);

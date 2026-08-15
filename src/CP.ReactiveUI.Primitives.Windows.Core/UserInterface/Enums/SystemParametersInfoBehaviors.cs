@@ -13,10 +13,13 @@ public enum SystemParametersInfoBehaviors : uint
 {
     /// <summary>Do nothing.</summary>
     None = 0U,
+
     /// <summary>Writes the new system-wide parameter setting to the user profile.</summary>
     UpdateIniFile = 1U,
+
     /// <summary>Broadcasts the WM_SETTINGCHANGE message after updating the user profile.</summary>
     SendChange = 2U,
+
     /// <summary>Same as SPIF_SENDCHANGE.</summary>
-    SendWinIniChange = SendChange
+    SendWinIniChange = SendChange,
 }

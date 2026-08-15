@@ -80,7 +80,8 @@ public readonly struct ScrollBarInfo : IEquatable<ScrollBarInfo>
     public int ThumbTop => _nativeThumbTop;
 
     /// <summary>Gets an array of object states. Each element indicates the state of a scroll bar component.</summary>
-    public ObjectStates[] States => new ObjectStates[6] { _nativeState0, _nativeState1, _nativeState2, _nativeState3, _nativeState4, _nativeState5 };
+    public ObjectStates[] States =>
+        [_nativeState0, _nativeState1, _nativeState2, _nativeState3, _nativeState4, _nativeState5];
 
     /// <summary>Create a ScrollBarInfo struct.</summary>
     /// <returns>The initialized scroll bar information.</returns>
@@ -112,7 +113,8 @@ public readonly struct ScrollBarInfo : IEquatable<ScrollBarInfo>
     }
 
     /// <inheritdoc />
-    public bool Equals(ScrollBarInfo other) => HasSameScrollMetrics(in other) && HasSameScrollStates(in other);
+    public bool Equals(ScrollBarInfo other) =>
+        HasSameScrollMetrics(in other) && HasSameScrollStates(in other);
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is ScrollBarInfo other && Equals(other);
@@ -123,10 +125,22 @@ public readonly struct ScrollBarInfo : IEquatable<ScrollBarInfo>
     /// <summary>Compares scroll bar metrics.</summary>
     /// <param name="other">The other value.</param>
     /// <returns>True when metrics match.</returns>
-    private bool HasSameScrollMetrics(in ScrollBarInfo other) => _nativeSize == other._nativeSize && _nativeScrollBarBounds.Equals(other._nativeScrollBarBounds) && _nativeLineButtonSize == other._nativeLineButtonSize && _nativeThumbBottom == other._nativeThumbBottom && _nativeThumbTop == other._nativeThumbTop && _nativeReserved == other._nativeReserved;
+    private bool HasSameScrollMetrics(in ScrollBarInfo other) =>
+        _nativeSize == other._nativeSize
+        && _nativeScrollBarBounds.Equals(other._nativeScrollBarBounds)
+        && _nativeLineButtonSize == other._nativeLineButtonSize
+        && _nativeThumbBottom == other._nativeThumbBottom
+        && _nativeThumbTop == other._nativeThumbTop
+        && _nativeReserved == other._nativeReserved;
 
     /// <summary>Compares scroll bar state values.</summary>
     /// <param name="other">The other value.</param>
     /// <returns>True when states match.</returns>
-    private bool HasSameScrollStates(in ScrollBarInfo other) => _nativeState0 == other._nativeState0 && _nativeState1 == other._nativeState1 && _nativeState2 == other._nativeState2 && _nativeState3 == other._nativeState3 && _nativeState4 == other._nativeState4 && _nativeState5 == other._nativeState5;
+    private bool HasSameScrollStates(in ScrollBarInfo other) =>
+        _nativeState0 == other._nativeState0
+        && _nativeState1 == other._nativeState1
+        && _nativeState2 == other._nativeState2
+        && _nativeState3 == other._nativeState3
+        && _nativeState4 == other._nativeState4
+        && _nativeState5 == other._nativeState5;
 }

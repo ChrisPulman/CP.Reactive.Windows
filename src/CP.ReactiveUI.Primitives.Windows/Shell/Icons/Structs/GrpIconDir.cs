@@ -13,8 +13,17 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly record struct GrpIconDir
 {
+    /// <summary>Defines the cursor resource type value.</summary>
+    private const ushort CursorResourceType = 2;
+
+    /// <summary>Defines the icon resource type value.</summary>
+    private const ushort IconResourceType = 1;
+
+    /// <summary>Defines the native structure size.</summary>
+    private const int StructureSize = 6;
+
     /// <summary>Gets the size of the GRPICONDIR structure in bytes.</summary>
-    public static int Size => 6;
+    public static int Size => StructureSize;
 
     /// <summary>Gets or sets the reserved value, which must be zero.</summary>
     public ushort Reserved { get; init; }
@@ -25,22 +34,13 @@ public readonly record struct GrpIconDir
     /// <summary>Gets or sets the number of group icon directory entries.</summary>
     public ushort Count { get; init; }
 
-    /// <summary>Defines the cursor resource type value.</summary>
-    private const ushort CursorResourceType = 2;
-
-    /// <summary>Defines the icon resource type value.</summary>
-    private const ushort IconResourceType = 1;
-
-    /// <summary>Defines the native structure size.</summary>
-    private const int StructureSize = 6;
-
     /// <summary>Creates a new GRPICONDIR structure for an icon resource.</summary>
     /// <param name="count">Number of icon entries.</param>
     /// <returns>The initialized GRPICONDIR structure.</returns>
-    public static GrpIconDir CreateIcon(ushort count) => new GrpIconDir { Type = 1, Count = count };
+    public static GrpIconDir CreateIcon(ushort count) => new GrpIconDir { Type = IconResourceType, Count = count };
 
     /// <summary>Creates a new GRPICONDIR structure for a cursor resource.</summary>
     /// <param name="count">Number of cursor entries.</param>
     /// <returns>The initialized GRPICONDIR structure.</returns>
-    public static GrpIconDir CreateCursor(ushort count) => new GrpIconDir { Type = 2, Count = count };
+    public static GrpIconDir CreateCursor(ushort count) => new GrpIconDir { Type = CursorResourceType, Count = count };
 }

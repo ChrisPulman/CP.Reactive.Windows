@@ -17,6 +17,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 /// <summary>A managed EnumWindows wrapper, offering both as IObservable as an IEnumerable.</summary>
 public static class WindowsEnumerator
 {
+    /// <summary>Composable native enumeration operations.</summary>
+    private static WindowsEnumeratorOperations _operations = new();
+
     /// <summary>Enumerate the windows / child windows (this is NOT lazy, unless you add functions).</summary>
     /// <param name="parent">IInteropWindow with the windowHandle of the parent, or null for all.</param>
     /// <returns>IEnumerable with IntPtr.</returns>
@@ -36,7 +39,7 @@ public static class WindowsEnumerator
     public static IEnumerable<IntPtr> EnumerateWindowHandles(IInteropWindow parent, Func<IntPtr, bool> wherePredicate, Func<IntPtr, int, bool> takeWhileFunc)
     {
         List<IntPtr> result = new();
-        _ = User32Api.EnumChildWindows(parent?.Handle ?? IntPtr.Zero, EnumWindowsProc, IntPtr.Zero);
+        _ = Volatile.Read(ref _operations).EnumChildWindows(parent?.Handle ?? IntPtr.Zero, windowHandle => EnumWindowsProc(windowHandle, IntPtr.Zero));
         return result;
         bool EnumWindowsProc(IntPtr windowHandle, IntPtr _)
         {
@@ -45,12 +48,7 @@ public static class WindowsEnumerator
                 result.Add(windowHandle);
             }
 
-            if (takeWhileFunc is not null)
-            {
-                return takeWhileFunc(windowHandle, result.Count);
-            }
-
-            return true;
+            return takeWhileFunc is null || takeWhileFunc(windowHandle, result.Count);
         }
     }
 
@@ -61,15 +59,15 @@ public static class WindowsEnumerator
     /// <summary>Enumerate the windows and child handles (IntPtr) via an Observable.</summary>
     /// <param name="parentWindowHandle">IntPtr with the windowHandle of the parent, or null for all.</param>
     /// <returns>IObservable with IntPtr.</returns>
-    public static IObservable<IntPtr> ObserveWindowHandles(IntPtr? parentWindowHandle) => ReactiveSignal.CreateSafe(delegate(IObserver<IntPtr> observer)
+    public static IObservable<IntPtr> ObserveWindowHandles(IntPtr? parentWindowHandle) => ReactiveSignal.CreateSafe((IObserver<IntPtr> observer) =>
         {
             CancellationTokenSource cancellationTokenSource = new();
             _ = Task.Run(
-                delegate
-            {
-                _ = User32Api.EnumChildWindows(parentWindowHandle ?? IntPtr.Zero, EnumWindowsProc, IntPtr.Zero);
-                observer.OnCompleted();
-            },
+                () =>
+                {
+                    _ = Volatile.Read(ref _operations).EnumChildWindows(parentWindowHandle ?? IntPtr.Zero, windowHandle => EnumWindowsProc(windowHandle, IntPtr.Zero));
+                    observer.OnCompleted();
+                },
                 cancellationTokenSource.Token);
             return new CancellationDisposable(cancellationTokenSource);
             bool EnumWindowsProc(IntPtr windowHandle, IntPtr _)
@@ -103,7 +101,7 @@ public static class WindowsEnumerator
     public static IEnumerable<IInteropWindow> EnumerateWindows(IInteropWindow parent, Func<IInteropWindow, bool> wherePredicate, Func<IInteropWindow, int, bool> takeWhileFunc)
     {
         List<IInteropWindow> result = new();
-        _ = User32Api.EnumChildWindows(parent?.Handle ?? IntPtr.Zero, EnumWindowsProc, IntPtr.Zero);
+        _ = Volatile.Read(ref _operations).EnumChildWindows(parent?.Handle ?? IntPtr.Zero, windowHandle => EnumWindowsProc(windowHandle, IntPtr.Zero));
         return result;
         bool EnumWindowsProc(IntPtr windowHandle, IntPtr _)
         {
@@ -113,12 +111,7 @@ public static class WindowsEnumerator
                 result.Add(interopWindow);
             }
 
-            if (takeWhileFunc is not null)
-            {
-                return takeWhileFunc(interopWindow, result.Count);
-            }
-
-            return true;
+            return takeWhileFunc is null || takeWhileFunc(interopWindow, result.Count);
         }
     }
 
@@ -129,15 +122,15 @@ public static class WindowsEnumerator
     /// <summary>Enumerate the windows / child windows via an Observable.</summary>
     /// <param name="parentWindowHandle">IntPtr with the windowHandle of the parent, or null for all.</param>
     /// <returns>IObservable with IInteropWindow.</returns>
-    public static IObservable<IInteropWindow> ObserveWindows(IntPtr? parentWindowHandle) => ReactiveSignal.CreateSafe(delegate(IObserver<IInteropWindow> observer)
+    public static IObservable<IInteropWindow> ObserveWindows(IntPtr? parentWindowHandle) => ReactiveSignal.CreateSafe((IObserver<IInteropWindow> observer) =>
         {
             CancellationTokenSource cancellationTokenSource = new();
             _ = Task.Run(
-                delegate
-            {
-                _ = User32Api.EnumChildWindows(parentWindowHandle ?? IntPtr.Zero, EnumWindowsProc, IntPtr.Zero);
-                observer.OnCompleted();
-            },
+                () =>
+                {
+                    _ = Volatile.Read(ref _operations).EnumChildWindows(parentWindowHandle ?? IntPtr.Zero, windowHandle => EnumWindowsProc(windowHandle, IntPtr.Zero));
+                    observer.OnCompleted();
+                },
                 cancellationTokenSource.Token);
             return new CancellationDisposable(cancellationTokenSource);
             bool EnumWindowsProc(IntPtr windowHandle, IntPtr _)
@@ -152,4 +145,50 @@ public static class WindowsEnumerator
                 return !cancellationTokenSource.IsCancellationRequested;
             }
         });
+
+    /// <summary>Replaces enumeration operations for a bounded deterministic test scope.</summary>
+    /// <param name="operations">The operations to use while the returned scope is alive.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static OperationsOverride OverrideOperationsForTesting(WindowsEnumeratorOperations operations)
+    {
+        Throw.IfNull(operations);
+        return new(Interlocked.Exchange(ref _operations, operations));
+    }
+
+    /// <summary>Restores previous operations when disposed.</summary>
+    internal sealed class OperationsOverride : IDisposable
+    {
+        /// <summary>The operation set to restore.</summary>
+        private readonly WindowsEnumeratorOperations _previous;
+
+        /// <summary>Tracks whether restoration has already occurred.</summary>
+        private int _disposed;
+
+        /// <summary>Initializes a new instance of the <see cref="OperationsOverride"/> class.</summary>
+        /// <param name="previous">The previous operations.</param>
+        internal OperationsOverride(WindowsEnumeratorOperations previous) => _previous = previous;
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _ = Interlocked.Exchange(ref _operations, _previous);
+            }
+        }
+    }
+
+    /// <summary>Native operations used by <see cref="WindowsEnumerator"/>.</summary>
+    internal class WindowsEnumeratorOperations
+    {
+        /// <summary>Enumerates child windows using a managed callback.</summary>
+        /// <param name="parentWindowHandle">The parent window handle.</param>
+        /// <param name="callback">Receives each enumerated handle and returns whether enumeration continues.</param>
+        /// <returns>true when enumeration completes.</returns>
+        internal virtual bool EnumChildWindows(IntPtr parentWindowHandle, Func<IntPtr, bool> callback)
+        {
+            Throw.IfNull(callback);
+            return User32Api.EnumChildWindows(parentWindowHandle, (windowHandle, _) => callback(windowHandle), IntPtr.Zero);
+        }
+    }
 }

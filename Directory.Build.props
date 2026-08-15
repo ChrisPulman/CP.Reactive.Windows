@@ -25,6 +25,8 @@
     <Deterministic>true</Deterministic>
     <IsPackable>false</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**\.codex-diagnostics\**;**/.codex-diagnostics/**;**\.codex-recovery\**;**/.codex-recovery/**;**\.codex-tools\**;**/.codex-tools/**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Tests'">
@@ -32,6 +34,10 @@
     <OutputType>Exe</OutputType>
     <TUnitImplicitUsings>true</TUnitImplicitUsings>
     <TUnitAssertionsImplicitUsings>true</TUnitAssertionsImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' Or '$(TargetFramework)' == 'net472' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net481'">
+    <DefineConstants>$(DefineConstants);NETFRAMEWORK</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' != '' And $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net11.0'))">
@@ -47,8 +53,11 @@
     <Using Include="System.Object" Alias="Lock" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Core'">
     <Compile Include="$(MSBuildThisFileDirectory)src\PolyFills\*.cs" Link="PolyFills\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="CP.ReactiveUI.Primitives.Windows.PolyFills" />
     <Using Include="System.Reflection.Assembly" Alias="ReflectionAssembly" />
     <Using Include="System.ComponentModel.Win32Exception" Alias="NativeWin32Exception" />
@@ -58,11 +67,10 @@
     <InternalsVisibleTo Include="CP.ReactiveUI.Primitives.Windows.Tests" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework' And '$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Core'">
     <Compile Include="$(MSBuildThisFileDirectory)src\PolyFills\NetFramework\*.cs"
              Exclude="$(MSBuildThisFileDirectory)src\PolyFills\NetFramework\ModuleInitializerAttribute.cs"
              LinkBase="PolyFills\NetFramework" />
-    <Using Include="System.Runtime.InteropServices.DllImportAttribute" Alias="LibraryImport" />
     <Using Include="System.Security.Permissions" />
   </ItemGroup>
 

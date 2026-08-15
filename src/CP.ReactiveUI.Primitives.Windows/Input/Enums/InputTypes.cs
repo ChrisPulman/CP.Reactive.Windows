@@ -19,5 +19,5 @@ public enum InputTypes : uint
     /// <summary>The event is a keyboard event.</summary>
     Keyboard,
     /// <summary>The event is a hardware event.</summary>
-    Hardware
+    Hardware,
 }

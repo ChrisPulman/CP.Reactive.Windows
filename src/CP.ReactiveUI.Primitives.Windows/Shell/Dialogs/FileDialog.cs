@@ -68,12 +68,7 @@ public static class FileDialog
         }
 
         FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
-        if (!result.WasCancelled)
-        {
-            return result.SelectedPath;
-        }
-
-        return null;
+        return !result.WasCancelled ? result.SelectedPath : null;
     }
 
     /// <summary>
@@ -119,12 +114,7 @@ public static class FileDialog
         }
 
         FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
-        if (!result.WasCancelled)
-        {
-            return result.SelectedPaths;
-        }
-
-        return [];
+        return !result.WasCancelled ? result.SelectedPaths : [];
     }
 
     /// <summary>Presents a modern save-file dialog and returns the chosen path.</summary>
@@ -176,12 +166,7 @@ public static class FileDialog
         }
 
         FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
-        if (!result.WasCancelled)
-        {
-            return result.SelectedPath;
-        }
-
-        return null;
+        return !result.WasCancelled ? result.SelectedPath : null;
     }
 
     /// <summary>Presents a modern folder-picker dialog and returns the selected folder path.</summary>
@@ -211,12 +196,7 @@ public static class FileDialog
         }
 
         FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
-        if (!result.WasCancelled)
-        {
-            return result.SelectedPath;
-        }
-
-        return null;
+        return !result.WasCancelled ? result.SelectedPath : null;
     }
 
     /// <summary>Restores the production dialog executor.</summary>

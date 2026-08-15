@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Structs;
 #else
@@ -52,47 +49,37 @@ internal readonly struct NativeDwmThumbnailProperties : IEquatable<NativeDwmThum
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when both values are equal.</returns>
-    public static bool operator ==(NativeDwmThumbnailProperties left, NativeDwmThumbnailProperties right)
-    {
-        return left.Equals(right);
-    }
+    public static bool operator ==(NativeDwmThumbnailProperties left, NativeDwmThumbnailProperties right) => left.Equals(right);
 
     /// <summary>Determines whether two values are not equal.</summary>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when the values are not equal.</returns>
-    public static bool operator !=(NativeDwmThumbnailProperties left, NativeDwmThumbnailProperties right)
-    {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(NativeDwmThumbnailProperties left, NativeDwmThumbnailProperties right) => !left.Equals(right);
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is NativeDwmThumbnailProperties other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is NativeDwmThumbnailProperties other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(NativeDwmThumbnailProperties other)
-    {
-        if (_flags == other._flags && _destination == other._destination && _source == other._source && _opacity == other._opacity && _visible == other._visible)
-        {
-            return _sourceClientAreaOnly == other._sourceClientAreaOnly;
-        }
-
-        return false;
-    }
+    public bool Equals(NativeDwmThumbnailProperties other) =>
+        _flags == other._flags
+        && _destination == other._destination
+        && _source == other._source
+        && _opacity == other._opacity
+        && _visible == other._visible
+        && _sourceClientAreaOnly == other._sourceClientAreaOnly;
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_flags, _destination, _source, _opacity, _visible, _sourceClientAreaOnly);
 
-    /// <summary>Reads fields so source analyzers do not treat ABI-only values as dead writes.</summary>
+    /// <summary>Reads ABI-only fields so analyzers recognize the native layout values as intentionally consumed.</summary>
     internal void MarkFieldsAsRead()
     {
+        _ = _flags;
+        _ = _destination;
+        _ = _source;
+        _ = _opacity;
+        _ = _visible;
+        _ = _sourceClientAreaOnly;
     }
 }

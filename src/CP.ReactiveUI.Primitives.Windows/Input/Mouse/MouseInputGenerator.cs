@@ -28,7 +28,10 @@ public static class MouseInputGenerator
     /// <param name="location">NativePoint to specify where the mouse click takes place.</param>
     /// <param name="timestamp">The time stamp for the event.</param>
     /// <returns>number of input events generated.</returns>
-    public static uint MouseClick(MouseButtons mouseButtons, NativePoint? location, uint? timestamp) => NativeInput.SendInput(DesktopInput.CreateMouseInputs(MouseInput.MouseDown(mouseButtons, location, timestamp), MouseInput.MouseUp(mouseButtons, location, timestamp)));
+    public static uint MouseClick(MouseButtons mouseButtons, NativePoint? location, uint? timestamp) =>
+        NativeInput.SendInput(DesktopInput.CreateMouseInputs(
+            MouseInput.MouseDown(mouseButtons, location, timestamp),
+            MouseInput.MouseUp(mouseButtons, location, timestamp)));
 
     /// <summary>Generate mouse button(s) down.</summary>
     /// <param name="mouseButtons">MouseButtons specifying which buttons are down.</param>

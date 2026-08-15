@@ -17,4 +17,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs;
 /// <param name="DefaultExtension">The default extension.</param>
 /// <param name="Filters">The file-type filters.</param>
 /// <param name="Places">The custom sidebar places.</param>
-internal sealed record FileSaveDialogRequest(long OwnerHandle, string Title, string InitialDirectory, string SuggestedFileName, string DefaultExtension, IReadOnlyList<(string Name, string Pattern)> Filters, IReadOnlyList<(string Path, bool AtTop)> Places);
+internal sealed record FileSaveDialogRequest(
+    long OwnerHandle,
+    string Title,
+    string InitialDirectory,
+    string SuggestedFileName,
+    string DefaultExtension,
+    IReadOnlyList<(string Name, string Pattern)> Filters,
+    IReadOnlyList<(string Path, bool AtTop)> Places);

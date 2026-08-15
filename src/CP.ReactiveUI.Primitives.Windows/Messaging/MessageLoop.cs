@@ -16,6 +16,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>Provides a simple message loop for console applications.</summary>
 public static class MessageLoop
 {
+    /// <summary>Message-loop operations used by this process.</summary>
+    private static MessageLoopOperations _operations = new(GetMessageNative, DispatchNative);
+
     /// <summary>Defines a delegate for handling Windows messages.</summary>
     /// <param name="message">The message.</param>
     /// <returns><c>true</c> to continue processing; otherwise <c>false</c>.</returns>
@@ -32,59 +35,6 @@ public static class MessageLoop
     /// <summary>Dispatches a message through a composable operation.</summary>
     /// <param name="message">The message to dispatch.</param>
     internal delegate void DispatchOperation(ref Msg message);
-
-    /// <summary>Contains the message-loop imports.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>The User32 module handle.</summary>
-        private static readonly nint User32Module = System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, "user32.dll"));
-
-        /// <summary>The DispatchMessageW export pointer.</summary>
-        private static readonly nint DispatchMessageExport = System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module, "DispatchMessageW");
-
-        /// <summary>Dispatches a message to its window procedure.</summary>
-        /// <param name="message">The message to dispatch.</param>
-        internal static unsafe void DispatchMessage(Msg* message) => ((delegate* unmanaged[Stdcall]<Msg*, IntPtr>)checked((nuint)DispatchMessageExport))(message);
-
-        /// <summary>Retrieves a message from the calling thread queue.</summary>
-        /// <param name="message">The message buffer.</param>
-        /// <param name="windowHandle">The native window handle.</param>
-        /// <param name="minimumFilter">The lowest message value to retrieve.</param>
-        /// <param name="maximumFilter">The highest message value to retrieve.</param>
-        /// <returns>A value greater than zero for a message, zero for WM_QUIT, or -1 for an error.</returns>
-        [DllImport("user32.dll", EntryPoint = "GetMessageW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe sbyte GetMessage(Msg* message, nint windowHandle, uint minimumFilter, uint maximumFilter);
-
-        /// <summary>Translates virtual-key messages.</summary>
-        /// <param name="message">The message to translate.</param>
-        /// <returns><c>true</c> when the message was translated; otherwise <c>false</c>.</returns>
-        [DllImport("user32.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern unsafe bool TranslateMessage(Msg* message);
-    }
-
-    /// <summary>Composes message retrieval and dispatch operations.</summary>
-    /// <param name="getMessage">The retrieval operation.</param>
-    /// <param name="dispatch">The dispatch operation.</param>
-    private sealed class MessageLoopOperations(GetMessageOperation getMessage, DispatchOperation dispatch)
-    {
-        /// <summary>Dispatches a message.</summary>
-        /// <param name="message">The message to dispatch.</param>
-        public void Dispatch(ref Msg message) => dispatch(ref message);
-
-        /// <summary>Retrieves a message.</summary>
-        /// <param name="message">The retrieved message.</param>
-        /// <param name="windowHandle">The native window handle.</param>
-        /// <param name="minimumMessage">The minimum message value.</param>
-        /// <param name="maximumMessage">The maximum message value.</param>
-        /// <returns>The configured operation result.</returns>
-        public sbyte GetMessage(out Msg message, nint windowHandle, uint minimumMessage, uint maximumMessage) => getMessage(out message, windowHandle, minimumMessage, maximumMessage);
-    }
-
-    /// <summary>Message-loop operations used by this process.</summary>
-    private static MessageLoopOperations _operations = new(GetMessageNative, DispatchNative);
 
     /// <summary>Processes every message for the calling thread.</summary>
     public static void ProcessMessages() => ProcessMessagesCore(null, 0, 0U, 0U);
@@ -103,7 +53,12 @@ public static class MessageLoop
     /// <param name="windowHandle">The window handle value whose messages are retrieved.</param>
     /// <param name="minimumMessage">The lowest message value to retrieve.</param>
     /// <param name="maximumMessage">The highest message value to retrieve.</param>
-    public static void ProcessMessages(MessageProc handler, long windowHandle, uint minimumMessage, uint maximumMessage) => ProcessMessagesCore(handler, checked((nint)windowHandle), minimumMessage, maximumMessage);
+    public static void ProcessMessages(
+        MessageProc handler,
+        long windowHandle,
+        uint minimumMessage,
+        uint maximumMessage) =>
+        ProcessMessagesCore(handler, checked((nint)windowHandle), minimumMessage, maximumMessage);
 
     /// <summary>Retrieves a queued message for the current thread.</summary>
     /// <param name="message">The retrieved message.</param>
@@ -124,7 +79,7 @@ public static class MessageLoop
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(dispatch);
         MessageLoopOperations operations = _operations;
         _operations = new(getMessage, dispatch);
-        return Scope.Create(operations, delegate(MessageLoopOperations previous)
+        return Scope.Create(operations, static previous =>
         {
             _operations = previous;
         });
@@ -170,5 +125,74 @@ public static class MessageLoop
         {
             return NativeMethods.GetMessage(message2, windowHandle, minimumMessage, maximumMessage);
         }
+    }
+
+    /// <summary>Contains the message-loop imports.</summary>
+    private static class NativeMethods
+    {
+        /// <summary>The User32 library name.</summary>
+        private const string User32Dll = "user32.dll";
+
+        /// <summary>The User32 module handle.</summary>
+        private static readonly nint User32Module =
+            NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, User32Dll));
+
+        /// <summary>The GetMessageW export pointer.</summary>
+        private static readonly nint GetMessageExport = NativeLibrary.GetExport(User32Module, "GetMessageW");
+
+        /// <summary>The DispatchMessageW export pointer.</summary>
+        private static readonly nint DispatchMessageExport =
+            NativeLibrary.GetExport(User32Module, "DispatchMessageW");
+
+        /// <summary>The TranslateMessage export pointer.</summary>
+        private static readonly nint TranslateMessageExport =
+            NativeLibrary.GetExport(User32Module, nameof(TranslateMessage));
+
+        /// <summary>Dispatches a message to its window procedure.</summary>
+        /// <param name="message">The message to dispatch.</param>
+        internal static unsafe void DispatchMessage(Msg* message) =>
+            ((delegate* unmanaged[Stdcall]<Msg*, IntPtr>)checked((nuint)DispatchMessageExport))(message);
+
+        /// <summary>Retrieves a message from the calling thread queue.</summary>
+        /// <param name="message">The message buffer.</param>
+        /// <param name="windowHandle">The native window handle.</param>
+        /// <param name="minimumFilter">The lowest message value to retrieve.</param>
+        /// <param name="maximumFilter">The highest message value to retrieve.</param>
+        /// <returns>A value greater than zero for a message, zero for WM_QUIT, or -1 for an error.</returns>
+        internal static unsafe sbyte GetMessage(
+            Msg* message,
+            nint windowHandle,
+            uint minimumFilter,
+            uint maximumFilter) =>
+            ((delegate* unmanaged[Stdcall]<Msg*, nint, uint, uint, sbyte>)checked((nuint)GetMessageExport))(
+                message,
+                windowHandle,
+                minimumFilter,
+                maximumFilter);
+
+        /// <summary>Translates virtual-key messages.</summary>
+        /// <param name="message">The message to translate.</param>
+        /// <returns><c>true</c> when the message was translated; otherwise <c>false</c>.</returns>
+        internal static unsafe bool TranslateMessage(Msg* message) =>
+            ((delegate* unmanaged[Stdcall]<Msg*, int>)checked((nuint)TranslateMessageExport))(message) != 0;
+    }
+
+    /// <summary>Composes message retrieval and dispatch operations.</summary>
+    /// <param name="getMessage">The retrieval operation.</param>
+    /// <param name="dispatch">The dispatch operation.</param>
+    private sealed class MessageLoopOperations(GetMessageOperation getMessage, DispatchOperation dispatch)
+    {
+        /// <summary>Dispatches a message.</summary>
+        /// <param name="message">The message to dispatch.</param>
+        public void Dispatch(ref Msg message) => dispatch(ref message);
+
+        /// <summary>Retrieves a message.</summary>
+        /// <param name="message">The retrieved message.</param>
+        /// <param name="windowHandle">The native window handle.</param>
+        /// <param name="minimumMessage">The minimum message value.</param>
+        /// <param name="maximumMessage">The maximum message value.</param>
+        /// <returns>The configured operation result.</returns>
+        public sbyte GetMessage(out Msg message, nint windowHandle, uint minimumMessage, uint maximumMessage) =>
+            getMessage(out message, windowHandle, minimumMessage, maximumMessage);
     }
 }

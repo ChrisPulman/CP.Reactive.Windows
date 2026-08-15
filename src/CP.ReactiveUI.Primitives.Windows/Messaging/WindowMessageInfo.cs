@@ -29,10 +29,10 @@ public sealed class WindowMessageInfo
     /// <param name="longParameter">The long parameter value.</param>
     /// <returns>WindowMessageInfo.</returns>
     public static WindowMessageInfo Create(long windowHandle, int msg, long wordParameter, long longParameter) => new WindowMessageInfo
-        {
-            Handle = windowHandle,
-            Message = (WindowsMessages)checked((uint)msg),
-            WordParam = wordParameter,
-            LongParam = longParameter
-        };
+    {
+        Handle = windowHandle,
+        Message = (WindowsMessages)checked((uint)msg),
+        WordParam = wordParameter,
+        LongParam = longParameter,
+    };
 }

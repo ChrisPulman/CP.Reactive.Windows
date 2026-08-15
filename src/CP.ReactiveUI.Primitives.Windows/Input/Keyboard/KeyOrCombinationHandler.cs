@@ -19,9 +19,6 @@ public class KeyOrCombinationHandler : IKeyboardHookEventHandler
     /// <summary>The handlers that are evaluated for each keyboard event.</summary>
     private readonly IKeyboardHookEventHandler[] _keyCombinations;
 
-    /// <inheritdoc />
-    public bool HasKeysPressed => Array.Exists(_keyCombinations, (handler) => handler.HasKeysPressed);
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeyOrCombinationHandler" /> class.</summary>
     /// <param name="keyCombinations">IEnumerable with KeyCombinationHandler.</param>
     public KeyOrCombinationHandler(IEnumerable<IKeyboardHookEventHandler> keyCombinations)
@@ -35,6 +32,9 @@ public class KeyOrCombinationHandler : IKeyboardHookEventHandler
     {
         _keyCombinations = CopyHandlers(keyCombinations);
     }
+
+    /// <inheritdoc />
+    public bool HasKeysPressed => Array.Exists(_keyCombinations, static (handler) => handler.HasKeysPressed);
 
     /// <summary>Check if the combinations are pressed.</summary>
     /// <param name="keyboardHookEventArgs">KeyboardHookEventArgs.</param>

@@ -23,9 +23,6 @@ public sealed class DpiAwareFormBehavior : IDisposable
     /// <summary>Tracks whether the behavior has been disposed.</summary>
     private bool _disposed;
 
-    /// <summary>Gets the DpiHandler used for this form.</summary>
-    public DpiHandler DpiHandler { get; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Forms.DpiAwareFormBehavior" /> class.</summary>
     /// <param name="form">The form to attach DPI-aware behavior to.</param>
     public DpiAwareFormBehavior(Form form)
@@ -35,12 +32,15 @@ public sealed class DpiAwareFormBehavior : IDisposable
         _handleScope = new(form, DpiAwarenessContext.PerMonitorAwareV2, DpiAwarenessContext.PerMonitorAware);
         DpiHandler = new(needsListenerWorkaround: true);
         _form.HandleCreated += OnHandleCreated;
-        DpiHandler.MessageHandler = form.ObserveWindowMessages().Subscribe(delegate(WindowMessageInfo message)
+        DpiHandler.MessageHandler = form.ObserveWindowMessages().Subscribe(message =>
         {
             _ = DpiHandler.HandleWindowMessages(message);
         });
         EnsureHandleCreated();
     }
+
+    /// <summary>Gets the DpiHandler used for this form.</summary>
+    public DpiHandler DpiHandler { get; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -67,8 +67,9 @@ public sealed class DpiAwareFormBehavior : IDisposable
     {
         if (_form.IsHandleCreated)
         {
-            _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(_form.Handle.ToInt64(), 129, 0L, 0L));
-            _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(_form.Handle.ToInt64(), 1, 0L, 0L));
+            long windowHandle = _form.Handle.ToInt64();
+            _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(windowHandle, (int)WindowsMessages.WM_NCCREATE, 0L, 0L));
+            _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(windowHandle, (int)WindowsMessages.WM_CREATE, 0L, 0L));
         }
     }
 

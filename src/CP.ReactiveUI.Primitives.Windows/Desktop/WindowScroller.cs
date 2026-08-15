@@ -22,111 +22,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 /// <summary>The is a container class to help to scroll a window.</summary>
 public class WindowScroller
 {
-    /// <summary>Restores overridden scroll operations.</summary>
-    internal sealed class OperationsOverride : IDisposable
-    {
-        /// <summary>Previous operations to restore.</summary>
-        private readonly WindowScrollerOperations _previous;
-
-        /// <summary>Tracks whether this scope has already restored the previous operations.</summary>
-        private int _disposed;
-
-        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.WindowScroller.OperationsOverride" /> class.</summary>
-        /// <param name="previous">Previous operations to restore.</param>
-        internal OperationsOverride(WindowScrollerOperations previous)
-        {
-            _previous = previous;
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            if (Interlocked.Exchange(ref _disposed, 1) == 0)
-            {
-                _ = Interlocked.Exchange(ref _operations, _previous);
-            }
-        }
-    }
-
-    /// <summary>Operations used by <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.WindowScroller" /> to interact with native scroll state and input.</summary>
-    internal class WindowScrollerOperations
-    {
-        /// <summary>Retrieves native scroll position information.</summary>
-        /// <param name="windowHandle">The target window handle.</param>
-        /// <param name="scrollBar">The target scroll bar.</param>
-        /// <param name="scrollInfo">The scroll information to populate.</param>
-        /// <returns><see langword="true" /> when scroll information was retrieved.</returns>
-        internal virtual bool GetScrollInfo(IntPtr windowHandle, ScrollBarTypes scrollBar, ref ScrollInfo scrollInfo) => User32Api.GetScrollInfo(windowHandle, scrollBar, ref scrollInfo);
-
-        /// <summary>Applies native scroll position information.</summary>
-        /// <param name="windowHandle">The target window handle.</param>
-        /// <param name="scrollBar">The target scroll bar.</param>
-        /// <param name="scrollInfo">The scroll information to apply.</param>
-        /// <param name="redraw">Whether the target should redraw.</param>
-        /// <returns>The native result.</returns>
-        internal virtual int SetScrollInfo(IntPtr windowHandle, ScrollBarTypes scrollBar, ref ScrollInfo scrollInfo, bool redraw) => User32Api.SetScrollInfo(windowHandle, scrollBar, ref scrollInfo, redraw);
-
-        /// <summary>Sends a scroll command message.</summary>
-        /// <param name="windowHandle">The target window handle.</param>
-        /// <param name="message">The Windows message.</param>
-        /// <param name="scrollBarCommand">The scroll command.</param>
-        /// <param name="parameter">The message parameter.</param>
-        /// <returns>The native result.</returns>
-        internal virtual int SendCommandMessage(IntPtr windowHandle, WindowsMessages message, ScrollBarCommands scrollBarCommand, int parameter) => User32Api.SendMessage(windowHandle, message, scrollBarCommand, parameter);
-
-        /// <summary>Sends an integer scroll position message.</summary>
-        /// <param name="windowHandle">The target window handle.</param>
-        /// <param name="message">The Windows message.</param>
-        /// <param name="wordParameter">The word parameter.</param>
-        /// <param name="parameter">The message parameter.</param>
-        /// <returns>The native result.</returns>
-        internal virtual IntPtr SendIntegerMessage(IntPtr windowHandle, WindowsMessages message, int wordParameter, int parameter) => User32Api.SendMessage(windowHandle, message, wordParameter, parameter);
-
-        /// <summary>Retrieves native scroll bar information.</summary>
-        /// <param name="windowHandle">The target window handle.</param>
-        /// <param name="objectId">The native object identifier.</param>
-        /// <param name="scrollBarInfo">The scroll bar information to populate.</param>
-        /// <returns><see langword="true" /> when scroll bar information was retrieved.</returns>
-        internal virtual bool GetScrollBarInfo(IntPtr windowHandle, ObjectIdentifiers objectId, ref ScrollBarInfo scrollBarInfo) => User32Api.GetScrollBarInfo(windowHandle, objectId, ref scrollBarInfo);
-
-        /// <summary>Gets the configured scroll wheel line count text.</summary>
-        /// <returns>The registry value text, or <see langword="null" /> when unavailable.</returns>
-        internal virtual string GetScrollWheelLines()
-        {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", writable: false);
-            return key?.GetValue("WheelScrollLines") as string;
-        }
-
-        /// <summary>Generates key down input.</summary>
-        /// <param name="keycodes">The key codes to generate.</param>
-        /// <returns>The generated input count.</returns>
-        internal virtual uint KeyDown(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyDown(keycodes);
-
-        /// <summary>Generates key press input.</summary>
-        /// <param name="keycodes">The key codes to generate.</param>
-        /// <returns>The generated input count.</returns>
-        internal virtual uint KeyPresses(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyPresses(keycodes);
-
-        /// <summary>Generates key up input.</summary>
-        /// <param name="keycodes">The key codes to generate.</param>
-        /// <returns>The generated input count.</returns>
-        internal virtual uint KeyUp(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyUp(keycodes);
-
-        /// <summary>Generates mouse-wheel input.</summary>
-        /// <param name="wheelDelta">The wheel delta.</param>
-        /// <param name="location">The target location.</param>
-        /// <returns>The generated input count.</returns>
-        internal virtual uint MoveMouseWheel(int wheelDelta, NativePoint? location)
-        {
-            if (wheelDelta != 0 || location.HasValue)
-            {
-                return MouseInputGenerator.MoveMouseWheel(wheelDelta, location);
-            }
-
-            return 0U;
-        }
-    }
-
     /// <summary>Default number of lines scrolled for one mouse wheel detent.</summary>
     private const int DefaultScrollWheelLines = 3;
 
@@ -166,17 +61,7 @@ public class WindowScroller
         get
         {
             string wheelScrollLines = Volatile.Read(ref _operations).GetScrollWheelLines();
-            if (wheelScrollLines is null)
-            {
-                return 3;
-            }
-
-            if (!int.TryParse(wheelScrollLines, out var scrollLines))
-            {
-                return 3;
-            }
-
-            return scrollLines;
+            return int.TryParse(wheelScrollLines, out var scrollLines) ? scrollLines : DefaultScrollWheelLines;
         }
     }
 
@@ -243,13 +128,13 @@ public class WindowScroller
     /// <summary>Move to the end.</summary>
     /// <returns>bool if this worked.</returns>
     public bool End() => ScrollMode switch
-        {
-            ScrollModes.KeyboardPageUpDown => SendControlKey(VirtualKeyCode.End),
-            ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_BOTTOM),
-            ScrollModes.AbsoluteWindowMessage => MoveToAbsoluteBoundary(end: true),
-            ScrollModes.MouseWheel => MoveToBoundaryWithMouseWheel(end: true),
-            _ => throw new ArgumentOutOfRangeException("ScrollMode", ScrollMode, "Unsupported scroll mode."),
-        };
+    {
+        ScrollModes.KeyboardPageUpDown => SendControlKey(VirtualKeyCode.End),
+        ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_BOTTOM),
+        ScrollModes.AbsoluteWindowMessage => MoveToAbsoluteBoundary(end: true),
+        ScrollModes.MouseWheel => MoveToBoundaryWithMouseWheel(end: true),
+        _ => throw new ArgumentOutOfRangeException(nameof(ScrollMode), ScrollMode, UnsupportedScrollModeMessage),
+    };
 
     /// <summary>Get current position.</summary>
     /// <param name="scrollInfo">ScrollInfo out.</param>
@@ -298,24 +183,24 @@ public class WindowScroller
     /// <summary>Go to the next "page".</summary>
     /// <returns>bool if this worked.</returns>
     public bool Next() => ScrollMode switch
-        {
-            ScrollModes.KeyboardPageUpDown => Volatile.Read(ref _operations).KeyPresses(VirtualKeyCode.Next) == 2,
-            ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_PAGEDOWN),
-            ScrollModes.AbsoluteWindowMessage => MoveByPage(forward: true),
-            ScrollModes.MouseWheel => MoveMouseWheel(forward: true),
-            _ => throw new ArgumentOutOfRangeException("ScrollMode", ScrollMode, "Unsupported scroll mode."),
-        };
+    {
+        ScrollModes.KeyboardPageUpDown => Volatile.Read(ref _operations).KeyPresses(VirtualKeyCode.Next) == KeyboardPageKeyPressCount,
+        ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_PAGEDOWN),
+        ScrollModes.AbsoluteWindowMessage => MoveByPage(forward: true),
+        ScrollModes.MouseWheel => MoveMouseWheel(forward: true),
+        _ => throw new ArgumentOutOfRangeException(nameof(ScrollMode), ScrollMode, UnsupportedScrollModeMessage),
+    };
 
     /// <summary>Go to the previous "page".</summary>
     /// <returns>bool if this worked.</returns>
     public bool Previous() => ScrollMode switch
-        {
-            ScrollModes.KeyboardPageUpDown => Volatile.Read(ref _operations).KeyPresses(VirtualKeyCode.Prior) == 2,
-            ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_PAGEUP),
-            ScrollModes.AbsoluteWindowMessage => MoveByPage(forward: false),
-            ScrollModes.MouseWheel => MoveMouseWheel(forward: false),
-            _ => throw new ArgumentOutOfRangeException("ScrollMode", ScrollMode, "Unsupported scroll mode."),
-        };
+    {
+        ScrollModes.KeyboardPageUpDown => Volatile.Read(ref _operations).KeyPresses(VirtualKeyCode.Prior) == KeyboardPageKeyPressCount,
+        ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_PAGEUP),
+        ScrollModes.AbsoluteWindowMessage => MoveByPage(forward: false),
+        ScrollModes.MouseWheel => MoveMouseWheel(forward: false),
+        _ => throw new ArgumentOutOfRangeException(nameof(ScrollMode), ScrollMode, UnsupportedScrollModeMessage),
+    };
 
     /// <summary>Set the position back to the original, only works for windows which support ScrollModes.WindowsMessage.</summary>
     /// <returns>true if this worked.</returns>
@@ -328,13 +213,13 @@ public class WindowScroller
     /// <summary>Move to the start.</summary>
     /// <returns>bool if this worked.</returns>
     public bool Start() => ScrollMode switch
-        {
-            ScrollModes.KeyboardPageUpDown => SendControlKey(VirtualKeyCode.Home),
-            ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_TOP),
-            ScrollModes.AbsoluteWindowMessage => MoveToAbsoluteBoundary(end: false),
-            ScrollModes.MouseWheel => MoveToBoundaryWithMouseWheel(end: false),
-            _ => throw new ArgumentOutOfRangeException("ScrollMode", ScrollMode, "Unsupported scroll mode."),
-        };
+    {
+        ScrollModes.KeyboardPageUpDown => SendControlKey(VirtualKeyCode.Home),
+        ScrollModes.WindowsMessage => SendScrollMessage(ScrollBarCommands.SB_TOP),
+        ScrollModes.AbsoluteWindowMessage => MoveToAbsoluteBoundary(end: false),
+        ScrollModes.MouseWheel => MoveToBoundaryWithMouseWheel(end: false),
+        _ => throw new ArgumentOutOfRangeException(nameof(ScrollMode), ScrollMode, UnsupportedScrollModeMessage),
+    };
 
     /// <summary>Overrides native scroll operations while the returned scope is alive.</summary>
     /// <param name="operations">The replacement operations.</param>
@@ -371,20 +256,22 @@ public class WindowScroller
         {
             if (ScrollBarType == ScrollBarTypes.Horizontal)
             {
-                _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_HSCROLL, 4 + (65_536 * scrollInfo.Position), 0);
+                int position = checked(HorizontalThumbPositionBase + (HorizontalThumbPositionScale * scrollInfo.Position));
+                _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_HSCROLL, position, 0);
                 return true;
             }
 
             ScrollBarTypes scrollBarType = ScrollBarType;
             if (unchecked((uint)(scrollBarType - 1)) <= 1U)
             {
-                _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_VSCROLL, (int)(4L + unchecked((long)(scrollInfo.Position << 16))), 0);
+                int position = unchecked(HorizontalThumbPositionBase + (scrollInfo.Position << VerticalThumbPositionShift));
+                _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_VSCROLL, position, 0);
                 return true;
             }
 
             if (ScrollBarType != ScrollBarTypes.Both)
             {
-                throw new ArgumentOutOfRangeException("ScrollBarType", ScrollBarType, "Unsupported scroll bar type.");
+                throw new ArgumentOutOfRangeException(nameof(ScrollBarType), ScrollBarType, "Unsupported scroll bar type.");
             }
 
             return true;
@@ -393,16 +280,13 @@ public class WindowScroller
 
     /// <summary>Gets the scroll bar object identifier.</summary>
     /// <returns>The matching object identifier.</returns>
-    private ObjectIdentifiers GetObjectIdentifier()
-    {
-        return ScrollBarType switch
+    private ObjectIdentifiers GetObjectIdentifier() => ScrollBarType switch
         {
             ScrollBarTypes.Control or ScrollBarTypes.Both => ObjectIdentifiers.Client,
             ScrollBarTypes.Vertical => ObjectIdentifiers.VerticalScrollbar,
             ScrollBarTypes.Horizontal => ObjectIdentifiers.HorizontalScrollbar,
-            _ => throw new ArgumentOutOfRangeException("ScrollBarType", ScrollBarType, "Unsupported scroll bar type.")
+            _ => throw new ArgumentOutOfRangeException(nameof(ScrollBarType), ScrollBarType, "Unsupported scroll bar type.")
         };
-    }
 
     /// <summary>Gets the middle point of the scrolling window.</summary>
     /// <returns>The middle point.</returns>
@@ -411,7 +295,7 @@ public class WindowScroller
         NativeRect bounds = ScrollingWindow.GetInfo().Bounds;
         checked
         {
-            return new(bounds.X + unchecked(bounds.Width / 2), bounds.Y + unchecked(bounds.Height / 2));
+            return new(bounds.X + unchecked(bounds.Width / CoordinateCenterDivisor), bounds.Y + unchecked(bounds.Height / CoordinateCenterDivisor));
         }
     }
 
@@ -425,7 +309,10 @@ public class WindowScroller
             return false;
         }
 
-        scrollInfo.Position = checked(forward ? Math.Min(scrollInfo.Maximum, scrollInfo.Position + (int)scrollInfo.PageSize) : Math.Max(scrollInfo.Minimum, scrollInfo.Position - (int)scrollInfo.PageSize));
+        int pageSize = checked((int)scrollInfo.PageSize);
+        scrollInfo.Position = checked(forward
+            ? Math.Min(scrollInfo.Maximum, scrollInfo.Position + pageSize)
+            : Math.Max(scrollInfo.Minimum, scrollInfo.Position - pageSize));
         return ApplyPosition(ref scrollInfo);
     }
 
@@ -448,8 +335,9 @@ public class WindowScroller
     /// <returns><see langword="true" /> after movement stops.</returns>
     private bool MoveToBoundaryWithMouseWheel(bool end)
     {
-        while ((end ? (!IsAtEnd) : (!IsAtStart)) && !(end ? (!Next()) : (!Previous())))
+        while ((end ? !IsAtEnd : !IsAtStart) && !(end ? !Next() : !Previous()))
         {
+            _ = Thread.Yield();
         }
 
         return true;
@@ -458,7 +346,7 @@ public class WindowScroller
     /// <summary>Moves the mouse wheel by one configured increment.</summary>
     /// <param name="forward">Whether to move toward the end of the scrollbar.</param>
     /// <returns><see langword="true" /> when the wheel event was generated.</returns>
-    private bool MoveMouseWheel(bool forward) => Volatile.Read(ref _operations).MoveMouseWheel(forward ? checked(-WheelDelta) : WheelDelta, GetScrollMiddlePoint()) == 1;
+    private bool MoveMouseWheel(bool forward) => Volatile.Read(ref _operations).MoveMouseWheel(forward ? checked(-WheelDelta) : WheelDelta, GetScrollMiddlePoint()) == MouseWheelMoveCount;
 
     /// <summary>Helper method to send the right message.</summary>
     /// <param name="scrollBarCommand">ScrollBarCommands enum to specify where to scroll.</param>
@@ -471,7 +359,7 @@ public class WindowScroller
             return false;
         }
 
-        WindowsMessages message = ((ScrollBarType == ScrollBarTypes.Horizontal) ? WindowsMessages.WM_HSCROLL : WindowsMessages.WM_VSCROLL);
+        WindowsMessages message = ScrollBarType == ScrollBarTypes.Horizontal ? WindowsMessages.WM_HSCROLL : WindowsMessages.WM_VSCROLL;
         _ = Volatile.Read(ref _operations).SendCommandMessage(ScrollingWindow.Handle, message, scrollBarCommand, 0);
         return true;
     }
@@ -495,5 +383,118 @@ public class WindowScroller
         }
 
         return hasScrollInfo;
+    }
+
+    /// <summary>Restores overridden scroll operations.</summary>
+    internal sealed class OperationsOverride : IDisposable
+    {
+        /// <summary>Previous operations to restore.</summary>
+        private readonly WindowScrollerOperations _previous;
+
+        /// <summary>Tracks whether this scope has already restored the previous operations.</summary>
+        private int _disposed;
+
+        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.WindowScroller.OperationsOverride" /> class.</summary>
+        /// <param name="previous">Previous operations to restore.</param>
+        internal OperationsOverride(WindowScrollerOperations previous) => _previous = previous;
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _ = Interlocked.Exchange(ref _operations, _previous);
+            }
+        }
+    }
+
+    /// <summary>Operations used by <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.WindowScroller" /> to interact with native scroll state and input.</summary>
+    internal class WindowScrollerOperations
+    {
+        /// <summary>Function used to generate a mouse-wheel input event.</summary>
+        private readonly Func<int, NativePoint?, uint> _moveMouseWheel;
+
+        /// <summary>Initializes a new instance of the <see cref="WindowScrollerOperations" /> class with native input generation.</summary>
+        internal WindowScrollerOperations()
+            : this(MouseInputGenerator.MoveMouseWheel)
+        {
+        }
+
+        /// <summary>Initializes a new instance of the <see cref="WindowScrollerOperations" /> class with supplied input generation.</summary>
+        /// <param name="moveMouseWheel">Function used to generate a mouse-wheel input event.</param>
+        internal WindowScrollerOperations(Func<int, NativePoint?, uint> moveMouseWheel) =>
+            _moveMouseWheel = moveMouseWheel ?? throw new ArgumentNullException(nameof(moveMouseWheel));
+
+        /// <summary>Retrieves native scroll position information.</summary>
+        /// <param name="windowHandle">The target window handle.</param>
+        /// <param name="scrollBar">The target scroll bar.</param>
+        /// <param name="scrollInfo">The scroll information to populate.</param>
+        /// <returns><see langword="true" /> when scroll information was retrieved.</returns>
+        internal virtual bool GetScrollInfo(IntPtr windowHandle, ScrollBarTypes scrollBar, ref ScrollInfo scrollInfo) => User32Api.GetScrollInfo(windowHandle, scrollBar, ref scrollInfo);
+
+        /// <summary>Applies native scroll position information.</summary>
+        /// <param name="windowHandle">The target window handle.</param>
+        /// <param name="scrollBar">The target scroll bar.</param>
+        /// <param name="scrollInfo">The scroll information to apply.</param>
+        /// <param name="redraw">Whether the target should redraw.</param>
+        /// <returns>The native result.</returns>
+        internal virtual int SetScrollInfo(IntPtr windowHandle, ScrollBarTypes scrollBar, ref ScrollInfo scrollInfo, bool redraw) =>
+            User32Api.SetScrollInfo(windowHandle, scrollBar, ref scrollInfo, redraw);
+
+        /// <summary>Sends a scroll command message.</summary>
+        /// <param name="windowHandle">The target window handle.</param>
+        /// <param name="message">The Windows message.</param>
+        /// <param name="scrollBarCommand">The scroll command.</param>
+        /// <param name="parameter">The message parameter.</param>
+        /// <returns>The native result.</returns>
+        internal virtual int SendCommandMessage(IntPtr windowHandle, WindowsMessages message, ScrollBarCommands scrollBarCommand, int parameter) =>
+            User32Api.SendMessage(windowHandle, message, scrollBarCommand, parameter);
+
+        /// <summary>Sends an integer scroll position message.</summary>
+        /// <param name="windowHandle">The target window handle.</param>
+        /// <param name="message">The Windows message.</param>
+        /// <param name="wordParameter">The word parameter.</param>
+        /// <param name="parameter">The message parameter.</param>
+        /// <returns>The native result.</returns>
+        internal virtual IntPtr SendIntegerMessage(IntPtr windowHandle, WindowsMessages message, int wordParameter, int parameter) =>
+            User32Api.SendMessage(windowHandle, message, wordParameter, parameter);
+
+        /// <summary>Retrieves native scroll bar information.</summary>
+        /// <param name="windowHandle">The target window handle.</param>
+        /// <param name="objectId">The native object identifier.</param>
+        /// <param name="scrollBarInfo">The scroll bar information to populate.</param>
+        /// <returns><see langword="true" /> when scroll bar information was retrieved.</returns>
+        internal virtual bool GetScrollBarInfo(IntPtr windowHandle, ObjectIdentifiers objectId, ref ScrollBarInfo scrollBarInfo) =>
+            User32Api.GetScrollBarInfo(windowHandle, objectId, ref scrollBarInfo);
+
+        /// <summary>Gets the configured scroll wheel line count text.</summary>
+        /// <returns>The registry value text, or <see langword="null" /> when unavailable.</returns>
+        internal virtual string GetScrollWheelLines()
+        {
+            using RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", writable: false);
+            return RegistryValueReader.GetValue(key, "WheelScrollLines") as string;
+        }
+
+        /// <summary>Generates key down input.</summary>
+        /// <param name="keycodes">The key codes to generate.</param>
+        /// <returns>The generated input count.</returns>
+        internal virtual uint KeyDown(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyDown(keycodes);
+
+        /// <summary>Generates key press input.</summary>
+        /// <param name="keycodes">The key codes to generate.</param>
+        /// <returns>The generated input count.</returns>
+        internal virtual uint KeyPresses(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyPresses(keycodes);
+
+        /// <summary>Generates key up input.</summary>
+        /// <param name="keycodes">The key codes to generate.</param>
+        /// <returns>The generated input count.</returns>
+        internal virtual uint KeyUp(params VirtualKeyCode[] keycodes) => KeyboardInputGenerator.KeyUp(keycodes);
+
+        /// <summary>Generates mouse-wheel input.</summary>
+        /// <param name="wheelDelta">The wheel delta.</param>
+        /// <param name="location">The target location.</param>
+        /// <returns>The generated input count.</returns>
+        internal virtual uint MoveMouseWheel(int wheelDelta, NativePoint? location) =>
+            wheelDelta != 0 || location.HasValue ? _moveMouseWheel(wheelDelta, location) : 0U;
     }
 }

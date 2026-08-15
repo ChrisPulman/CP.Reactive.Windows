@@ -22,12 +22,7 @@ public static class NativeInput
         get
         {
             LastInputInfo lastInputInfo = LastInputInfo.Create();
-            if (!GetCurrentApi().GetLastInputInfo(ref lastInputInfo))
-            {
-                return DateTimeOffset.MinValue;
-            }
-
-            return lastInputInfo.LastInputDateTime;
+            return GetCurrentApi().GetLastInputInfo(ref lastInputInfo) ? lastInputInfo.LastInputDateTime : DateTimeOffset.MinValue;
         }
     }
 
@@ -37,12 +32,7 @@ public static class NativeInput
         get
         {
             LastInputInfo lastInputInfo = LastInputInfo.Create();
-            if (!GetCurrentApi().GetLastInputInfo(ref lastInputInfo))
-            {
-                return TimeSpan.MaxValue;
-            }
-
-            return lastInputInfo.LastInputTimeSpan;
+            return GetCurrentApi().GetLastInputInfo(ref lastInputInfo) ? lastInputInfo.LastInputTimeSpan : TimeSpan.MaxValue;
         }
     }
 

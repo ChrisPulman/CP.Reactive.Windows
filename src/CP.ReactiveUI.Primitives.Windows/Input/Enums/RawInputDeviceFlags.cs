@@ -71,5 +71,5 @@ public enum RawInputDeviceFlags
     ///     RIDEV_DEVNOTIFY: If set, this enables the caller to receive WM_INPUT_DEVICE_CHANGE notifications for device arrival and device removal.
     ///     Windows XP:  This flag is not supported until Windows Vista.
     /// </summary>
-    DeviceNotify = 0x2000
+    DeviceNotify = 0x2000,
 }

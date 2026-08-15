@@ -44,5 +44,5 @@ public enum SoundSettings : uint
     /// <summary>The pszSound parameter is a predefined id.</summary>
     AliasId = Alias | AliasIdentifier,
     /// <summary>The pszSound parameter is a resource identifier.</summary>
-    Resource = Memory | ResourceType
+    Resource = Memory | ResourceType,
 }

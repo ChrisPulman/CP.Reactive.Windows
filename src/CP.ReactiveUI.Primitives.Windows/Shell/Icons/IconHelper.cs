@@ -26,76 +26,20 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Helper code for icons.</summary>
 public static class IconHelper
 {
-    /// <summary>Dispatches icon resource loading for identifier and string resource names.</summary>
-    private readonly struct IconResourceName
-    {
-        /// <summary>The integer resource identifier.</summary>
-        private readonly IntPtr _identifier;
-
-        /// <summary>The string resource name.</summary>
-        private readonly string _name;
-
-        /// <summary>A value indicating whether the string resource name is active.</summary>
-        private readonly bool _usesName;
-
-        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.IconHelper.IconResourceName" /> struct.</summary>
-        /// <param name="identifier">The integer resource identifier.</param>
-        public IconResourceName(IntPtr identifier)
-        {
-            _identifier = identifier;
-            _name = null;
-            _usesName = false;
-        }
-
-        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.IconHelper.IconResourceName" /> struct.</summary>
-        /// <param name="name">The string resource name.</param>
-        public IconResourceName(string name)
-        {
-            _identifier = IntPtr.Zero;
-            _name = name;
-            _usesName = true;
-        }
-
-        /// <summary>Loads an icon with system metrics.</summary>
-        /// <param name="instanceHandle">A handle to the module containing the icon resource.</param>
-        /// <param name="metricSize">The metric size to use.</param>
-        /// <param name="iconHandle">The loaded icon handle.</param>
-        /// <returns>The HRESULT from the native loader.</returns>
-        public int LoadWithSystemMetrics(IntPtr instanceHandle, IconMetricSize metricSize, out IntPtr iconHandle)
-        {
-            if (!_usesName)
-            {
-                return NativeIconMethods.LoadIconMetric(instanceHandle, _identifier, metricSize, out iconHandle);
-            }
-
-            return NativeIconMethods.LoadIconMetric(instanceHandle, _name, metricSize, out iconHandle);
-        }
-
-        /// <summary>Loads an icon with scale-down semantics.</summary>
-        /// <param name="instanceHandle">A handle to the module containing the icon resource.</param>
-        /// <param name="width">The desired width in pixels.</param>
-        /// <param name="height">The desired height in pixels.</param>
-        /// <param name="iconHandle">The loaded icon handle.</param>
-        /// <returns>The HRESULT from the native loader.</returns>
-        public int LoadWithScaleDown(IntPtr instanceHandle, int width, int height, out IntPtr iconHandle)
-        {
-            if (!_usesName)
-            {
-                return NativeIconMethods.LoadIconWithScaleDown(instanceHandle, _identifier, width, height, out iconHandle);
-            }
-
-            return NativeIconMethods.LoadIconWithScaleDown(instanceHandle, _name, width, height, out iconHandle);
-        }
-    }
-
     /// <summary>The default icon index used when extracting associated icons.</summary>
     private const int DefaultAssociatedIconIndex = 0;
+
+    /// <summary>The number of icons to extract when selecting one associated icon.</summary>
+    private const uint AssociatedIconExtractionCount = 1U;
 
     /// <summary>The default app-logo scale percentage.</summary>
     private const int DefaultLogoScaleValue = 100;
 
+    /// <summary>The associated-icon extractor used by this process.</summary>
+    private static ExtractAssociatedIconOperation _extractAssociatedIcon = Shell32Api.ExtractIconEx;
+
     /// <summary>Gets the default app-logo scale percentage.</summary>
-    internal static int DefaultLogoScale => 100;
+    internal static int DefaultLogoScale => DefaultLogoScaleValue;
 
     /// <summary>Helper method to get the app logo from the applications AppxManifest.</summary>
     /// <typeparam name="TBitmap">The bitmap return type, such as BitmapSource or Bitmap.</typeparam>
@@ -149,7 +93,7 @@ public static class IconHelper
             return null;
         }
 
-        _ = Shell32Api.ExtractIconEx(filePath, index, out var large, out var small, 1);
+        _ = _extractAssociatedIcon(filePath, index, out var large, out var small, checked((int)AssociatedIconExtractionCount));
         using SafeIconHandle largeIcon = new(large);
         using SafeIconHandle smallIcon = new(small);
         if (useLargeIcon && !largeIcon.IsInvalid)
@@ -168,10 +112,8 @@ public static class IconHelper
     /// <summary>Gets the number of icons in the file.</summary>
     /// <param name="location">The executable or DLL location.</param>
     /// <returns>The number of icons in the file.</returns>
-    public static int CountAssociatedIcons(string location)
-    {
-        return Shell32Api.ExtractIconEx(location, -1, out _, out _, 0);
-    }
+    public static int CountAssociatedIcons(string location) =>
+        Shell32Api.ExtractIconEx(location, -1, out _, out _, DefaultAssociatedIconIndex);
 
     /// <summary>Creates a typed icon object from the specified icon handle.</summary>
     /// <typeparam name="TIcon">The icon return type, such as Icon, Bitmap, or BitmapSource.</typeparam>
@@ -210,12 +152,10 @@ public static class IconHelper
         where TIcon : class
     {
         _ = iconType;
-        if (iconHandle is not null && !iconHandle.IsInvalid)
-        {
-            return iconHandle.UseNativeHandle((nativeIconHandle) => IconHandleTo(nativeIconHandle, iconType));
-        }
-
-        return null;
+        return iconHandle is not null
+            && !iconHandle.IsInvalid
+            ? iconHandle.UseNativeHandle(nativeIconHandle => IconHandleTo(nativeIconHandle, iconType))
+            : null;
     }
 
     /// <summary>Gets an icon for a file extension.</summary>
@@ -291,11 +231,11 @@ public static class IconHelper
     /// <param name="metricSize">The metric size.</param>
     /// <returns>A size structure containing the width and height in pixels.</returns>
     public static Size GetSystemIconSize(IconMetricSize metricSize) => metricSize switch
-        {
-            IconMetricSize.SmallIcon => new Size(GetSmallIconWidth(), GetSmallIconHeight()),
-            IconMetricSize.StandardIcon => new Size(GetStandardIconWidth(), GetStandardIconHeight()),
-            _ => throw new ArgumentOutOfRangeException(nameof(metricSize)),
-        };
+    {
+        IconMetricSize.SmallIcon => new Size(GetSmallIconWidth(), GetSmallIconHeight()),
+        IconMetricSize.StandardIcon => new Size(GetStandardIconWidth(), GetStandardIconHeight()),
+        _ => throw new ArgumentOutOfRangeException(nameof(metricSize)),
+    };
 
     /// <summary>Loads an icon at the system-preferred size using LoadIconMetric.</summary>
     /// <typeparam name="TIcon">The icon return type, such as Icon, Bitmap, or BitmapSource.</typeparam>
@@ -348,6 +288,7 @@ public static class IconHelper
     internal static TBitmap GetAppLogoFromProcessPath<TBitmap>(string exePath, TBitmap bitmapType, int scale)
         where TBitmap : class
     {
+        _ = bitmapType;
         if (exePath is null)
         {
             return null;
@@ -395,6 +336,28 @@ public static class IconHelper
 
         using Image bitmap = Image.FromStream(fileStream);
         return bitmap.Clone() as TBitmap;
+    }
+
+    /// <summary>Replaces associated-icon extraction for deterministic tests.</summary>
+    /// <param name="extractor">The replacement extraction operation.</param>
+    /// <returns>The previous extraction operation.</returns>
+    internal static ExtractAssociatedIconOperation SetAssociatedIconExtractorForTesting(ExtractAssociatedIconOperation extractor)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(extractor);
+        ExtractAssociatedIconOperation previous = _extractAssociatedIcon;
+        _extractAssociatedIcon = extractor;
+        return previous;
+    }
+
+    /// <summary>Reads a logo path from an already parsed package manifest.</summary>
+    /// <param name="manifestDocument">The parsed package manifest.</param>
+    /// <returns>The logo path, or <see langword="null" /> when no logo is declared.</returns>
+    internal static string ReadLogoPath(XDocument manifestDocument)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(manifestDocument);
+        XName propertiesNamespace = XName.Get("Properties", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
+        XName logoNamespace = XName.Get("Logo", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
+        return manifestDocument.Root?.Element(propertiesNamespace)?.Element(logoNamespace)?.Value;
     }
 
     /// <summary>Loads an icon at the system-preferred size using a resource name dispatcher.</summary>
@@ -474,12 +437,7 @@ public static class IconHelper
             processId = GetAppChildProcessId(interopWindow);
         }
 
-        if (processId > 0)
-        {
-            return Kernel32Api.GetProcessPath(processId);
-        }
-
-        return null;
+        return processId > 0 ? Kernel32Api.GetProcessPath(processId) : null;
     }
 
     /// <summary>Gets the process id for the child app window.</summary>
@@ -517,9 +475,59 @@ public static class IconHelper
     private static string ReadLogoPath(string manifestPath)
     {
         using FileStream fileStream = File.OpenRead(manifestPath);
-        XDocument xDocument = XDocument.Load((Stream)fileStream);
-        XName propertiesNamespace = XName.Get("Properties", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
-        XName logoNamespace = XName.Get("Logo", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
-        return xDocument.Root?.Element(propertiesNamespace)?.Element(logoNamespace)?.Value;
+        XDocument manifestDocument = XDocument.Load((Stream)fileStream);
+        return ReadLogoPath(manifestDocument);
+    }
+
+    /// <summary>Dispatches icon resource loading for identifier and string resource names.</summary>
+    private readonly struct IconResourceName
+    {
+        /// <summary>The integer resource identifier.</summary>
+        private readonly IntPtr _identifier;
+
+        /// <summary>The string resource name.</summary>
+        private readonly string _name;
+
+        /// <summary>A value indicating whether the string resource name is active.</summary>
+        private readonly bool _usesName;
+
+        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.IconHelper.IconResourceName" /> struct.</summary>
+        /// <param name="identifier">The integer resource identifier.</param>
+        public IconResourceName(IntPtr identifier)
+        {
+            _identifier = identifier;
+            _name = null;
+            _usesName = false;
+        }
+
+        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.IconHelper.IconResourceName" /> struct.</summary>
+        /// <param name="name">The string resource name.</param>
+        public IconResourceName(string name)
+        {
+            _identifier = IntPtr.Zero;
+            _name = name;
+            _usesName = true;
+        }
+
+        /// <summary>Loads an icon with system metrics.</summary>
+        /// <param name="instanceHandle">A handle to the module containing the icon resource.</param>
+        /// <param name="metricSize">The metric size to use.</param>
+        /// <param name="iconHandle">The loaded icon handle.</param>
+        /// <returns>The HRESULT from the native loader.</returns>
+        public int LoadWithSystemMetrics(IntPtr instanceHandle, IconMetricSize metricSize, out IntPtr iconHandle) =>
+            _usesName
+                ? NativeIconMethods.LoadIconMetric(instanceHandle, _name, metricSize, out iconHandle)
+                : NativeIconMethods.LoadIconMetric(instanceHandle, _identifier, metricSize, out iconHandle);
+
+        /// <summary>Loads an icon with scale-down semantics.</summary>
+        /// <param name="instanceHandle">A handle to the module containing the icon resource.</param>
+        /// <param name="width">The desired width in pixels.</param>
+        /// <param name="height">The desired height in pixels.</param>
+        /// <param name="iconHandle">The loaded icon handle.</param>
+        /// <returns>The HRESULT from the native loader.</returns>
+        public int LoadWithScaleDown(IntPtr instanceHandle, int width, int height, out IntPtr iconHandle) =>
+            _usesName
+                ? NativeIconMethods.LoadIconWithScaleDown(instanceHandle, _name, width, height, out iconHandle)
+                : NativeIconMethods.LoadIconWithScaleDown(instanceHandle, _identifier, width, height, out iconHandle);
     }
 }

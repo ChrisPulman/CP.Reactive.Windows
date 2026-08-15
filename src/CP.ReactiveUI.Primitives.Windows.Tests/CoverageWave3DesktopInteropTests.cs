@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Windows.Enums;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Wave 3 coverage for desktop interop helpers.</summary>
@@ -81,6 +79,10 @@ public sealed class CoverageWave3DesktopInteropTests
     [Test]
     public async Task AppQuery_CompositionSeams_CoverVisibilityLauncherAndEnumerationBranchesAsync()
     {
+        using var publicOperations = AppQueryExtensions.OverridePublicOperationsForTesting(
+            static () => null,
+            static () => Array.Empty<DisplayInfo>(),
+            static (_, _) => IntPtr.Zero);
         var displayBounds = new NativeRect(0, 0, TestBoundsSize, TestBoundsSize);
         var partialBounds = new NativeRect(0, 0, TestBoundsSize - 1, TestBoundsSize);
         var outsideBounds = new NativeRect(TestBoundsSize, TestBoundsSize, TestBoundsSize, TestBoundsSize);

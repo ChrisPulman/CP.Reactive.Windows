@@ -12,8 +12,10 @@ public enum CursorInfoFlags : uint
 {
     /// <summary>The cursor is hidden.</summary>
     None = 0U,
+
     /// <summary>Cursor is showing.</summary>
     Showing = 1U,
+
     /// <summary>Cursor is suppressed.</summary>
-    Suppressed = 2U
+    Suppressed = 2U,
 }

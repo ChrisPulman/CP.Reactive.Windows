@@ -13,228 +13,17 @@ using CP.ReactiveUI.Primitives.Windows.PolyFills;
 namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 
 /// <summary>Kernel 32 functionality.</summary>
+#if NETFRAMEWORK
 public static class Kernel32Api
+#else
+public static partial class Kernel32Api
+#endif
 {
     /// <summary>Default value for AttachProcess if not specifying a process ID, this uses the console of the parent of the current process.</summary>
     private const uint AttachParentProcess = uint.MaxValue;
 
     /// <summary>The Windows Vista major version.</summary>
     private const int VistaMajorVersion = 6;
-
-    /// <summary>Native kernel32 entry points that need managed public wrappers.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>The Kernel32 DLL library name.</summary>
-        private const string Kernel32Dll = "kernel32.dll";
-
-        /// <summary>The loaded Kernel32 module.</summary>
-        private static readonly IntPtr Kernel32Module = NativeLibrary.Load("kernel32.dll");
-
-        /// <summary>The exported LocalFree function pointer.</summary>
-        private static readonly IntPtr LocalFreePointer = NativeLibrary.GetExport(Kernel32Module, "LocalFree");
-
-        /// <summary>The exported SetLastError function pointer.</summary>
-        private static readonly IntPtr SetLastErrorPointer = NativeLibrary.GetExport(Kernel32Module, "SetLastError");
-
-        /// <summary>Gets the package full name for a process.</summary>
-        /// <param name="processHandle">Process handle.</param>
-        /// <param name="packageFullNameLength">Package name buffer length.</param>
-        /// <param name="fullName">Package name buffer.</param>
-        /// <returns>Win32 result code.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe int GetPackageFullName(IntPtr processHandle, ref int packageFullNameLength, char* fullName);
-
-        /// <summary>Specifies the default directories searched for DLLs.</summary>
-        /// <param name="directoryFlags">Directory search flags.</param>
-        /// <returns>True if the directory set was applied; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags);
-
-        /// <summary>Adds a directory to the DLL search path.</summary>
-        /// <param name="pathName">The path name.</param>
-        /// <returns>True if the directory was set; otherwise, false.</returns>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool SetDllDirectory(string pathName);
-
-        /// <summary>Allocates a console.</summary>
-        /// <returns>True if a console was allocated; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool AllocConsole();
-
-        /// <summary>Gets the current process id.</summary>
-        /// <returns>The process id.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int GetCurrentProcessId();
-
-        /// <summary>Gets the current thread id.</summary>
-        /// <returns>The thread id.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int GetCurrentThreadId();
-
-        /// <summary>Attaches the current process to a console.</summary>
-        /// <param name="processId">The process id.</param>
-        /// <returns>True if the console was attached; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool AttachConsole(uint processId);
-
-        /// <summary>Closes a native handle.</summary>
-        /// <param name="objectHandle">The object handle.</param>
-        /// <returns>True if the handle was closed; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool CloseHandle(IntPtr objectHandle);
-
-        /// <summary>Frees a loaded module.</summary>
-        /// <param name="module">The module handle.</param>
-        /// <returns>True if the module was freed; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool FreeLibrary(IntPtr module);
-
-        /// <summary>Gets a module handle.</summary>
-        /// <param name="moduleName">The module name.</param>
-        /// <returns>The module handle.</returns>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, EntryPoint = "GetModuleHandleW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr GetModuleHandle(string moduleName);
-
-        /// <summary>Gets Windows product information.</summary>
-        /// <param name="operatingSystemMajorVersion">The operating system major version.</param>
-        /// <param name="operatingSystemMinorVersion">The operating system minor version.</param>
-        /// <param name="servicePackMajorVersion">The service pack major version.</param>
-        /// <param name="servicePackMinorVersion">The service pack minor version.</param>
-        /// <param name="edition">The Windows product edition.</param>
-        /// <returns>True if product information was retrieved; otherwise, false.</returns>
-        [DllImport("kernel32.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool GetProductInfo(int operatingSystemMajorVersion, int operatingSystemMinorVersion, int servicePackMajorVersion, int servicePackMinorVersion, out WindowsProducts edition);
-
-        /// <summary>Gets version information.</summary>
-        /// <param name="versionInfo">The version information.</param>
-        /// <returns>True if version information was retrieved; otherwise, false.</returns>
-        [DllImport("kernel32.dll", EntryPoint = "GetVersionExW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern unsafe bool GetVersionEx(void* versionInfo);
-
-        /// <summary>Loads a native library.</summary>
-        /// <param name="fileName">The file name.</param>
-        /// <returns>The module handle.</returns>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, EntryPoint = "LoadLibraryW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr LoadLibrary(string fileName);
-
-        /// <summary>Opens a process.</summary>
-        /// <param name="desiredAccess">Desired access rights.</param>
-        /// <param name="inheritHandle">True to inherit the handle; otherwise, false.</param>
-        /// <param name="processId">The process id.</param>
-        /// <returns>The process handle.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr OpenProcess(ProcessAccessRights desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, int processId);
-
-        /// <summary>Queries a DOS device path.</summary>
-        /// <param name="deviceName">The device name.</param>
-        /// <param name="targetPath">The target path buffer.</param>
-        /// <param name="maximumLength">The buffer capacity.</param>
-        /// <returns>The number of characters copied.</returns>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, EntryPoint = "QueryDosDeviceW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe int QueryDosDevice(string deviceName, char* targetPath, int maximumLength);
-
-        /// <summary>Queries a process image name.</summary>
-        /// <param name="processHandle">The process handle.</param>
-        /// <param name="flags">Query flags.</param>
-        /// <param name="exeName">The executable name buffer.</param>
-        /// <param name="size">The buffer size.</param>
-        /// <returns>True if the image name was retrieved; otherwise, false.</returns>
-        [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern unsafe bool QueryFullProcessImageName(IntPtr processHandle, uint flags, char* exeName, ref int size);
-
-        /// <summary>Allocates global memory.</summary>
-        /// <param name="globalMemorySettings">Memory allocation attributes.</param>
-        /// <param name="bytes">Bytes to allocate.</param>
-        /// <returns>The memory handle.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr GlobalAlloc(GlobalMemorySettings globalMemorySettings, UIntPtr bytes);
-
-        /// <summary>Locks global memory.</summary>
-        /// <param name="memoryHandle">The memory handle.</param>
-        /// <returns>The memory pointer.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr GlobalLock(IntPtr memoryHandle);
-
-        /// <summary>Unlocks global memory.</summary>
-        /// <param name="memoryHandle">The memory handle.</param>
-        /// <returns>True if the memory was unlocked; otherwise, false.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static extern bool GlobalUnlock(IntPtr memoryHandle);
-
-        /// <summary>Gets the global memory size.</summary>
-        /// <param name="memoryHandle">The memory handle.</param>
-        /// <returns>The memory size.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int GlobalSize(IntPtr memoryHandle);
-
-        /// <summary>Gets the system tick count.</summary>
-        /// <returns>The elapsed milliseconds since startup.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern ulong GetTickCount64();
-
-        /// <summary>Frees local memory.</summary>
-        /// <param name="memoryHandle">The memory handle.</param>
-        /// <returns>The freed memory handle result.</returns>
-        internal static unsafe IntPtr LocalFree(IntPtr memoryHandle) => ((delegate* unmanaged[Stdcall]<IntPtr, IntPtr>)(void*)LocalFreePointer)(memoryHandle);
-
-        /// <summary>Sets the thread last-error value.</summary>
-        /// <param name="errorCode">The error code.</param>
-        internal static unsafe void SetLastError(uint errorCode) => ((delegate* unmanaged[Stdcall]<uint, void>)(void*)SetLastErrorPointer)(errorCode);
-
-        /// <summary>Opens a thread.</summary>
-        /// <param name="desiredAccess">Desired access rights.</param>
-        /// <param name="inheritHandle">True to inherit the handle; otherwise, false.</param>
-        /// <param name="threadId">The thread id.</param>
-        /// <returns>The thread handle.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern IntPtr OpenThread(ThreadAccess desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint threadId);
-
-        /// <summary>Suspends a thread.</summary>
-        /// <param name="threadHandle">The thread handle.</param>
-        /// <returns>The previous suspend count.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern uint SuspendThread(IntPtr threadHandle);
-
-        /// <summary>Resumes a thread.</summary>
-        /// <param name="threadHandle">The thread handle.</param>
-        /// <returns>The previous suspend count.</returns>
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int ResumeThread(IntPtr threadHandle);
-    }
 
     /// <summary>The maximum package full name length to allocate on the stack.</summary>
     private const int MaxStackPackageFullNameLength = 512;
@@ -279,19 +68,36 @@ public static class Kernel32Api
     private static readonly TimeProvider Clock = TimeProvider.System;
 
     /// <summary>The directory separator characters.</summary>
-    private static readonly char[] DirectorySeparator = new char[1] { '\\' };
+    private static readonly char[] DirectorySeparator = ['\\'];
 
     /// <summary>The cached system startup time.</summary>
     private static DateTimeOffset? _systemStartup;
 
-    /// <summary>Gets a DateTimeOffset which specifies when the system started.</summary>
+    /// <summary>The Kernel32 operations used by the managed wrappers.</summary>
+    private static unsafe Kernel32Operations _operations = new()
+    {
+        SetDefaultDllDirectories = NativeMethods.SetDefaultDllDirectories,
+        SetDllDirectory = NativeMethods.SetDllDirectory,
+        AllocConsole = NativeMethods.AllocConsole,
+        AttachConsole = NativeMethods.AttachConsole,
+        CloseHandle = NativeMethods.CloseHandle,
+        OpenProcess = NativeMethods.OpenProcess,
+        QueryDosDevice = NativeMethods.QueryDosDevice,
+        QueryFullProcessImageName = NativeMethods.QueryFullProcessImageName,
+        GetVersionEx = NativeMethods.GetVersionEx,
+        GetPackageFullName = NativeMethods.GetPackageFullName,
+    };
+
+    /// <summary>Gets a <see cref="DateTimeOffset"/> which specifies when the system started.</summary>
     public static DateTimeOffset SystemStartup
     {
         get
         {
             if (!_systemStartup.HasValue)
             {
-                _systemStartup = Clock.GetLocalNow().Subtract(TimeSpan.FromMilliseconds(GetTickCount64()));
+                _systemStartup = Clock
+                    .GetLocalNow()
+                    .Subtract(TimeSpan.FromMilliseconds(GetTickCount64()));
             }
 
             return _systemStartup.Value;
@@ -312,7 +118,9 @@ public static class Kernel32Api
         }
         else
         {
-            _ = SetDefaultDllDirectories(DefaultDllDirectories.SearchUserDirectories | DefaultDllDirectories.SearchSystem32Directory);
+            _ = SetDefaultDllDirectories(
+                DefaultDllDirectories.SearchUserDirectories
+                    | DefaultDllDirectories.SearchSystem32Directory);
         }
     }
 
@@ -321,7 +129,10 @@ public static class Kernel32Api
     /// <returns>Process path.</returns>
     public static unsafe string GetProcessPath(int processId)
     {
-        IntPtr processHandle = OpenProcess(ProcessAccessRights.VirtualMemoryRead | ProcessAccessRights.QueryInformation, inheritHandle: false, processId);
+        IntPtr processHandle = OpenProcess(
+            ProcessAccessRights.VirtualMemoryRead | ProcessAccessRights.QueryInformation,
+            inheritHandle: false,
+            processId);
         if (processHandle != IntPtr.Zero)
         {
             try
@@ -338,17 +149,23 @@ public static class Kernel32Api
             }
         }
 
-        processHandle = OpenProcess(ProcessAccessRights.QueryInformation, inheritHandle: false, processId);
+        processHandle = OpenProcess(
+            ProcessAccessRights.QueryInformation,
+            inheritHandle: false,
+            processId);
         if (processHandle == IntPtr.Zero)
         {
             return null;
         }
 
-        char* pathBuffer = stackalloc char[512];
+        char* pathBuffer = stackalloc char[MaxStackPackageFullNameLength];
         try
         {
-            int bufferSize = 512;
-            if (Environment.OSVersion.Version.Major >= 6 && QueryFullProcessImageName(processHandle, 0U, pathBuffer, ref bufferSize) && bufferSize > 0)
+            int bufferSize = MaxStackPackageFullNameLength;
+            if (
+                Environment.OSVersion.Version.Major >= VistaMajorVersion
+                && QueryFullProcessImageName(processHandle, 0U, pathBuffer, ref bufferSize)
+                && bufferSize > 0)
             {
                 return new(pathBuffer, 0, bufferSize);
             }
@@ -356,7 +173,10 @@ public static class Kernel32Api
             string dosPath = PsApi.GetProcessImageFileName(processHandle);
             if (dosPath is not null)
             {
-                return GetProcessPathFromDosDevices(dosPath, pathBuffer, 512);
+                return GetProcessPathFromDosDevices(
+                    dosPath,
+                    pathBuffer,
+                    MaxStackPackageFullNameLength);
             }
         }
         finally
@@ -374,7 +194,8 @@ public static class Kernel32Api
     /// If the function fails, the return value is zero. To get extended error information, call GetLastError.
     /// </returns>
     /// <remarks>The process DLL search path applies only to the calling process and persists for the life of the process.</remarks>
-    public static bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags) => NativeMethods.SetDefaultDllDirectories(directoryFlags);
+    public static bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags) =>
+        _operations.SetDefaultDllDirectories(directoryFlags);
 
     /// <summary>Adds a directory to the search path used to locate DLLs for the application.</summary>
     /// <param name="pathName">The directory to be added to the search path.</param>
@@ -382,11 +203,11 @@ public static class Kernel32Api
     /// If the function succeeds, the return value is nonzero.
     /// If the function fails, the return value is zero. To get extended error information, call GetLastError.
     /// </returns>
-    public static bool SetDllDirectory(string pathName) => NativeMethods.SetDllDirectory(pathName);
+    public static bool SetDllDirectory(string pathName) => _operations.SetDllDirectory(pathName);
 
     /// <summary>Allocates a new console for the calling process.</summary>
     /// <returns>True if the console was allocated; otherwise, false.</returns>
-    public static bool AllocConsole() => NativeMethods.AllocConsole();
+    public static bool AllocConsole() => _operations.AllocConsole();
 
     /// <summary>Retrieves the process identifier of the calling process.</summary>
     /// <returns>The current process identifier.</returns>
@@ -409,7 +230,7 @@ public static class Kernel32Api
     /// </summary>
     /// <param name="processId">The identifier of the process whose console is to be used. Or -1 to use the parent process console.</param>
     /// <returns>True if the console was attached; otherwise, false.</returns>
-    public static bool AttachConsole(uint processId) => NativeMethods.AttachConsole(processId);
+    public static bool AttachConsole(uint processId) => _operations.AttachConsole(processId);
 
     /// <summary>
     /// Closes an open object handle.
@@ -418,7 +239,7 @@ public static class Kernel32Api
     /// </summary>
     /// <param name="objectHandle">A valid handle to an open object.</param>
     /// <returns>True if the handle was closed; otherwise, false.</returns>
-    public static bool CloseHandle(IntPtr objectHandle) => NativeMethods.CloseHandle(objectHandle);
+    public static bool CloseHandle(IntPtr objectHandle) => _operations.CloseHandle(objectHandle);
 
     /// <summary>
     ///     Frees the loaded dynamic-link library (DLL) module and, if necessary, decrements its reference count.
@@ -437,7 +258,8 @@ public static class Kernel32Api
     /// </summary>
     /// <param name="moduleName">The name of the loaded module, or null to return the executable module handle.</param>
     /// <returns>If the function succeeds, the return value is a handle to the specified module.</returns>
-    public static IntPtr GetModuleHandle(string moduleName) => NativeMethods.GetModuleHandle(moduleName);
+    public static IntPtr GetModuleHandle(string moduleName) =>
+        NativeMethods.GetModuleHandle(moduleName);
 
     /// <summary>See <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724358.aspx">GetProductInfo function</a>.</summary>
     /// <param name="operatingSystemMajorVersion">
@@ -451,18 +273,29 @@ public static class Kernel32Api
     /// <param name="servicePackMinorVersion">The minor version number of the operating system service pack. The minimum value is 0.</param>
     /// <param name="edition">WindowsProducts</param>
     /// <returns>True if product information was retrieved; otherwise, false.</returns>
-    public static bool GetProductInfo(int operatingSystemMajorVersion, int operatingSystemMinorVersion, int servicePackMajorVersion, int servicePackMinorVersion, out WindowsProducts edition) => NativeMethods.GetProductInfo(operatingSystemMajorVersion, operatingSystemMinorVersion, servicePackMajorVersion, servicePackMinorVersion, out edition);
+    public static bool GetProductInfo(
+        int operatingSystemMajorVersion,
+        int operatingSystemMinorVersion,
+        int servicePackMajorVersion,
+        int servicePackMinorVersion,
+        out WindowsProducts edition) =>
+        NativeMethods.GetProductInfo(
+            operatingSystemMajorVersion,
+            operatingSystemMinorVersion,
+            servicePackMajorVersion,
+            servicePackMinorVersion,
+            out edition);
 
     /// <summary>See <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms724451(v=vs.85).aspx">GetVersionEx function</a>.</summary>
     /// <param name="operatingSystemVersionInfo">OsVersionInfoEx</param>
     /// <returns>If the function fails, the return value is false. To get extended error information, call GetLastError.</returns>
     public static unsafe bool GetVersionEx(ref OsVersionInfoEx operatingSystemVersionInfo)
     {
-        Span<byte> versionInfo = stackalloc byte[284];
-        BinaryPrimitives.WriteInt32LittleEndian(versionInfo, 284);
+        Span<byte> versionInfo = stackalloc byte[OsVersionInfoExSize];
+        BinaryPrimitives.WriteInt32LittleEndian(versionInfo, OsVersionInfoExSize);
         fixed (byte* versionInfo2 = versionInfo)
         {
-            if (!NativeMethods.GetVersionEx(versionInfo2))
+            if (!_operations.GetVersionEx(versionInfo2))
             {
                 return false;
             }
@@ -486,14 +319,18 @@ public static class Kernel32Api
     /// <param name="inheritHandle">True to allow child processes to inherit the handle; otherwise, false.</param>
     /// <param name="processId">The identifier of the local process to be opened.</param>
     /// <returns>If the function succeeds, the return value is an open handle to the specified process.</returns>
-    public static IntPtr OpenProcess(ProcessAccessRights desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, int processId) => NativeMethods.OpenProcess(desiredAccess, inheritHandle, processId);
+    public static IntPtr OpenProcess(
+        ProcessAccessRights desiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+        int processId) => _operations.OpenProcess(desiredAccess, inheritHandle, processId);
 
     /// <summary>See <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/aa365461(v=vs.85).aspx">QueryDosDevice function</a>.</summary>
     /// <param name="deviceName">An MS-DOS device name string specifying the target of the query.</param>
     /// <param name="targetPath">A pointer to a buffer that receives the result of the query.</param>
     /// <param name="uuchMax">The maximum number of TCHARs that can be stored into the buffer pointed to by targetPath.</param>
     /// <returns>If the function succeeds, the return value is the number of TCHARs stored into the buffer pointed to by targetPath.</returns>
-    public static unsafe int QueryDosDevice(string deviceName, char* targetPath, int uuchMax) => NativeMethods.QueryDosDevice(deviceName, targetPath, uuchMax);
+    public static unsafe int QueryDosDevice(string deviceName, char* targetPath, int uuchMax) =>
+        _operations.QueryDosDevice(deviceName, targetPath, uuchMax);
 
     /// <summary>Retrieves the full name of the executable image for the specified process.</summary>
     /// <param name="processHandle">A handle to the process.</param>
@@ -508,7 +345,12 @@ public static class Kernel32Api
     /// If the function succeeds, the return value is nonzero.
     /// If the function fails, the return value is zero. To get extended error information, call GetLastError.
     /// </returns>
-    public static unsafe bool QueryFullProcessImageName(IntPtr processHandle, uint flags, char* executableName, ref int lpdwSize) => NativeMethods.QueryFullProcessImageName(processHandle, flags, executableName, ref lpdwSize);
+    public static unsafe bool QueryFullProcessImageName(
+        IntPtr processHandle,
+        uint flags,
+        char* executableName,
+        ref int lpdwSize) =>
+        _operations.QueryFullProcessImageName(processHandle, flags, executableName, ref lpdwSize);
 
     /// <summary>Allocates the specified number of bytes from the heap.</summary>
     /// <param name="globalMemorySettings">The memory allocation attributes.</param>
@@ -517,7 +359,8 @@ public static class Kernel32Api
     /// If the function succeeds, the return value is a handle to the newly allocated memory object.
     /// If the function fails, the return value is NULL. To get extended error information, call GetLastError.
     /// </returns>
-    public static IntPtr GlobalAlloc(GlobalMemorySettings globalMemorySettings, UIntPtr bytes) => NativeMethods.GlobalAlloc(globalMemorySettings, bytes);
+    public static IntPtr GlobalAlloc(GlobalMemorySettings globalMemorySettings, UIntPtr bytes) =>
+        NativeMethods.GlobalAlloc(globalMemorySettings, bytes);
 
     /// <summary>Locks a global memory object and returns a pointer to the first byte of the object's memory block.</summary>
     /// <param name="memoryHandle">IntPtr with a hGlobal, handle for a global memory blockk</param>
@@ -527,7 +370,8 @@ public static class Kernel32Api
     /// <summary>Decrements the lock count associated with a movable global memory object.</summary>
     /// <param name="memoryHandle">IntPtr with a hGlobal, handle for a global memory block</param>
     /// <returns>bool if the unlock worked.</returns>
-    public static bool GlobalUnlock(IntPtr memoryHandle) => NativeMethods.GlobalUnlock(memoryHandle);
+    public static bool GlobalUnlock(IntPtr memoryHandle) =>
+        NativeMethods.GlobalUnlock(memoryHandle);
 
     /// <summary>Retrieves the current size of the specified global memory object, in bytes.</summary>
     /// <param name="memoryHandle">IntPtr with a hGlobal, handle for a global memory blockk</param>
@@ -552,12 +396,16 @@ public static class Kernel32Api
     /// <param name="inheritHandle">bool</param>
     /// <param name="threadId">uint</param>
     /// <returns>The thread handle.</returns>
-    public static IntPtr OpenThread(ThreadAccess desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint threadId) => NativeMethods.OpenThread(desiredAccess, inheritHandle, threadId);
+    public static IntPtr OpenThread(
+        ThreadAccess desiredAccess,
+        [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+        uint threadId) => NativeMethods.OpenThread(desiredAccess, inheritHandle, threadId);
 
     /// <summary>See <a href="https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-suspendthread">Suspend thread</a>.</summary>
     /// <param name="threadHandle">IntPtr</param>
     /// <returns>The previous suspend count.</returns>
-    public static uint SuspendThread(IntPtr threadHandle) => NativeMethods.SuspendThread(threadHandle);
+    public static uint SuspendThread(IntPtr threadHandle) =>
+        NativeMethods.SuspendThread(threadHandle);
 
     /// <summary>The ResumeThread value.</summary>
     /// <param name="threadHandle">IntPtr</param>
@@ -569,15 +417,24 @@ public static class Kernel32Api
     /// <param name="packageFullNameLength">The package full name buffer length.</param>
     /// <param name="fullName">StringBuilder to place the fullname in</param>
     /// <returns>Win32 result code.</returns>
-    public static unsafe int GetPackageFullName(IntPtr processHandle, ref int packageFullNameLength, StringBuilder fullName)
+    public static unsafe int GetPackageFullName(
+        IntPtr processHandle,
+        ref int packageFullNameLength,
+        StringBuilder fullName)
     {
         Throw.IfNull(fullName);
         int capacity = fullName.Capacity;
-        Span<char> span = ((capacity > 512) ? ((Span<char>)new char[capacity]) : stackalloc char[capacity]);
+        Span<char> span = (
+            (capacity > MaxStackPackageFullNameLength)
+                ? ((Span<char>)new char[capacity])
+                : stackalloc char[capacity]);
         Span<char> buffer = span;
         fixed (char* bufferPointer = buffer)
         {
-            int result = NativeMethods.GetPackageFullName(processHandle, ref packageFullNameLength, bufferPointer);
+            int result = _operations.GetPackageFullName(
+                processHandle,
+                ref packageFullNameLength,
+                bufferPointer);
             if (result != 0)
             {
                 return result;
@@ -586,6 +443,7 @@ public static class Kernel32Api
             int length;
             for (length = 0; length < capacity && buffer[length] != 0; length = checked(length + 1))
             {
+                // Advance to the terminating null character written by kernel32.
             }
 
             _ = fullName.Clear();
@@ -594,20 +452,36 @@ public static class Kernel32Api
         }
     }
 
+    /// <summary>Overrides Kernel32 operations for deterministic tests.</summary>
+    /// <param name="operations">The replacement operations.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(Kernel32Operations operations)
+    {
+        Throw.IfNull(operations);
+        Kernel32Operations previous = _operations;
+        _operations = operations;
+        return Scope.Create(previous, static value => _operations = value);
+    }
+
     /// <summary>Creates a managed OS version value from an OSVERSIONINFOEXW byte buffer.</summary>
     /// <param name="versionInfo">The native OSVERSIONINFOEXW bytes.</param>
     /// <returns>The managed OS version value.</returns>
-    internal static OsVersionInfoEx CreateOsVersionInfo(ReadOnlySpan<byte> versionInfo) => new OsVersionInfoEx
+    internal static OsVersionInfoEx CreateOsVersionInfo(ReadOnlySpan<byte> versionInfo) =>
+        new OsVersionInfoEx
         {
-            MajorVersion = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(4)),
-            MinorVersion = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(8)),
-            BuildNumber = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(12)),
-            PlatformId = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(16)),
-            ServicePackVersion = NativeUtf16String.ReadNullTerminated(versionInfo.Slice(20, 256)),
-            ServicePackMajor = BinaryPrimitives.ReadInt16LittleEndian(versionInfo.Slice(276)),
-            ServicePackMinor = BinaryPrimitives.ReadInt16LittleEndian(versionInfo.Slice(278)),
-            SuiteMask = (WindowsSuites)BinaryPrimitives.ReadUInt16LittleEndian(versionInfo.Slice(280)),
-            ProductType = (WindowsProductTypes)versionInfo[282]
+            MajorVersion = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(MajorVersionOffset)),
+            MinorVersion = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(MinorVersionOffset)),
+            BuildNumber = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(BuildNumberOffset)),
+            PlatformId = BinaryPrimitives.ReadInt32LittleEndian(versionInfo.Slice(PlatformIdOffset)),
+            ServicePackVersion = NativeUtf16String.ReadNullTerminated(
+                versionInfo.Slice(
+                    ServicePackVersionOffset,
+                    ServicePackVersionCharacterCapacity * Utf16CharacterSize)),
+            ServicePackMajor = BinaryPrimitives.ReadInt16LittleEndian(versionInfo.Slice(ServicePackMajorOffset)),
+            ServicePackMinor = BinaryPrimitives.ReadInt16LittleEndian(versionInfo.Slice(ServicePackMinorOffset)),
+            SuiteMask = (WindowsSuites)
+                BinaryPrimitives.ReadUInt16LittleEndian(versionInfo.Slice(SuiteMaskOffset)),
+            ProductType = (WindowsProductTypes)versionInfo[ProductTypeOffset],
         };
 
     /// <summary>Gets a Win32 path from a DOS device path.</summary>
@@ -615,9 +489,12 @@ public static class Kernel32Api
     /// <param name="pathBuffer">Reusable path buffer.</param>
     /// <param name="capacity">Reusable path buffer capacity.</param>
     /// <returns>Win32 path if resolved; otherwise, null.</returns>
-    private static unsafe string GetProcessPathFromDosDevices(string dosPath, char* pathBuffer, int capacity)
+    private static unsafe string GetProcessPathFromDosDevices(
+        string dosPath,
+        char* pathBuffer,
+        int capacity)
     {
-        string[] logicalDrives = Environment.GetLogicalDrives();
+        string[] logicalDrives = _operations.GetLogicalDrives();
         foreach (string drive in logicalDrives)
         {
             int charCount = QueryDosDevice(drive.TrimEnd(DirectorySeparator), pathBuffer, capacity);
@@ -626,11 +503,655 @@ public static class Kernel32Api
                 string dosDevice = new(pathBuffer, 0, charCount);
                 if (dosPath.StartsWith(dosDevice, StringComparison.Ordinal))
                 {
-                    return drive + dosPath.Remove(0, charCount);
+                    return drive.TrimEnd(DirectorySeparator) + dosPath.Remove(0, charCount);
                 }
             }
         }
 
         return null;
+    }
+
+    /// <summary>Native kernel32 entry points that need managed public wrappers.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
+    {
+        /// <summary>The Kernel32 DLL library name.</summary>
+        private const string Kernel32Dll = "kernel32.dll";
+
+        /// <summary>The loaded Kernel32 module.</summary>
+        private static readonly IntPtr Kernel32Module = NativeLibrary.Load("kernel32.dll");
+
+        /// <summary>The exported LocalFree function pointer.</summary>
+        private static readonly IntPtr LocalFreePointer = NativeLibrary.GetExport(
+            Kernel32Module,
+            nameof(LocalFree));
+
+        /// <summary>The exported SetLastError function pointer.</summary>
+        private static readonly IntPtr SetLastErrorPointer = NativeLibrary.GetExport(
+            Kernel32Module,
+            nameof(SetLastError));
+
+        /// <summary>Gets the package full name for a process.</summary>
+        /// <param name="processHandle">Process handle.</param>
+        /// <param name="packageFullNameLength">Package name buffer length.</param>
+        /// <param name="fullName">Package name buffer.</param>
+        /// <returns>Win32 result code.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern unsafe int GetPackageFullName(
+            IntPtr processHandle,
+            ref int packageFullNameLength,
+            char* fullName);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern unsafe int GetPackageFullName(
+            IntPtr processHandle,
+            ref int packageFullNameLength,
+            char* fullName);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static unsafe partial int GetPackageFullName(
+            IntPtr processHandle,
+            ref int packageFullNameLength,
+            char* fullName);
+#endif
+#endif
+
+        /// <summary>Specifies the default directories searched for DLLs.</summary>
+        /// <param name="directoryFlags">Directory search flags.</param>
+        /// <returns>True if the directory set was applied; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetDefaultDllDirectories(DefaultDllDirectories directoryFlags);
+#endif
+#endif
+
+        /// <summary>Adds a directory to the DLL search path.</summary>
+        /// <param name="pathName">The path name.</param>
+        /// <returns>True if the directory was set; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetDllDirectory(string pathName);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool SetDllDirectory(string pathName);
+#else
+        [LibraryImport(
+            "kernel32.dll",
+            SetLastError = true,
+            StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool SetDllDirectory(string pathName);
+#endif
+#endif
+
+        /// <summary>Allocates a console.</summary>
+        /// <returns>True if a console was allocated; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool AllocConsole();
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool AllocConsole();
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool AllocConsole();
+#endif
+#endif
+
+        /// <summary>Gets the current process id.</summary>
+        /// <returns>The process id.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GetCurrentProcessId();
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GetCurrentProcessId();
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int GetCurrentProcessId();
+#endif
+#endif
+
+        /// <summary>Gets the current thread id.</summary>
+        /// <returns>The thread id.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GetCurrentThreadId();
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GetCurrentThreadId();
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int GetCurrentThreadId();
+#endif
+#endif
+
+        /// <summary>Attaches the current process to a console.</summary>
+        /// <param name="processId">The process id.</param>
+        /// <returns>True if the console was attached; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool AttachConsole(uint processId);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool AttachConsole(uint processId);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool AttachConsole(uint processId);
+#endif
+#endif
+
+        /// <summary>Closes a native handle.</summary>
+        /// <param name="objectHandle">The object handle.</param>
+        /// <returns>True if the handle was closed; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool CloseHandle(IntPtr objectHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool CloseHandle(IntPtr objectHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool CloseHandle(IntPtr objectHandle);
+#endif
+#endif
+
+        /// <summary>Frees a loaded module.</summary>
+        /// <param name="module">The module handle.</param>
+        /// <returns>True if the module was freed; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool FreeLibrary(IntPtr module);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool FreeLibrary(IntPtr module);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool FreeLibrary(IntPtr module);
+#endif
+#endif
+
+        /// <summary>Gets a module handle.</summary>
+        /// <param name="moduleName">The module name.</param>
+        /// <returns>The module handle.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "GetModuleHandleW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GetModuleHandle(string moduleName);
+#else
+#if NETFRAMEWORK
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "GetModuleHandleW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GetModuleHandle(string moduleName);
+#else
+        [LibraryImport(
+            "kernel32.dll",
+            EntryPoint = "GetModuleHandleW",
+            SetLastError = true,
+            StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr GetModuleHandle(string moduleName);
+#endif
+#endif
+
+        /// <summary>Gets Windows product information.</summary>
+        /// <param name="operatingSystemMajorVersion">The operating system major version.</param>
+        /// <param name="operatingSystemMinorVersion">The operating system minor version.</param>
+        /// <param name="servicePackMajorVersion">The service pack major version.</param>
+        /// <param name="servicePackMinorVersion">The service pack minor version.</param>
+        /// <param name="edition">The Windows product edition.</param>
+        /// <returns>True if product information was retrieved; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetProductInfo(
+            int operatingSystemMajorVersion,
+            int operatingSystemMinorVersion,
+            int servicePackMajorVersion,
+            int servicePackMinorVersion,
+            out WindowsProducts edition);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GetProductInfo(
+            int operatingSystemMajorVersion,
+            int operatingSystemMinorVersion,
+            int servicePackMajorVersion,
+            int servicePackMinorVersion,
+            out WindowsProducts edition);
+#else
+        [LibraryImport("kernel32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool GetProductInfo(
+            int operatingSystemMajorVersion,
+            int operatingSystemMinorVersion,
+            int servicePackMajorVersion,
+            int servicePackMinorVersion,
+            out WindowsProducts edition);
+#endif
+#endif
+
+        /// <summary>Gets version information.</summary>
+        /// <param name="versionInfo">The version information.</param>
+        /// <returns>True if version information was retrieved; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", EntryPoint = "GetVersionExW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern unsafe bool GetVersionEx(void* versionInfo);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", EntryPoint = "GetVersionExW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern unsafe bool GetVersionEx(void* versionInfo);
+#else
+        [LibraryImport("kernel32.dll", EntryPoint = "GetVersionExW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static unsafe partial bool GetVersionEx(void* versionInfo);
+#endif
+#endif
+
+        /// <summary>Loads a native library.</summary>
+        /// <param name="fileName">The file name.</param>
+        /// <returns>The module handle.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "LoadLibraryW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr LoadLibrary(string fileName);
+#else
+#if NETFRAMEWORK
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "LoadLibraryW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr LoadLibrary(string fileName);
+#else
+        [LibraryImport(
+            "kernel32.dll",
+            EntryPoint = "LoadLibraryW",
+            SetLastError = true,
+            StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr LoadLibrary(string fileName);
+#endif
+#endif
+
+        /// <summary>Opens a process.</summary>
+        /// <param name="desiredAccess">Desired access rights.</param>
+        /// <param name="inheritHandle">True to inherit the handle; otherwise, false.</param>
+        /// <param name="processId">The process id.</param>
+        /// <returns>The process handle.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr OpenProcess(
+            ProcessAccessRights desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            int processId);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr OpenProcess(
+            ProcessAccessRights desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            int processId);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr OpenProcess(
+            ProcessAccessRights desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            int processId);
+#endif
+#endif
+
+        /// <summary>Queries a DOS device path.</summary>
+        /// <param name="deviceName">The device name.</param>
+        /// <param name="targetPath">The target path buffer.</param>
+        /// <param name="maximumLength">The buffer capacity.</param>
+        /// <returns>The number of characters copied.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "QueryDosDeviceW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern unsafe int QueryDosDevice(
+            string deviceName,
+            char* targetPath,
+            int maximumLength);
+#else
+#if NETFRAMEWORK
+        [DllImport(
+            "kernel32.dll",
+            EntryPoint = "QueryDosDeviceW",
+            SetLastError = true,
+            CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern unsafe int QueryDosDevice(
+            string deviceName,
+            char* targetPath,
+            int maximumLength);
+#else
+        [LibraryImport(
+            "kernel32.dll",
+            EntryPoint = "QueryDosDeviceW",
+            SetLastError = true,
+            StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static unsafe partial int QueryDosDevice(
+            string deviceName,
+            char* targetPath,
+            int maximumLength);
+#endif
+#endif
+
+        /// <summary>Queries a process image name.</summary>
+        /// <param name="processHandle">The process handle.</param>
+        /// <param name="flags">Query flags.</param>
+        /// <param name="exeName">The executable name buffer.</param>
+        /// <param name="size">The buffer size.</param>
+        /// <returns>True if the image name was retrieved; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern unsafe bool QueryFullProcessImageName(
+            IntPtr processHandle,
+            uint flags,
+            char* exeName,
+            ref int size);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern unsafe bool QueryFullProcessImageName(
+            IntPtr processHandle,
+            uint flags,
+            char* exeName,
+            ref int size);
+#else
+        [LibraryImport(
+            "kernel32.dll",
+            EntryPoint = "QueryFullProcessImageNameW",
+            SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static unsafe partial bool QueryFullProcessImageName(
+            IntPtr processHandle,
+            uint flags,
+            char* exeName,
+            ref int size);
+#endif
+#endif
+
+        /// <summary>Allocates global memory.</summary>
+        /// <param name="globalMemorySettings">Memory allocation attributes.</param>
+        /// <param name="bytes">Bytes to allocate.</param>
+        /// <returns>The memory handle.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GlobalAlloc(
+            GlobalMemorySettings globalMemorySettings,
+            UIntPtr bytes);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GlobalAlloc(
+            GlobalMemorySettings globalMemorySettings,
+            UIntPtr bytes);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr GlobalAlloc(
+            GlobalMemorySettings globalMemorySettings,
+            UIntPtr bytes);
+#endif
+#endif
+
+        /// <summary>Locks global memory.</summary>
+        /// <param name="memoryHandle">The memory handle.</param>
+        /// <returns>The memory pointer.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GlobalLock(IntPtr memoryHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr GlobalLock(IntPtr memoryHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr GlobalLock(IntPtr memoryHandle);
+#endif
+#endif
+
+        /// <summary>Unlocks global memory.</summary>
+        /// <param name="memoryHandle">The memory handle.</param>
+        /// <returns>True if the memory was unlocked; otherwise, false.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GlobalUnlock(IntPtr memoryHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool GlobalUnlock(IntPtr memoryHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool GlobalUnlock(IntPtr memoryHandle);
+#endif
+#endif
+
+        /// <summary>Gets the global memory size.</summary>
+        /// <param name="memoryHandle">The memory handle.</param>
+        /// <returns>The memory size.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GlobalSize(IntPtr memoryHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int GlobalSize(IntPtr memoryHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int GlobalSize(IntPtr memoryHandle);
+#endif
+#endif
+
+        /// <summary>Gets the system tick count.</summary>
+        /// <returns>The elapsed milliseconds since startup.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern ulong GetTickCount64();
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern ulong GetTickCount64();
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial ulong GetTickCount64();
+#endif
+#endif
+
+        /// <summary>Frees local memory.</summary>
+        /// <param name="memoryHandle">The memory handle.</param>
+        /// <returns>The freed memory handle result.</returns>
+        internal static unsafe IntPtr LocalFree(IntPtr memoryHandle) =>
+            ((delegate* unmanaged[Stdcall]<IntPtr, IntPtr>)(void*)LocalFreePointer)(memoryHandle);
+
+        /// <summary>Sets the thread last-error value.</summary>
+        /// <param name="errorCode">The error code.</param>
+        internal static unsafe void SetLastError(uint errorCode) =>
+            ((delegate* unmanaged[Stdcall]<uint, void>)(void*)SetLastErrorPointer)(errorCode);
+
+        /// <summary>Opens a thread.</summary>
+        /// <param name="desiredAccess">Desired access rights.</param>
+        /// <param name="inheritHandle">True to inherit the handle; otherwise, false.</param>
+        /// <param name="threadId">The thread id.</param>
+        /// <returns>The thread handle.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr OpenThread(
+            ThreadAccess desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            uint threadId);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern IntPtr OpenThread(
+            ThreadAccess desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            uint threadId);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial IntPtr OpenThread(
+            ThreadAccess desiredAccess,
+            [MarshalAs(UnmanagedType.Bool)] bool inheritHandle,
+            uint threadId);
+#endif
+#endif
+
+        /// <summary>Suspends a thread.</summary>
+        /// <param name="threadHandle">The thread handle.</param>
+        /// <returns>The previous suspend count.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern uint SuspendThread(IntPtr threadHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern uint SuspendThread(IntPtr threadHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial uint SuspendThread(IntPtr threadHandle);
+#endif
+#endif
+
+        /// <summary>Resumes a thread.</summary>
+        /// <param name="threadHandle">The thread handle.</param>
+        /// <returns>The previous suspend count.</returns>
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int ResumeThread(IntPtr threadHandle);
+#else
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int ResumeThread(IntPtr threadHandle);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int ResumeThread(IntPtr threadHandle);
+#endif
+#endif
     }
 }

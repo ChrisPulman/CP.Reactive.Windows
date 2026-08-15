@@ -59,5 +59,5 @@ internal enum FileOpenOptions : uint
     /// <summary>Indicates to the Save As dialog box that it should open in expanded mode.</summary>
     DefaultNoMiniMode = 0x20000000U,
     /// <summary>Indicates to the Open dialog box that the preview pane should always be displayed.</summary>
-    ForcePreviewPaneOn = 0x40000000U
+    ForcePreviewPaneOn = 0x40000000U,
 }

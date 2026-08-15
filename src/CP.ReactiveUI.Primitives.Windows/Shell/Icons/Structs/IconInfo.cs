@@ -73,26 +73,15 @@ public readonly struct IconInfo : IEquatable<IconInfo>
     }
 
     /// <inheritdoc />
-    public bool Equals(IconInfo other)
-    {
-        if (_isIcon == other._isIcon && _hotspotX == other._hotspotX && _hotspotY == other._hotspotY && _maskBitmapHandle == other._maskBitmapHandle)
-        {
-            return _colorBitmapHandle == other._colorBitmapHandle;
-        }
-
-        return false;
-    }
+    public bool Equals(IconInfo other) =>
+        _isIcon == other._isIcon
+        && _hotspotX == other._hotspotX
+        && _hotspotY == other._hotspotY
+        && _maskBitmapHandle == other._maskBitmapHandle
+        && _colorBitmapHandle == other._colorBitmapHandle;
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is IconInfo other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is IconInfo other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_isIcon, _hotspotX, _hotspotY, _maskBitmapHandle, _colorBitmapHandle);

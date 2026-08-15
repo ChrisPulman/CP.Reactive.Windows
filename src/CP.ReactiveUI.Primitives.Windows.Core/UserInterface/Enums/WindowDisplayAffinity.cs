@@ -9,6 +9,7 @@ public enum WindowDisplayAffinity
 {
     /// <summary>Non affinity.</summary>
     None,
+
     /// <summary>Enable window contents to be displayed on a monitor.</summary>
-    Monitor
+    Monitor,
 }

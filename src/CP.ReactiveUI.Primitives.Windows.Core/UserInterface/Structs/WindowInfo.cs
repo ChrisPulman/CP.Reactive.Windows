@@ -81,7 +81,8 @@ public struct WindowInfo : IEquatable<WindowInfo>
     public readonly ExtendedWindowStyleFlags ExtendedStyle => _nativeExtendedStyle;
 
     /// <summary>Gets the size of the border.</summary>
-    public readonly NativeSize BorderSize => checked(new NativeSize((int)_nativeWindowBorderWidth, (int)_nativeWindowBorderHeight));
+    public readonly NativeSize BorderSize =>
+        checked(new NativeSize((int)_nativeWindowBorderWidth, (int)_nativeWindowBorderHeight));
 
     /// <summary>Gets the Windows version of the application that created the window.</summary>
     public readonly ushort CreatorVersion => _nativeCreatorVersion;
@@ -91,7 +92,8 @@ public struct WindowInfo : IEquatable<WindowInfo>
 
     /// <summary>Factory method for a default WindowInfo.</summary>
     /// <returns>The initialized window information.</returns>
-    public static WindowInfo Create() => new WindowInfo { _nativeSize = checked((uint)Marshal.SizeOf<WindowInfo>()) };
+    public static WindowInfo Create() =>
+        new WindowInfo { _nativeSize = checked((uint)Marshal.SizeOf<WindowInfo>()) };
 
     /// <summary>Compares two WindowInfo values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -112,10 +114,22 @@ public struct WindowInfo : IEquatable<WindowInfo>
     }
 
     /// <inheritdoc />
-    public override readonly string ToString() => $"{{IsActive: {IsActive}; Bounds: {_nativeWindowBounds}; ClientBounds: {_nativeClientBounds}; Style: {_nativeStyle}; ExtendedStyle: {_nativeExtendedStyle}; BorderSize: {BorderSize};}}";
+    public override readonly string ToString() =>
+        $"{{IsActive: {IsActive}; Bounds: {_nativeWindowBounds}; ClientBounds: {_nativeClientBounds};"
+        + $" Style: {_nativeStyle}; ExtendedStyle: {_nativeExtendedStyle}; BorderSize: {BorderSize};}}";
 
     /// <inheritdoc />
-    public readonly bool Equals(WindowInfo other) => _nativeSize == other._nativeSize && _nativeWindowBounds.Equals(other._nativeWindowBounds) && _nativeClientBounds.Equals(other._nativeClientBounds) && _nativeStyle == other._nativeStyle && _nativeExtendedStyle == other._nativeExtendedStyle && _nativeWindowStatus == other._nativeWindowStatus && _nativeWindowBorderWidth == other._nativeWindowBorderWidth && _nativeWindowBorderHeight == other._nativeWindowBorderHeight && _nativeAtomWindowType == other._nativeAtomWindowType && _nativeCreatorVersion == other._nativeCreatorVersion;
+    public readonly bool Equals(WindowInfo other) =>
+        _nativeSize == other._nativeSize
+        && _nativeWindowBounds.Equals(other._nativeWindowBounds)
+        && _nativeClientBounds.Equals(other._nativeClientBounds)
+        && _nativeStyle == other._nativeStyle
+        && _nativeExtendedStyle == other._nativeExtendedStyle
+        && _nativeWindowStatus == other._nativeWindowStatus
+        && _nativeWindowBorderWidth == other._nativeWindowBorderWidth
+        && _nativeWindowBorderHeight == other._nativeWindowBorderHeight
+        && _nativeAtomWindowType == other._nativeAtomWindowType
+        && _nativeCreatorVersion == other._nativeCreatorVersion;
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is WindowInfo other && Equals(other);

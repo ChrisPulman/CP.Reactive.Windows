@@ -16,4 +16,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Native;
 /// <param name="wordParameter">The first message-specific value. The meaning depends on the value of the msg parameter.</param>
 /// <param name="longParameter">The second message-specific value. The meaning depends on the value of the msg parameter.</param>
 /// <returns>A value that indicates the result of the message processing, as defined by the message being handled.</returns>
-public delegate nuint WndProc(nint windowHandle, WindowsMessages msg, nint wordParameter, nint longParameter);
+public delegate nuint WndProc(
+    nint windowHandle,
+    WindowsMessages msg,
+    nint wordParameter,
+    nint longParameter);

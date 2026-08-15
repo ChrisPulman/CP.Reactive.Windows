@@ -44,7 +44,8 @@ public struct CieXyzTriple : IEquatable<CieXyzTriple>
     /// <param name="green">The green CIE XYZ component.</param>
     /// <param name="blue">The blue CIE XYZ component.</param>
     /// <returns>The CIE XYZ triplet.</returns>
-    public static CieXyzTriple Create(CieXyz red, CieXyz green, CieXyz blue) => new CieXyzTriple { _cieXyzRed = red, _cieXyzGreen = green, _cieXyzBlue = blue };
+    public static CieXyzTriple Create(CieXyz red, CieXyz green, CieXyz blue) =>
+        new CieXyzTriple { _cieXyzRed = red, _cieXyzGreen = green, _cieXyzBlue = blue };
 
     /// <summary>Determines whether two CIE XYZ triplets are equal.</summary>
     /// <param name="left">The first CIE XYZ triplet.</param>
@@ -65,7 +66,10 @@ public struct CieXyzTriple : IEquatable<CieXyzTriple>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(CieXyzTriple other) => _cieXyzRed.Equals(other._cieXyzRed) && _cieXyzGreen.Equals(other._cieXyzGreen) && _cieXyzBlue.Equals(other._cieXyzBlue);
+    public readonly bool Equals(CieXyzTriple other) =>
+        _cieXyzRed.Equals(other._cieXyzRed)
+        && _cieXyzGreen.Equals(other._cieXyzGreen)
+        && _cieXyzBlue.Equals(other._cieXyzBlue);
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is CieXyzTriple other && Equals(other);

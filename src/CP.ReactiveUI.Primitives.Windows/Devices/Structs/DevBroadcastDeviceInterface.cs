@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
+using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Structs;
@@ -53,6 +54,9 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <summary>The device type regular expression.</summary>
     private static readonly Regex DeviceTypeExpression = new("\\\\\\?\\\\([A-Z]+)#", RegexOptions.IgnoreCase, RegexTimeout);
 
+    /// <summary>Reads device-registry values for the current process.</summary>
+    private static Func<string, string, object> _readRegistryValue = ReadRegistryValue;
+
     /// <summary>The structure size.</summary>
     private int _size;
 
@@ -82,12 +86,22 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     public readonly string Name => _name;
 
     /// <summary>Gets the display name of the device.</summary>
-    public string DisplayName
+    public readonly string DisplayName
     {
         get
         {
-            string displayName = _name.Substring(3);
-            displayName = displayName.Substring(0, displayName.LastIndexOf("#{", StringComparison.Ordinal));
+            if (string.IsNullOrEmpty(_name) || _name.Length <= DevicePathPrefixLength)
+            {
+                return _name;
+            }
+
+            string displayName = SpanText.Slice(_name, DevicePathPrefixLength);
+            int classMarkerIndex = displayName.LastIndexOf("#{", StringComparison.Ordinal);
+            if (classMarkerIndex >= 0)
+            {
+                displayName = SpanText.Create(displayName.AsSpan(0, classMarkerIndex));
+            }
+
             return displayName.Replace('#', '\\');
         }
     }
@@ -98,45 +112,30 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <summary>
     /// Gets returns the Device Setup Class GUID from the Windows registry.
     /// This is the Class GUID shown in Device Manager (e.g., {4d36e968-e325-11ce-bfc1-08002be10318} for Display adapters).
-    /// This is different from <see cref="P:CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Structs.DevBroadcastDeviceInterface.DeviceClassGuid" /> which is the Device Interface Class GUID from the notification message.
+    /// This differs from <see cref="DeviceClassGuid" />, which is the notification Device Interface Class GUID.
     /// Returns null if the registry key cannot be accessed or the ClassGUID value is not found.
     /// </summary>
-    public readonly Guid? DeviceSetupClassGuid
-    {
-        get
-        {
-            using (RegistryKey key = TryOpenDeviceRegistryKey(_name))
-            {
-                if (key?.GetValue("ClassGUID") is string classGuidString && Guid.TryParse(classGuidString, out var classGuid))
-                {
-                    return classGuid;
-                }
-            }
-
-            return null;
-        }
-    }
+    public readonly Guid? DeviceSetupClassGuid =>
+        _readRegistryValue(_name, "ClassGUID") is string classGuidString
+            && Guid.TryParse(classGuidString, out var classGuid)
+            ? classGuid
+            : null;
 
     /// <summary>Gets returns the device type, e.g. USB or HID.</summary>
-    public string DeviceType
+    public readonly string DeviceType
     {
         get
         {
             Match match = DeviceTypeExpression.Match(_name);
-            if (match.Groups.Count == 2)
-            {
-                return match.Groups[1].Value;
-            }
-
-            return null;
+            return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
 
     /// <summary>Gets is this a USB device?</summary>
-    public bool IsUsb => "USB".Equals(DeviceType, StringComparison.OrdinalIgnoreCase);
+    public readonly bool IsUsb => "USB".Equals(DeviceType, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Gets is this a PCI device?</summary>
-    public bool IsPci => "PCI".Equals(DeviceType, StringComparison.OrdinalIgnoreCase);
+    public readonly bool IsPci => "PCI".Equals(DeviceType, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Gets returns the Device ID of the device.</summary>
     public readonly string DeviceId
@@ -144,12 +143,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         get
         {
             Match match = DeviceIdExpression.Match(_name);
-            if (match.Groups.Count == 2)
-            {
-                return match.Groups[1].Value;
-            }
-
-            return null;
+            return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
 
@@ -159,12 +153,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         get
         {
             Match match = VendorExpression.Match(_name);
-            if (match.Groups.Count == 3)
-            {
-                return match.Groups[2].Value;
-            }
-
-            return null;
+            return match.Groups.Count == VendorGroupCount ? match.Groups[2].Value : null;
         }
     }
 
@@ -174,12 +163,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         get
         {
             Match match = ProductExpression.Match(_name);
-            if (match.Groups.Count == 2)
-            {
-                return match.Groups[1].Value;
-            }
-
-            return null;
+            return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
 
@@ -203,10 +187,10 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <summary>Factory for an empty, but initialized, DevBroadcastDeviceInterface.</summary>
     /// <returns>A DevBroadcastDeviceInterface value.</returns>
     public static DevBroadcastDeviceInterface Create() => new DevBroadcastDeviceInterface
-        {
-            _deviceType = DeviceBroadcastDeviceType.DeviceInterface,
-            _size = Marshal.SizeOf<DevBroadcastDeviceInterface>()
-        };
+    {
+        _deviceType = DeviceBroadcastDeviceType.DeviceInterface,
+        _size = Marshal.SizeOf<DevBroadcastDeviceInterface>(),
+    };
 
     /// <summary>Used for testing.</summary>
     /// <param name="deviceName">string</param>
@@ -248,29 +232,28 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     }
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj)
-    {
-        if (obj is DevBroadcastDeviceInterface other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override readonly bool Equals(object obj) => obj is DevBroadcastDeviceInterface other && Equals(other);
 
     /// <inheritdoc />
-    public readonly bool Equals(DevBroadcastDeviceInterface other)
-    {
-        if (_size == other._size && _deviceType == other._deviceType && _classGuid == other._classGuid)
-        {
-            return string.Equals(_name, other._name, StringComparison.Ordinal);
-        }
-
-        return false;
-    }
+    public readonly bool Equals(DevBroadcastDeviceInterface other) =>
+        _size == other._size
+        && _deviceType == other._deviceType
+        && _classGuid == other._classGuid
+        && string.Equals(_name, other._name, StringComparison.Ordinal);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => typeof(DevBroadcastDeviceInterface).GetHashCode();
+
+    /// <summary>Overrides device-registry value reads for deterministic tests.</summary>
+    /// <param name="readRegistryValue">The replacement registry-value reader.</param>
+    /// <returns>A lifetime that restores the previous reader.</returns>
+    internal static IDisposable OverrideRegistryValueReaderForTesting(Func<string, string, object> readRegistryValue)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(readRegistryValue);
+        Func<string, string, object> previousReadRegistryValue = _readRegistryValue;
+        _readRegistryValue = readRegistryValue;
+        return new ActionDisposable(() => _readRegistryValue = previousReadRegistryValue);
+    }
 
     /// <summary>
     /// Helper method to parse the device name and open the corresponding registry key.
@@ -286,7 +269,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         }
 
         string[] parts = name.Split('#');
-        if (parts.Length < 3)
+        if (parts.Length < MinimumRegistryPathParts)
         {
             return null;
         }
@@ -294,12 +277,12 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         int startIndex = parts[0].IndexOf("?\\", StringComparison.Ordinal);
         checked
         {
-            if (startIndex < 0 || startIndex + 2 >= parts[0].Length)
+            if (startIndex < 0 || startIndex + DeviceRegistryPrefixLength >= parts[0].Length)
             {
                 return null;
             }
 
-            string devType = parts[0].Substring(startIndex + 2);
+            string devType = parts[0].Substring(startIndex + DeviceRegistryPrefixLength);
             string deviceInstanceId = parts[1];
             string deviceUniqueId = parts[2];
             if (string.IsNullOrWhiteSpace(devType) || string.IsNullOrWhiteSpace(deviceInstanceId) || string.IsNullOrWhiteSpace(deviceUniqueId))
@@ -312,18 +295,23 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         }
     }
 
+    /// <summary>Reads a value from the device registry key when it is available.</summary>
+    /// <param name="name">The device interface name.</param>
+    /// <param name="valueName">The registry value name.</param>
+    /// <returns>The registry value, or <see langword="null"/> when it is unavailable.</returns>
+    private static object ReadRegistryValue(string name, string valueName)
+    {
+        using RegistryKey key = TryOpenDeviceRegistryKey(name);
+        return RegistryValueReader.GetValue(key, valueName);
+    }
+
     /// <summary>Gets the description attribute for a device interface class value.</summary>
     /// <param name="deviceClass">The device class value.</param>
     /// <returns>The description attribute, or <c>null</c> when the value has none.</returns>
     private static DescriptionAttribute GetDescriptionAttribute(DeviceInterfaceClass deviceClass)
     {
         MemberInfo[] members = typeof(DeviceInterfaceClass).GetMember(deviceClass.ToString());
-        if (members.Length != 0)
-        {
-            return members[0].GetCustomAttribute<DescriptionAttribute>(inherit: false);
-        }
-
-        return null;
+        return members.Length != 0 ? members[0].GetCustomAttribute<DescriptionAttribute>(inherit: false) : null;
     }
 
     /// <summary>Gets the device class associated with the native class GUID.</summary>
@@ -348,18 +336,15 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <returns>The friendly device name.</returns>
     private readonly string GetFriendlyDeviceName()
     {
-        using (RegistryKey key = TryOpenDeviceRegistryKey(_name))
+        if (_readRegistryValue(_name, "FriendlyName") is string result)
         {
-            if (key?.GetValue("FriendlyName") is string result)
-            {
-                return result;
-            }
+            return result;
+        }
 
-            if (key?.GetValue("DeviceDesc") is string result2)
-            {
-                int semiColonIndex = result2.LastIndexOf(';');
-                return (semiColonIndex >= 0) ? result2.Substring(checked(semiColonIndex + 1)) : result2;
-            }
+        if (_readRegistryValue(_name, "DeviceDesc") is string result2)
+        {
+            int semiColonIndex = result2.LastIndexOf(';');
+            return (semiColonIndex >= 0) ? result2.Substring(checked(semiColonIndex + 1)) : result2;
         }
 
         return _name;

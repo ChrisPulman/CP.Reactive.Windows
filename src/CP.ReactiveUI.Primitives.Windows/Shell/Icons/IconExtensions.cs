@@ -20,6 +20,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Extension code for icons.</summary>
 public static class IconExtensions
 {
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="window">The extended instance.</param>
     extension(IInteropWindow window)
     {
         /// <summary>Gets the icon for a window.</summary>
@@ -55,13 +57,8 @@ public static class IconExtensions
                 return IconHelper.ExtractAssociatedIcon(processPath, iconType, 0, useLargeIcons);
             }
 
-            icon = GetIconFromSiblingProcessWindow(window, processId, useLargeIcons, iconType);
-            if (icon is null)
-            {
-                return GetIconFromSiblingTopLevelWindow(window, processId, useLargeIcons, iconType);
-            }
-
-            return icon;
+            icon = GetIconFromSiblingProcessWindow(processId, useLargeIcons, iconType);
+            return icon ?? GetIconFromSiblingTopLevelWindow(window, processId, useLargeIcons, iconType);
         }
 
         /// <summary>Gets the icon for an interop window.</summary>
@@ -80,6 +77,8 @@ public static class IconExtensions
             where TIcon : class => GetIconForWindowHandle(window.Handle, iconType, useLargeIcons);
     }
 
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="icon">The extended instance.</param>
     extension(Icon icon)
     {
         /// <summary>Converts an icon to an image source.</summary>
@@ -137,12 +136,11 @@ public static class IconExtensions
 
     /// <summary>Gets an icon from a sibling process window.</summary>
     /// <typeparam name="TIcon">The return icon type.</typeparam>
-    /// <param name="window">The source window.</param>
     /// <param name="processId">The target process id.</param>
     /// <param name="useLargeIcons">A value indicating whether large icons should be preferred.</param>
     /// <param name="iconType">The icon type marker.</param>
     /// <returns>The matching icon, or the default value.</returns>
-    private static TIcon GetIconFromSiblingProcessWindow<TIcon>(IInteropWindow window, int processId, bool useLargeIcons, TIcon iconType)
+    private static TIcon GetIconFromSiblingProcessWindow<TIcon>(int processId, bool useLargeIcons, TIcon iconType)
         where TIcon : class
     {
         using Process process = _operations.GetProcessById(processId);
@@ -220,26 +218,24 @@ public static class IconExtensions
     /// <summary>Gets a small icon handle from a window.</summary>
     /// <param name="windowHandle">The window handle.</param>
     /// <returns>The icon handle, or zero.</returns>
-    private static IntPtr GetSmallIconHandle(IntPtr windowHandle)
-    {
-        if (_operations.TrySendMessage(windowHandle, WindowsMessages.WM_GETICON, SmallIconMessageParameter, out var iconHandle))
-        {
-            return iconHandle;
-        }
-
-        return _operations.GetClassLong(windowHandle, ClassLongIndex.SmallIconHandle);
-    }
+    private static IntPtr GetSmallIconHandle(IntPtr windowHandle) =>
+        _operations.TrySendMessage(
+            windowHandle,
+            WindowsMessages.WM_GETICON,
+            SmallIconMessageParameter,
+            out var iconHandle)
+            ? iconHandle
+            : _operations.GetClassLong(windowHandle, ClassLongIndex.SmallIconHandle);
 
     /// <summary>Gets a large icon handle from a window.</summary>
     /// <param name="windowHandle">The window handle.</param>
     /// <returns>The icon handle, or zero.</returns>
-    private static IntPtr GetLargeIconHandle(IntPtr windowHandle)
-    {
-        if (_operations.TrySendMessage(windowHandle, WindowsMessages.WM_GETICON, BigIconMessageParameter, out var iconHandle))
-        {
-            return iconHandle;
-        }
-
-        return _operations.GetClassLong(windowHandle, ClassLongIndex.IconHandle);
-    }
+    private static IntPtr GetLargeIconHandle(IntPtr windowHandle) =>
+        _operations.TrySendMessage(
+            windowHandle,
+            WindowsMessages.WM_GETICON,
+            BigIconMessageParameter,
+            out var iconHandle)
+            ? iconHandle
+            : _operations.GetClassLong(windowHandle, ClassLongIndex.IconHandle);
 }

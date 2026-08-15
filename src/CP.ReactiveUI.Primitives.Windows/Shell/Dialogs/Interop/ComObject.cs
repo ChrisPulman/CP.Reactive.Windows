@@ -13,15 +13,15 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop;
 /// <summary>Base wrapper for an owned COM interface pointer.</summary>
 internal class ComObject : IDisposable
 {
-    /// <summary>Gets the owned COM interface pointer.</summary>
-    internal IntPtr Handle { get; private set; }
-
     /// <summary>Initializes a new instance of the <see cref="T:ComObject" /> class.</summary>
     /// <param name="handle">The owned COM interface pointer.</param>
     protected ComObject(IntPtr handle)
     {
         Handle = handle;
     }
+
+    /// <summary>Gets the owned COM interface pointer.</summary>
+    internal IntPtr Handle { get; private set; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -46,7 +46,7 @@ internal class ComObject : IDisposable
     {
         if (Handle != IntPtr.Zero)
         {
-            ReleaseCore(Handle);
+            _ = Marshal.Release(Handle);
             Handle = IntPtr.Zero;
         }
     }
@@ -54,9 +54,9 @@ internal class ComObject : IDisposable
     /// <summary>Gets a vtable slot as a native function pointer address.</summary>
     /// <param name="slot">The vtable slot index.</param>
     /// <returns>The native function pointer address.</returns>
-    protected virtual unsafe IntPtr GetMethod(int slot) => *(IntPtr*)((*(IntPtr*)(void*)Handle) + checked(unchecked((nint)slot) * unchecked((nint)sizeof(IntPtr))));
-
-    /// <summary>Releases a COM interface pointer.</summary>
-    /// <param name="handle">The COM interface pointer.</param>
-    protected virtual unsafe void ReleaseCore(IntPtr handle) => ((delegate* unmanaged[Stdcall]<IntPtr, uint>)(void*)(*(IntPtr*)((*(IntPtr*)(void*)handle) + checked((nint)2 * unchecked((nint)sizeof(IntPtr))))))(handle);
+    protected virtual unsafe IntPtr GetMethod(int slot)
+    {
+        nint slotOffset = checked((nint)slot * (nint)sizeof(IntPtr));
+        return *(IntPtr*)((*(IntPtr*)(void*)Handle) + slotOffset);
+    }
 }

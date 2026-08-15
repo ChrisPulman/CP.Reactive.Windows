@@ -50,6 +50,9 @@ public sealed class CoverageLifecycleMediaEnvironmentTailTests
     [Test]
     public async Task ObserveEndSessionMessagesCreatesSharedObservableOnSubscriptionAsync()
     {
+        using var messages = new ManualObservable<WindowMessage>();
+        using var handles = new ManualObservable<nint>();
+        using var streams = SharedMessageWindow.OverrideStreamsForTesting(messages, handles, 0);
         ApplicationRestartManager.ResetEndSessionMessagesForTesting();
         var observer = new CoreInteropCoverageTests.RecordingObserver<EndSessionMessage>();
 

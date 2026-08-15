@@ -15,7 +15,5 @@ public abstract class SafeDcHandle : SafeHandleZeroOrMinusOneIsInvalid
     ///     release (not recommended).
     /// </param>
     protected SafeDcHandle(bool ownsHandle)
-        : base(ownsHandle)
-    {
-    }
+        : base(ownsHandle) { }
 }

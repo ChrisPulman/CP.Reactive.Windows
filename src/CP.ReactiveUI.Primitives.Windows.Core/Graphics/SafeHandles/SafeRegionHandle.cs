@@ -11,9 +11,7 @@ public class SafeRegionHandle : SafeObjectHandle
 {
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeRegionHandle" /> class.</summary>
     public SafeRegionHandle()
-        : base(ownsHandle: true)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeRegionHandle" /> class from an existing handle.</summary>
     /// <param name="preexistingHandle">The existing region handle.</param>
@@ -29,5 +27,6 @@ public class SafeRegionHandle : SafeObjectHandle
     /// <param name="right">The x-coordinate of the right edge.</param>
     /// <param name="bottom">The y-coordinate of the bottom edge.</param>
     /// <returns>A safe handle for the created region.</returns>
-    public static SafeRegionHandle CreateRectRgn(int left, int top, int right, int bottom) => Gdi32Api.CreateRectRgn(left, top, right, bottom);
+    public static SafeRegionHandle CreateRectRgn(int left, int top, int right, int bottom) =>
+        Gdi32Api.CreateRectRgn(left, top, right, bottom);
 }

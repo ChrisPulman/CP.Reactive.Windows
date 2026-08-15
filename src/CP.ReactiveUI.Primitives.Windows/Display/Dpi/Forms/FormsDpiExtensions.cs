@@ -12,6 +12,12 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Forms;
 /// <summary>Extensions for Windows Form.</summary>
 public static class FormsDpiExtensions
 {
+    /// <summary>Creates the window-message stream for a Windows Forms control.</summary>
+    private static Func<Control, IObservable<WindowMessageInfo>> _windowMessageSource =
+        static control => control.ObserveWindowMessages();
+
+    /// <summary>Extension methods for context menu strips.</summary>
+    /// <param name="contextMenuStrip">The context menu strip to attach DPI behavior to.</param>
     extension(ContextMenuStrip contextMenuStrip)
     {
         /// <summary>Handle DPI changes for the specified ContextMenuStrip.</summary>
@@ -19,7 +25,7 @@ public static class FormsDpiExtensions
         public DpiHandler AttachDpiHandler()
         {
             DpiHandler dpiHandler = new(needsListenerWorkaround: true);
-            dpiHandler.MessageHandler = contextMenuStrip.ObserveWindowMessages().Subscribe(delegate(WindowMessageInfo message)
+            dpiHandler.MessageHandler = _windowMessageSource(contextMenuStrip).Subscribe(message =>
             {
                 _ = dpiHandler.HandleContextMenuMessages(message);
             });
@@ -27,6 +33,8 @@ public static class FormsDpiExtensions
         }
     }
 
+    /// <summary>Extension methods for forms.</summary>
+    /// <param name="form">The form to attach DPI behavior to.</param>
     extension(Form form)
     {
         /// <summary>
@@ -39,7 +47,7 @@ public static class FormsDpiExtensions
         public DpiHandler AttachDpiHandler()
         {
             DpiHandler dpiHandler = new(needsListenerWorkaround: true);
-            dpiHandler.MessageHandler = form.ObserveWindowMessages().Subscribe(delegate(WindowMessageInfo message)
+            dpiHandler.MessageHandler = _windowMessageSource(form).Subscribe(message =>
             {
                 _ = dpiHandler.HandleWindowMessages(message);
             });
@@ -53,6 +61,18 @@ public static class FormsDpiExtensions
         /// <summary>Attach DPI-unaware behavior to the specified Form.</summary>
         /// <returns>DPI-unaware form behavior.</returns>
         public DpiUnawareFormBehavior AttachDpiUnawareBehavior() => CreateDpiUnawareBehavior(form);
+    }
+
+    /// <summary>Exchanges the Forms message source for deterministic tests.</summary>
+    /// <param name="windowMessageSource">The replacement message source.</param>
+    /// <returns>The previous message source.</returns>
+    internal static Func<Control, IObservable<WindowMessageInfo>> ExchangeWindowMessageSource(
+        Func<Control, IObservable<WindowMessageInfo>> windowMessageSource)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(windowMessageSource);
+        Func<Control, IObservable<WindowMessageInfo>> previousWindowMessageSource = _windowMessageSource;
+        _windowMessageSource = windowMessageSource;
+        return previousWindowMessageSource;
     }
 
     /// <summary>Creates DPI-unaware behavior for the specified form.</summary>

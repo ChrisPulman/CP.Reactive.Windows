@@ -15,5 +15,5 @@ internal enum MonitorAppVisibility
     /// <summary>Represents the MAV_NO_APP_VISIBLE value.</summary>
     MAV_NO_APP_VISIBLE,
     /// <summary>Represents the MAV_APP_VISIBLE value.</summary>
-    MAV_APP_VISIBLE
+    MAV_APP_VISIBLE,
 }

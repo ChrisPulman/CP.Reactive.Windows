@@ -13,36 +13,12 @@ namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs;
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs;
 #endif
 /// <summary>Shared internal helper that handles all COM interactions for the file and folder dialog builders.</summary>
+#if NETFRAMEWORK
 internal static class ComDialogHelper
+#else
+internal static partial class ComDialogHelper
+#endif
 {
-    /// <summary>Native shell helpers.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>In-process COM server class context.</summary>
-        internal const uint ClsctxInprocServer = 1U;
-
-        /// <summary>Creates a COM object instance.</summary>
-        /// <param name="classId">The COM class identifier.</param>
-        /// <param name="outerUnknown">The controlling unknown for aggregation.</param>
-        /// <param name="classContext">The class context.</param>
-        /// <param name="interfaceId">The requested interface identifier.</param>
-        /// <param name="instance">The created COM interface pointer.</param>
-        /// <returns>The native HRESULT.</returns>
-        [DllImport("ole32.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int CoCreateInstance(ref Guid classId, IntPtr outerUnknown, uint classContext, ref Guid interfaceId, out IntPtr instance);
-
-        /// <summary>Creates a shell item from a file-system parsing name.</summary>
-        /// <param name="path">The file-system path.</param>
-        /// <param name="bindContext">The optional bind context.</param>
-        /// <param name="interfaceId">The requested COM interface identifier.</param>
-        /// <param name="shellItem">The created shell item.</param>
-        /// <returns>The native HRESULT.</returns>
-        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int SHCreateItemFromParsingName(string path, IntPtr bindContext, ref Guid interfaceId, out IntPtr shellItem);
-    }
-
     /// <summary>HRESULT returned when the user dismisses the dialog via Cancel or Escape.</summary>
     internal const int HResultCancelled = -2_147_023_673;
 
@@ -64,6 +40,18 @@ internal static class ComDialogHelper
     /// <summary>Gets or sets the shell item wrapper factory.</summary>
     internal static Func<IntPtr, IShellItem> WrapShellItem { get; set; } = WrapShellItemCore;
 
+    /// <summary>Gets or sets the low-level COM dialog activation operation.</summary>
+    internal static Func<Guid, Guid, (int ResultCode, IntPtr Dialog)> NativeDialogActivation { get; set; } = ActivateNativeDialog;
+
+    /// <summary>Gets or sets the low-level shell item creation operation.</summary>
+    internal static Func<string, Guid, (int ResultCode, IntPtr Item)> NativeShellItemCreation { get; set; } = CreateNativeShellItem;
+
+    /// <summary>Gets or sets the platform COM activation operation.</summary>
+    internal static CoCreateInstanceOperation CoCreateInstance { get; set; } = NativeMethods.CoCreateInstance;
+
+    /// <summary>Gets or sets the platform shell-item creation operation.</summary>
+    internal static CreateShellItemOperation CreateShellItem { get; set; } = NativeMethods.SHCreateItemFromParsingName;
+
     /// <summary>Creates a COM dialog coclass instance and casts it to <typeparamref name="T" />.</summary>
     /// <exception cref="T:System.PlatformNotSupportedException">Called on a non-Windows platform.</exception>
     /// <exception cref="T:System.InvalidOperationException">The COM object could not be instantiated.</exception>
@@ -76,26 +64,34 @@ internal static class ComDialogHelper
         Guid interfaceId = GetInterfaceId<T>();
         var (resultCode, dialog) = CreateDialogInstance(clsid, interfaceId);
         Marshal.ThrowExceptionForHR(resultCode);
-        return (T)(Activator.CreateInstance(typeof(T), dialog) ?? throw new InvalidOperationException("The Windows Common Item Dialog could not be instantiated."));
+        return typeof(T) == typeof(IFileOpenDialog)
+            ? (T)(ComObject)new IFileOpenDialog(dialog)
+            : (T)(ComObject)new IFileSaveDialog(dialog);
     }
 
-    /// <summary>Converts filter tuples to <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.FilterSpec" /> structs and applies them to the dialog.</summary>
+    /// <summary>
+    /// Converts filter tuples to
+    /// <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.FilterSpec" />
+    /// structs and applies them to the dialog.
+    /// </summary>
     /// <param name="setFileTypes">The method used to apply the filter specifications.</param>
     /// <param name="setFileTypeIndex">The method used to select the active filter index.</param>
     /// <param name="filters">The configured filters.</param>
     internal static void ApplyFilters(Action<FilterSpec[]> setFileTypes, Action<uint> setFileTypeIndex, IReadOnlyList<(string Name, string Pattern)> filters)
     {
-        if (filters is not null && filters.Count != 0)
+        if (filters is null || filters.Count == 0)
         {
-            FilterSpec[] specs = new FilterSpec[filters.Count];
-            for (int i = 0; i < filters.Count; i = checked(i + 1))
-            {
-                specs[i] = new(filters[i].Name, filters[i].Pattern);
-            }
-
-            setFileTypes(specs);
-            setFileTypeIndex(1U);
+            return;
         }
+
+        FilterSpec[] specs = new FilterSpec[filters.Count];
+        for (int i = 0; i < filters.Count; i = checked(i + 1))
+        {
+            specs[i] = new(filters[i].Name, filters[i].Pattern);
+        }
+
+        setFileTypes(specs);
+        setFileTypeIndex(1U);
     }
 
     /// <summary>Sets the initial folder on the dialog.</summary>
@@ -110,9 +106,8 @@ internal static class ComDialogHelper
 
         try
         {
-            IShellItem shellItem = ShellItemFromPath(path);
+            using IShellItem shellItem = ShellItemFromPath(path);
             setFolder(shellItem);
-            shellItem.Dispose();
         }
         catch (COMException)
         {
@@ -135,9 +130,8 @@ internal static class ComDialogHelper
             {
                 try
                 {
-                    IShellItem shellItem = ShellItemFromPath(path);
+                    using IShellItem shellItem = ShellItemFromPath(path);
                     addPlace(shellItem, atTop ? FileDialogAddPlaceFlags.Top : FileDialogAddPlaceFlags.Bottom);
-                    shellItem.Dispose();
                 }
                 catch (COMException)
                 {
@@ -146,32 +140,40 @@ internal static class ComDialogHelper
         }
     }
 
-    /// <summary>Returns the file-system path string for the given <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.IShellItem" />.</summary>
+    /// <summary>
+    /// Returns the file-system path string for the given
+    /// <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.IShellItem" />.
+    /// </summary>
     /// <param name="item">The shell item.</param>
     /// <returns>The file-system path.</returns>
     internal static string GetFileSysPath(IShellItem item) => item.GetDisplayName(ShellItemDisplayName.FileSysPath);
 
-    /// <summary>Collects file-system paths from all items in an <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.IShellItemArray" />.</summary>
+    /// <summary>
+    /// Collects file-system paths from all items in an
+    /// <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.IShellItemArray" />.
+    /// </summary>
     /// <param name="items">The shell item array.</param>
     /// <returns>The collected file-system paths.</returns>
     internal static IReadOnlyList<string> CollectPaths(IShellItemArray items)
     {
-        uint count = items.GetCount();
-        checked
+        using (items)
         {
-            List<string> result = new((int)count);
-            for (uint i = 0U; i < count; i++)
+            uint count = items.GetCount();
+            checked
             {
-                using IShellItem item = items.GetItemAt(i);
-                result.Add(GetFileSysPath(item));
-            }
+                List<string> result = new((int)count);
+                for (uint i = 0U; i < count; i++)
+                {
+                    using IShellItem item = items.GetItemAt(i);
+                    result.Add(GetFileSysPath(item));
+                }
 
-            items.Dispose();
-            return result;
+                return result;
+            }
         }
     }
 
-    /// <summary>Creates an <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.IShellItem" /> from a file-system path.</summary>
+    /// <summary>Creates an IShellItem from a file-system path.</summary>
     /// <param name="path">The file-system path.</param>
     /// <returns>The created shell item.</returns>
     internal static IShellItem ShellItemFromPath(string path)
@@ -188,6 +190,10 @@ internal static class ComDialogHelper
         CreateDialogInstance = CreateDialogInstanceCore;
         CreateShellItemInstance = CreateShellItemInstanceCore;
         WrapShellItem = WrapShellItemCore;
+        NativeDialogActivation = ActivateNativeDialog;
+        NativeShellItemCreation = CreateNativeShellItem;
+        CoCreateInstance = NativeMethods.CoCreateInstance;
+        CreateShellItem = NativeMethods.SHCreateItemFromParsingName;
     }
 
     /// <summary>Gets the COM interface identifier for a wrapper type.</summary>
@@ -213,25 +219,106 @@ internal static class ComDialogHelper
     /// <param name="clsid">The class identifier.</param>
     /// <param name="interfaceId">The requested interface identifier.</param>
     /// <returns>The native result and interface pointer.</returns>
-    private static (int ResultCode, IntPtr Dialog) CreateDialogInstanceCore(Guid clsid, Guid interfaceId)
+    private static (int ResultCode, IntPtr Dialog) CreateDialogInstanceCore(Guid clsid, Guid interfaceId) =>
+        NativeDialogActivation(clsid, interfaceId);
+
+    /// <summary>Activates a native COM dialog using the Windows COM runtime.</summary>
+    /// <param name="clsid">The class identifier.</param>
+    /// <param name="interfaceId">The requested interface identifier.</param>
+    /// <returns>The native result and interface pointer.</returns>
+    private static (int ResultCode, IntPtr Dialog) ActivateNativeDialog(Guid clsid, Guid interfaceId)
     {
-        Marshal.ThrowExceptionForHR(NativeMethods.CoCreateInstance(ref clsid, IntPtr.Zero, 1U, ref interfaceId, out var dialog));
-        return (ResultCode: 0, Dialog: dialog);
+        int resultCode = CoCreateInstance(
+            ref clsid,
+            IntPtr.Zero,
+            NativeMethods.ClsctxInprocServer,
+            ref interfaceId,
+            out var dialog);
+        return (ResultCode: resultCode, Dialog: dialog);
     }
 
     /// <summary>Creates a native shell item instance.</summary>
     /// <param name="path">The file-system path.</param>
     /// <param name="interfaceId">The shell item interface identifier.</param>
     /// <returns>The native result and shell item pointer.</returns>
-    private static (int ResultCode, IntPtr Item) CreateShellItemInstanceCore(string path, Guid interfaceId)
+    private static (int ResultCode, IntPtr Item) CreateShellItemInstanceCore(string path, Guid interfaceId) =>
+        NativeShellItemCreation(path, interfaceId);
+
+    /// <summary>Creates a native shell item using the Windows shell runtime.</summary>
+    /// <param name="path">The file-system path.</param>
+    /// <param name="interfaceId">The requested interface identifier.</param>
+    /// <returns>The native result and shell item pointer.</returns>
+    private static (int ResultCode, IntPtr Item) CreateNativeShellItem(string path, Guid interfaceId)
     {
         Guid iid = interfaceId;
-        Marshal.ThrowExceptionForHR(NativeMethods.SHCreateItemFromParsingName(path, IntPtr.Zero, ref iid, out var item));
-        return (ResultCode: 0, Item: item);
+        int resultCode = CreateShellItem(path, IntPtr.Zero, ref iid, out var item);
+        return (ResultCode: resultCode, Item: item);
     }
 
     /// <summary>Wraps a shell item pointer.</summary>
     /// <param name="handle">The shell item handle.</param>
     /// <returns>The shell item wrapper.</returns>
     private static IShellItem WrapShellItemCore(IntPtr handle) => new(handle);
+
+    /// <summary>Native shell helpers.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
+    {
+        /// <summary>In-process COM server class context.</summary>
+        internal const uint ClsctxInprocServer = 1U;
+
+        /// <summary>Creates a COM object instance.</summary>
+        /// <param name="classId">The COM class identifier.</param>
+        /// <param name="outerUnknown">The controlling unknown for aggregation.</param>
+        /// <param name="classContext">The class context.</param>
+        /// <param name="interfaceId">The requested interface identifier.</param>
+        /// <param name="instance">The created COM interface pointer.</param>
+        /// <returns>The native HRESULT.</returns>
+#if NETFRAMEWORK
+        [DllImport("ole32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int CoCreateInstance(
+            ref Guid classId,
+            IntPtr outerUnknown,
+            uint classContext,
+            ref Guid interfaceId,
+            out IntPtr instance);
+#else
+        [LibraryImport("ole32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int CoCreateInstance(
+            ref Guid classId,
+            IntPtr outerUnknown,
+            uint classContext,
+            ref Guid interfaceId,
+            out IntPtr instance);
+#endif
+
+        /// <summary>Creates a shell item from a file-system parsing name.</summary>
+        /// <param name="path">The file-system path.</param>
+        /// <param name="bindContext">The optional bind context.</param>
+        /// <param name="interfaceId">The requested COM interface identifier.</param>
+        /// <param name="shellItem">The created shell item.</param>
+        /// <returns>The native HRESULT.</returns>
+#if NETFRAMEWORK
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int SHCreateItemFromParsingName(
+            string path,
+            IntPtr bindContext,
+            ref Guid interfaceId,
+            out IntPtr shellItem);
+#else
+        [LibraryImport("shell32.dll", EntryPoint = "SHCreateItemFromParsingName", StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int SHCreateItemFromParsingName(
+            string path,
+            IntPtr bindContext,
+            ref Guid interfaceId,
+            out IntPtr shellItem);
+#endif
+    }
 }

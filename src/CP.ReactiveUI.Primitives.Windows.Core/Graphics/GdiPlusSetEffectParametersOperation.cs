@@ -11,4 +11,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 /// <param name="parameters">The parameter memory.</param>
 /// <param name="size">The parameter size.</param>
 /// <returns>The GDI+ status.</returns>
-internal delegate GdiPlusStatus GdiPlusSetEffectParametersOperation(nint effect, nint parameters, uint size);
+internal delegate GdiPlusStatus GdiPlusSetEffectParametersOperation(
+    nint effect,
+    nint parameters,
+    uint size);

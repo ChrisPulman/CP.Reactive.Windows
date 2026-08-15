@@ -16,8 +16,10 @@ public enum MonitorFrom : uint
 {
     /// <summary>Returns a handle to the display monitor that is nearest to the rectangle.</summary>
     None = 0U,
+
     /// <summary>Returns NULL. (why??).</summary>
     DefaultToNull = 1U,
+
     /// <summary>Returns a handle to the primary display monitor.</summary>
-    DefaultToPrimary = 2U
+    DefaultToPrimary = 2U,
 }

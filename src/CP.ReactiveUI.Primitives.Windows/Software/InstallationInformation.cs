@@ -17,64 +17,17 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Software;
 /// <summary>A helper class to evaluate the installed software.</summary>
 public static class InstallationInformation
 {
-    /// <summary>Production installed-software registry reader.</summary>
-    private sealed class WindowsInstalledSoftwareRegistry : IInstalledSoftwareRegistry
-    {
-        /// <summary>The shared production registry reader.</summary>
-        internal static readonly WindowsInstalledSoftwareRegistry Instance = new();
-
-        /// <inheritdoc />
-        public IInstalledSoftwareRegistryKey OpenLocalMachineSubKey(string subkeyName)
-        {
-            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(subkeyName);
-            if (registryKey is not null)
-            {
-                return new WindowsInstalledSoftwareRegistryKey(registryKey);
-            }
-
-            return null;
-        }
-    }
-
-    /// <summary>Production registry key reader.</summary>
-    /// <param name="registryKey">The wrapped registry key.</param>
-    private sealed class WindowsInstalledSoftwareRegistryKey(RegistryKey registryKey) : IInstalledSoftwareRegistryKey
-    {
-        /// <inheritdoc />
-        public void Dispose() => registryKey.Dispose();
-
-        /// <inheritdoc />
-        public string[] GetSubKeyNames() => registryKey.GetSubKeyNames();
-
-        /// <inheritdoc />
-        public IInstalledSoftwareRegistryKey OpenSubKey(string subkeyName)
-        {
-            RegistryKey subKey = registryKey.OpenSubKey(subkeyName);
-            if (subKey is not null)
-            {
-                return new WindowsInstalledSoftwareRegistryKey(subKey);
-            }
-
-            return null;
-        }
-
-        /// <inheritdoc />
-        public object GetValue(string valueName) => registryKey.GetValue(valueName);
-
-        /// <inheritdoc />
-        public RegistryValueKind GetValueKind(string valueName) => registryKey.GetValueKind(valueName);
-
-        /// <inheritdoc />
-        public string[] GetValueNames() => registryKey.GetValueNames();
-    }
-
     /// <summary>Registry path containing uninstall entries.</summary>
     private const string UninstallKey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
     /// <summary>Logging source for registry parsing issues.</summary>
     private static readonly ILog Log = LogManager.GetLogger(typeof(InstallationInformation));
 
-    /// <summary>Public writable properties available on <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Software.SoftwareDetails" /> by registry value name.</summary>
+    /// <summary>
+    /// Public writable properties available on
+    /// <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Software.SoftwareDetails" />
+    /// by registry value name.
+    /// </summary>
     private static readonly Dictionary<string, PropertyInfo> SoftwareDetailsPropertyMap = CreateSoftwareDetailsPropertyMap();
 
     /// <summary>The registry reader override used by deterministic tests.</summary>
@@ -84,7 +37,7 @@ public static class InstallationInformation
     /// <returns>IEnumerable with SoftwareDetails.</returns>
     public static IEnumerable<SoftwareDetails> InstalledSoftware()
     {
-        using IInstalledSoftwareRegistryKey registryKey = GetRegistry().OpenLocalMachineSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall");
+        using IInstalledSoftwareRegistryKey registryKey = GetRegistry().OpenLocalMachineSubKey(UninstallKey);
         if (registryKey is null)
         {
             yield break;
@@ -107,12 +60,17 @@ public static class InstallationInformation
     /// <param name="getValue">Reads a registry value.</param>
     /// <param name="getValueKind">Reads a registry value kind.</param>
     /// <returns>The mapped software details.</returns>
-    internal static SoftwareDetails MapFromRegistryValues(string subkeyName, IEnumerable<string> valueNames, Func<string, object> getValue, Func<string, RegistryValueKind> getValueKind)
+    internal static SoftwareDetails MapFromRegistryValues(
+        string subkeyName,
+        IEnumerable<string> valueNames,
+        Func<string, object> getValue,
+        Func<string, RegistryValueKind> getValueKind)
     {
         SoftwareDetails softwareDetails = CreateSoftwareDetails(subkeyName);
         foreach (string valueName in valueNames)
         {
-            if (SoftwareDetailsPropertyMap.TryGetValue(valueName, out var propertyInfo) && TryGetRegistryValue(propertyInfo, getValue, getValueKind, out var value))
+            if (SoftwareDetailsPropertyMap.TryGetValue(valueName, out var propertyInfo)
+                && TryGetRegistryValue(propertyInfo, getValue, getValueKind, out var value))
             {
                 propertyInfo.SetValue(softwareDetails, value);
             }
@@ -128,7 +86,7 @@ public static class InstallationInformation
     {
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registry);
         IInstalledSoftwareRegistry registry2 = GetRegistry();
-        _registryOverride = ((registry == WindowsInstalledSoftwareRegistry.Instance) ? null : registry);
+        _registryOverride = registry == WindowsInstalledSoftwareRegistry.Instance ? null : registry;
         return registry2;
     }
 
@@ -136,7 +94,8 @@ public static class InstallationInformation
     /// <param name="subkeyName">string.</param>
     /// <param name="subKey">Registry key reader.</param>
     /// <returns>SoftwareDetails.</returns>
-    private static SoftwareDetails MapFromRegistryKey(string subkeyName, IInstalledSoftwareRegistryKey subKey) => MapFromRegistryValues(subkeyName, subKey.GetValueNames(), subKey.GetValue, subKey.GetValueKind);
+    private static SoftwareDetails MapFromRegistryKey(string subkeyName, IInstalledSoftwareRegistryKey subKey) =>
+        MapFromRegistryValues(subkeyName, subKey.GetValueNames(), subKey.GetValue, subKey.GetValueKind);
 
     /// <summary>Creates base software details for the registry subkey.</summary>
     /// <param name="subkeyName">Subkey name.</param>
@@ -202,41 +161,68 @@ public static class InstallationInformation
     {
         switch (valueKind)
         {
-        case RegistryValueKind.DWord:
-        {
-            int intValue = Convert.ToInt32(propertyValue);
-            if (propertyType != typeof(bool))
-            {
-                return intValue;
-            }
+            case RegistryValueKind.DWord:
+                {
+                    int intValue = Convert.ToInt32(propertyValue);
+                    return propertyType != typeof(bool) ? intValue : intValue == 1;
+                }
 
-            return intValue == 1;
-        }
+            case RegistryValueKind.QWord:
+                {
+                    long longValue = Convert.ToInt64(propertyValue);
+                    return propertyType != typeof(bool) ? longValue : longValue == 1L;
+                }
 
-        case RegistryValueKind.QWord:
-        {
-            long longValue = Convert.ToInt64(propertyValue);
-            if (propertyType != typeof(bool))
-            {
-                return longValue;
-            }
-
-            return longValue == 1;
-        }
-
-        default:
-        {
-            if (!string.IsNullOrEmpty(propertyValue as string))
-            {
-                return Convert.ChangeType(propertyValue, propertyType);
-            }
-
-            return null;
-        }
+            default:
+                return !string.IsNullOrEmpty(propertyValue as string)
+                    ? Convert.ChangeType(propertyValue, propertyType)
+                    : null;
         }
     }
 
     /// <summary>Gets the active installed-software registry reader.</summary>
     /// <returns>The active registry reader.</returns>
-    private static IInstalledSoftwareRegistry GetRegistry() => _registryOverride ?? WindowsInstalledSoftwareRegistry.Instance;
+    private static IInstalledSoftwareRegistry GetRegistry() =>
+        _registryOverride ?? WindowsInstalledSoftwareRegistry.Instance;
+
+    /// <summary>Production installed-software registry reader.</summary>
+    private sealed class WindowsInstalledSoftwareRegistry : IInstalledSoftwareRegistry
+    {
+        /// <summary>The shared production registry reader.</summary>
+        internal static readonly WindowsInstalledSoftwareRegistry Instance = new();
+
+        /// <inheritdoc />
+        public IInstalledSoftwareRegistryKey OpenLocalMachineSubKey(string subkeyName)
+        {
+            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(subkeyName);
+            return registryKey is not null ? new WindowsInstalledSoftwareRegistryKey(registryKey) : null;
+        }
+    }
+
+    /// <summary>Production registry key reader.</summary>
+    /// <param name="registryKey">The wrapped registry key.</param>
+    private sealed class WindowsInstalledSoftwareRegistryKey(RegistryKey registryKey) : IInstalledSoftwareRegistryKey
+    {
+        /// <inheritdoc />
+        public void Dispose() => registryKey.Dispose();
+
+        /// <inheritdoc />
+        public string[] GetSubKeyNames() => registryKey.GetSubKeyNames();
+
+        /// <inheritdoc />
+        public IInstalledSoftwareRegistryKey OpenSubKey(string subkeyName)
+        {
+            RegistryKey subKey = registryKey.OpenSubKey(subkeyName);
+            return subKey is not null ? new WindowsInstalledSoftwareRegistryKey(subKey) : null;
+        }
+
+        /// <inheritdoc />
+        public object GetValue(string valueName) => registryKey.GetValue(valueName);
+
+        /// <inheritdoc />
+        public RegistryValueKind GetValueKind(string valueName) => registryKey.GetValueKind(valueName);
+
+        /// <inheritdoc />
+        public string[] GetValueNames() => registryKey.GetValueNames();
+    }
 }

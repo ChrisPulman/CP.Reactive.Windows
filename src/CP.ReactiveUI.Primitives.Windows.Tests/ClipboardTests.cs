@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>All clipboard related tests.</summary>
@@ -28,13 +26,12 @@ public class ClipboardTests : IDisposable
     private static readonly ILog Log = LogManager.GetLogger(typeof(ClipboardTests));
 
     /// <summary>Tracks shared message-window subscriptions for clipboard tests.</summary>
-    private readonly IDisposable _subscription;
+    private DeterministicClipboard _subscription;
 
     /// <summary>Initializes a new instance of the <see cref="ClipboardTests"/> class.</summary>
     public ClipboardTests()
     {
         TestLogging.UseConsoleLogger();
-        _subscription = SharedMessageWindow.ObserveWindowMessages().Subscribe();
     }
 
     /// <summary>Test monitoring the clipboard.</summary>
@@ -616,13 +613,30 @@ public class ClipboardTests : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Installs deterministic clipboard resources before each test.</summary>
+    [Before(Test)]
+    public void Setup()
+    {
+        _subscription?.Dispose();
+        _subscription = new();
+    }
+
+    /// <summary>Releases deterministic clipboard resources after each test.</summary>
+    [After(Test)]
+    public void Cleanup()
+    {
+        _subscription?.Dispose();
+        _subscription = null;
+    }
+
     /// <summary>Releases managed resources used by this test fixture.</summary>
     /// <param name="disposing">A value indicating whether managed resources should be released.</param>
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _subscription.Dispose();
+            _subscription?.Dispose();
+            _subscription = null;
         }
     }
 

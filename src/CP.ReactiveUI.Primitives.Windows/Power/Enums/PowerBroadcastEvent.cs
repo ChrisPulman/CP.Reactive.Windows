@@ -41,5 +41,5 @@ public enum PowerBroadcastEvent : uint
     /// </summary>
     PBT_APMRESUMEAUTOMATIC = 18U,
     /// <summary>A power setting change event has been received. The longParameter parameter points to a POWERBROADCAST_SETTING structure.</summary>
-    PBT_POWERSETTINGCHANGE = 32_787U
+    PBT_POWERSETTINGCHANGE = 32_787U,
 }

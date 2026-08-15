@@ -16,19 +16,16 @@ namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 #endif
 /// <summary>This is a Listener for WinProc messages.</summary>
-public sealed class WinProcListener : NativeWindow, IDisposable
+public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListenerState
 {
     /// <summary>The subscribed window procedure hooks.</summary>
     private List<HwndSourceHook> _hooks = new();
-
-    /// <summary>Gets a value indicating whether the WinProcListener is already disposed.</summary>
-    public bool IsDisposed { get; private set; }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.WinProcListener" /> class.</summary>
     /// <param name="control">Control to listen to.</param>
     public WinProcListener(Control control)
     {
-        if (control.IsHandleCreated && base.Handle == IntPtr.Zero)
+        if (control.IsHandleCreated && Handle == IntPtr.Zero)
         {
             AssignHandle(control.Handle);
         }
@@ -39,6 +36,9 @@ public sealed class WinProcListener : NativeWindow, IDisposable
 
         control.HandleDestroyed += OnHandleDestroyed;
     }
+
+    /// <summary>Gets a value indicating whether the WinProcListener is already disposed.</summary>
+    public bool IsDisposed { get; private set; }
 
     /// <inheritdoc />
     public void Dispose()
@@ -64,6 +64,31 @@ public sealed class WinProcListener : NativeWindow, IDisposable
         List<HwndSourceHook> newHooks = new(_hooks);
         _ = newHooks.Remove(hook);
         _hooks = newHooks;
+    }
+
+    /// <summary>Processes hooks through an abstract listener state.</summary>
+    /// <param name="listenerState">The listener lifecycle state.</param>
+    /// <param name="hooks">The hooks to process.</param>
+    /// <param name="message">The message to process.</param>
+    /// <returns><c>true</c> when a hook handles the message.</returns>
+    internal static bool ProcessHooksForTesting(IWinProcListenerState listenerState, IEnumerable<HwndSourceHook> hooks, ref Message message)
+    {
+        bool handled = false;
+        foreach (HwndSourceHook sourceHook in hooks ?? new List<HwndSourceHook>())
+        {
+            if (listenerState.IsDisposed)
+            {
+                break;
+            }
+
+            message.Result = sourceHook(message.HWnd, message.Msg, message.WParam, message.LParam, ref handled);
+            if (handled)
+            {
+                break;
+            }
+        }
+
+        return handled;
     }
 
     /// <inheritdoc />
@@ -99,23 +124,5 @@ public sealed class WinProcListener : NativeWindow, IDisposable
     /// <summary>Helper class to process the message.</summary>
     /// <param name="message">Message.</param>
     /// <returns>bool if the message was handled.</returns>
-    private bool ProcessMessage(ref Message message)
-    {
-        bool handled = false;
-        foreach (HwndSourceHook sourceHook in _hooks ?? new List<HwndSourceHook>())
-        {
-            if (IsDisposed)
-            {
-                break;
-            }
-
-            message.Result = sourceHook(message.HWnd, message.Msg, message.WParam, message.LParam, ref handled);
-            if (handled)
-            {
-                break;
-            }
-        }
-
-        return handled;
-    }
+    private bool ProcessMessage(ref Message message) => ProcessHooksForTesting(this, _hooks, ref message);
 }

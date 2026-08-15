@@ -24,7 +24,9 @@ internal sealed class DisposableComImplementation<T>(T obj) : IDisposableCom<T>
     {
         if (disposing)
         {
-            if (!EqualityComparer<T>.Default.Equals(ComObject, default(T)) && Marshal.IsComObject(ComObject))
+            if (
+                !EqualityComparer<T>.Default.Equals(ComObject, default(T))
+                && Marshal.IsComObject(ComObject))
             {
                 _ = Marshal.ReleaseComObject(ComObject);
             }

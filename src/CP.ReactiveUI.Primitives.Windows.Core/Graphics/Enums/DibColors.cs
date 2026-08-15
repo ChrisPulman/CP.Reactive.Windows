@@ -9,8 +9,10 @@ public enum DibColors : uint
 {
     /// <summary>Specifies a color table containing literal RGB values.</summary>
     RgbColors,
+
     /// <summary>Specifies a color table containing indexes into the current logical palette.</summary>
     PalColors,
+
     /// <summary>Specifies that DIB pixels index the current logical palette.</summary>
-    PalIndices
+    PalIndices,
 }

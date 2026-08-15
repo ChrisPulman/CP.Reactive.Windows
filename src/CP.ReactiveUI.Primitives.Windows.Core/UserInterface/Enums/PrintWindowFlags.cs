@@ -9,8 +9,10 @@ public enum PrintWindowFlags : uint
 {
     /// <summary>Copy the complete window.</summary>
     PW_COMPLETE,
+
     /// <summary>Only the client area of the window is copied. By default, the entire window is copied.</summary>
     PW_CLIENTONLY,
+
     /// <summary>Works on windows that use DirectX or DirectComposition.</summary>
-    PW_RENDERFULLCONTENT
+    PW_RENDERFULLCONTENT,
 }

@@ -29,5 +29,5 @@ public enum MonitorDpiType
     ///     This does not include the scale factor set by the user for this specific display and is not guaranteed to be a
     ///     supported DPI value.
     /// </summary>
-    RawDpi
+    RawDpi,
 }

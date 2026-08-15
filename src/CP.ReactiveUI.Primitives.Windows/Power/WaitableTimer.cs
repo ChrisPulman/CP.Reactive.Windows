@@ -32,28 +32,20 @@ public sealed class WaitableTimer : IDisposable
     /// <summary>The maximum cancellable wait slice.</summary>
     private const uint PollMilliseconds = 100U;
 
+    /// <summary>The maximum UInt32 value represented as a double.</summary>
+    private const double MaximumUInt32Milliseconds = uint.MaxValue;
+
     /// <summary>The wait operation used by this process.</summary>
     private static Func<SafeWaitHandle, uint, uint> _waitForSingleObject = SystemStateApi.WaitForSingleObject;
+
+    /// <summary>Observes cancellation in the background signal loop.</summary>
+    private static Action _onSignalObservationCancelled = static () => { };
 
     /// <summary>The owned waitable timer handle.</summary>
     private SafeWaitHandle _handle;
 
     /// <summary>A value indicating whether this instance has been disposed.</summary>
     private bool _disposed;
-
-    /// <summary>Gets a value indicating whether the timer has been created successfully.</summary>
-    public bool IsValid
-    {
-        get
-        {
-            if (_handle is not null)
-            {
-                return !_handle.IsInvalid;
-            }
-
-            return false;
-        }
-    }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Power.WaitableTimer" /> class.</summary>
     public WaitableTimer()
@@ -89,6 +81,13 @@ public sealed class WaitableTimer : IDisposable
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNullOrEmpty(name);
         _handle = SystemStateApi.CreateWaitableTimer(IntPtr.Zero, manualReset, name);
     }
+
+    /// <summary>Initializes a new instance of the <see cref="WaitableTimer"/> class around a caller-owned handle.</summary>
+    /// <param name="handle">The non-owning timer handle.</param>
+    internal WaitableTimer(SafeWaitHandle handle) => _handle = handle;
+
+    /// <summary>Gets a value indicating whether the timer has been created successfully.</summary>
+    public bool IsValid => _handle is not null && !_handle.IsInvalid;
 
     /// <summary>Sets the timer to fire once after the specified delay.</summary>
     /// <param name="delay">The delay before the timer fires.</param>
@@ -200,11 +199,11 @@ public sealed class WaitableTimer : IDisposable
     /// <summary>Observes each waitable timer signal until the subscription is disposed or a wait times out.</summary>
     /// <param name="timeout">Maximum time to wait between timer signals.</param>
     /// <returns>An observable sequence of signal timestamps.</returns>
-    public IObservable<DateTimeOffset> ObserveSignals(TimeSpan timeout) => ReactiveSignal.Create(delegate(IObserver<DateTimeOffset> observer)
+    public IObservable<DateTimeOffset> ObserveSignals(TimeSpan timeout) => ReactiveSignal.Create<DateTimeOffset>(observer =>
         {
             CancellationTokenSource cancellationTokenSource = new();
             _ = Task.Run(
-                async delegate
+                async () =>
             {
                 try
                 {
@@ -221,6 +220,7 @@ public sealed class WaitableTimer : IDisposable
                 }
                 catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
                 {
+                    _onSignalObservationCancelled();
                 }
                 catch (Exception error)
                 {
@@ -228,7 +228,13 @@ public sealed class WaitableTimer : IDisposable
                 }
             },
                 CancellationToken.None);
-            return cancellationTokenSource;
+            return Scope.Create(
+                cancellationTokenSource,
+                static source =>
+                {
+                    source.Cancel();
+                    source.Dispose();
+                });
         });
 
     /// <inheritdoc />
@@ -250,9 +256,22 @@ public sealed class WaitableTimer : IDisposable
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(waitForSingleObject);
         Func<SafeWaitHandle, uint, uint> waitForSingleObject2 = _waitForSingleObject;
         _waitForSingleObject = waitForSingleObject;
-        return Scope.Create(waitForSingleObject2, delegate(Func<SafeWaitHandle, uint, uint> previous)
+        return Scope.Create(waitForSingleObject2, static previous =>
         {
             _waitForSingleObject = previous;
+        });
+    }
+
+    /// <summary>Overrides background signal-observation cancellation handling for deterministic tests.</summary>
+    /// <param name="onSignalObservationCancelled">The callback invoked after a cancelled observation exits.</param>
+    /// <returns>A scope that restores the previous callback.</returns>
+    internal static IDisposable OverrideSignalObservationCancellationForTesting(Action onSignalObservationCancelled)
+    {
+        Action previous = _onSignalObservationCancelled;
+        _onSignalObservationCancelled = onSignalObservationCancelled;
+        return Scope.Create(previous, static callback =>
+        {
+            _onSignalObservationCancelled = callback;
         });
     }
 
@@ -280,7 +299,7 @@ public sealed class WaitableTimer : IDisposable
         }
 
         double totalMilliseconds = timeout.TotalMilliseconds;
-        if (totalMilliseconds < 0.0 || totalMilliseconds > 4294967295.0)
+        if (totalMilliseconds < 0.0 || totalMilliseconds > MaximumUInt32Milliseconds)
         {
             throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "The timeout must be infinite or between zero and UInt32.MaxValue milliseconds.");
         }
@@ -301,29 +320,32 @@ public sealed class WaitableTimer : IDisposable
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            uint waitMilliseconds = ((remainingMilliseconds == uint.MaxValue) ? 100U : Math.Min(remainingMilliseconds, 100U));
+            uint waitMilliseconds = remainingMilliseconds == InfiniteTimeout
+                ? PollMilliseconds
+                : Math.Min(remainingMilliseconds, PollMilliseconds);
             uint waitResult = _waitForSingleObject(_handle, waitMilliseconds);
             switch (waitResult)
             {
-            case 0U:
-                return true;
-            case 258U:
-            {
-                if (remainingMilliseconds != uint.MaxValue)
-                {
-                    if (remainingMilliseconds <= waitMilliseconds)
+                case WaitObject0:
+                    return true;
+                case WaitTimeout:
                     {
-                        return false;
+                        bool hasFiniteTimeout = remainingMilliseconds != InfiniteTimeout;
+                        if (hasFiniteTimeout)
+                        {
+                            if (remainingMilliseconds <= waitMilliseconds)
+                            {
+                                return false;
+                            }
+
+                            remainingMilliseconds = checked(remainingMilliseconds - waitMilliseconds);
+                        }
+
+                        break;
                     }
 
-                    remainingMilliseconds = checked(remainingMilliseconds - waitMilliseconds);
-                }
-
-                break;
-            }
-
-            default:
-                throw new InvalidOperationException($"Waitable timer wait failed with native result 0x{waitResult:X8}.");
+                default:
+                    throw new InvalidOperationException($"Waitable timer wait failed with native result 0x{waitResult:X8}.");
             }
         }
     }

@@ -12,16 +12,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard;
 /// <summary>Extensions for VirtualKeyCode.</summary>
 public static class VirtualKeyCodeExtensions
 {
-    extension(VirtualKeyCode virtualKeyCode)
-    {
-        /// <summary>Test if the VirtualKeyCode is a modifier key.</summary>
-        /// <returns>bool.</returns>
-        public bool IsModifier() => ModifierKeys.Contains(virtualKeyCode);
-    }
-
     /// <summary>The virtual keys that act as keyboard modifiers.</summary>
-    private static readonly HashSet<VirtualKeyCode> ModifierKeys = new HashSet<VirtualKeyCode>
-    {
+    private static readonly HashSet<VirtualKeyCode> ModifierKeys =
+    [
         VirtualKeyCode.Capital,
         VirtualKeyCode.NumLock,
         VirtualKeyCode.Scroll,
@@ -35,6 +28,15 @@ public static class VirtualKeyCodeExtensions
         VirtualKeyCode.LeftMenu,
         VirtualKeyCode.RightMenu,
         VirtualKeyCode.LeftWin,
-        VirtualKeyCode.RightWin
-    };
+        VirtualKeyCode.RightWin,
+    ];
+
+    /// <summary>Provides extensions for a virtual key code value.</summary>
+    /// <param name="virtualKeyCode">The virtual key code.</param>
+    extension(VirtualKeyCode virtualKeyCode)
+    {
+        /// <summary>Test if the VirtualKeyCode is a modifier key.</summary>
+        /// <returns>bool.</returns>
+        public bool IsModifier() => ModifierKeys.Contains(virtualKeyCode);
+    }
 }

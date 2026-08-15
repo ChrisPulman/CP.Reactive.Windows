@@ -15,4 +15,10 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 /// <param name="auxData">The auxiliary data pointer.</param>
 /// <param name="auxDataSize">The auxiliary data size.</param>
 /// <returns>The GDI+ status.</returns>
-internal delegate GdiPlusStatus GdiPlusApplyEffectOperation(nint bitmap, nint effect, ref NativeRect rectOfInterest, bool useAuxData, nint auxData, int auxDataSize);
+internal delegate GdiPlusStatus GdiPlusApplyEffectOperation(
+    nint bitmap,
+    nint effect,
+    ref NativeRect rectOfInterest,
+    bool useAuxData,
+    nint auxData,
+    int auxDataSize);

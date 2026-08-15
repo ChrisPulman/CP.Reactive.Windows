@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Enums;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Structs;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Additional coverage for DWM and desktop messaging components.</summary>
@@ -429,6 +425,7 @@ public sealed class DwmMessagingCoverageTests
         var result = User32.User32Api.SendMessage((nint)handler.Handle, WindowsMessages.WM_APP, (nint)TestWordParameter, (nint)TestLongParameter);
         duplicateSubscription.Dispose();
 
+        await Assert.That(handler.MessageHandlerWindow).IsNotNull();
         await Assert.That(handler.Handle).IsNotEqualTo(0L);
         await Assert.That(result).IsEqualTo((nint)TestResult);
         await Assert.That(callCount).IsEqualTo(1);

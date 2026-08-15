@@ -30,5 +30,5 @@ internal enum ShellItemDisplayName : uint
     /// <summary>Returns the path relative to the parent folder in a friendly format as displayed in an address bar.</summary>
     ParentRelativeForAddressBar = 2_147_991_553U,
     /// <summary>Returns the path relative to the parent folder.</summary>
-    ParentRelative = 2_148_007_937U
+    ParentRelative = 2_148_007_937U,
 }

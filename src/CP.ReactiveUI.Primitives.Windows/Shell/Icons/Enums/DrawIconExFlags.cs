@@ -29,5 +29,5 @@ public enum DrawIconExFlags : uint
     /// <summary>Uses system metric icon values when width and height are zero.</summary>
     DI_DEFAULTSIZE = 8U,
     /// <summary>Draws the icon as an unmirrored icon.</summary>
-    DI_NOMIRROR = 0x10U
+    DI_NOMIRROR = 0x10U,
 }

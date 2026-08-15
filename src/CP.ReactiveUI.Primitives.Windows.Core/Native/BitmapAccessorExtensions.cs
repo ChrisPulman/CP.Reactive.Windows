@@ -11,6 +11,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native;
 /// <summary>Provides extension methods for <see cref="T:System.Drawing.Bitmap" /> to enable typed span-based pixel access.</summary>
 public static class BitmapAccessorExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="targetBitmap">The target value.</param>
     extension(Bitmap targetBitmap)
     {
         /// <summary>Processes pixel rows of two bitmaps simultaneously, providing typed access to both as source and target.</summary>
@@ -19,15 +21,20 @@ public static class BitmapAccessorExtensions
         /// <param name="processRows">An action that processes each pair of rows.</param>
         /// <exception cref="T:System.ArgumentNullException">Thrown when any parameter is null.</exception>
         /// <exception cref="T:System.ArgumentException">Thrown when bitmaps have different dimensions.</exception>
-        public void ProcessPixelRows<TPixel>(Bitmap sourceBitmap, Action<BitmapAccessor<TPixel>, BitmapAccessor<TPixel>> processRows)
+        public void ProcessPixelRows<TPixel>(
+            Bitmap sourceBitmap,
+            Action<BitmapAccessor<TPixel>, BitmapAccessor<TPixel>> processRows)
             where TPixel : struct
         {
             Throw.IfNull(targetBitmap);
             Throw.IfNull(sourceBitmap);
             Throw.IfNull(processRows);
-            if (targetBitmap.Width != sourceBitmap.Width || targetBitmap.Height != sourceBitmap.Height)
+            if (
+                targetBitmap.Width != sourceBitmap.Width
+                || targetBitmap.Height != sourceBitmap.Height)
             {
-                throw new ArgumentException("Source and target bitmaps must have the same dimensions.");
+                throw new ArgumentException(
+                    "Source and target bitmaps must have the same dimensions.");
             }
 
             using BitmapAccessor<TPixel> targetAccessor = new(targetBitmap);

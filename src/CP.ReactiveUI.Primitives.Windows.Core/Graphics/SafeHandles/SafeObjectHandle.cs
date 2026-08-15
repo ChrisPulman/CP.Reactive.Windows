@@ -12,9 +12,7 @@ public class SafeObjectHandle : SafeHandleZeroOrMinusOneIsInvalid
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeObjectHandle" /> class.</summary>
     /// <param name="ownsHandle">A value indicating whether this instance owns the handle.</param>
     protected SafeObjectHandle(bool ownsHandle)
-        : base(ownsHandle)
-    {
-    }
+        : base(ownsHandle) { }
 
     /// <summary>Releases the handle by calling <c>DeleteObject</c>.</summary>
     /// <returns><see langword="true" /> if the object was deleted; otherwise, <see langword="false" />.</returns>

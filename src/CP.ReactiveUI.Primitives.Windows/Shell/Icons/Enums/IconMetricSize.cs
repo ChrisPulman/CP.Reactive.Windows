@@ -16,5 +16,5 @@ public enum IconMetricSize
     /// </summary>
     SmallIcon,
     /// <summary>Use the system standard icon size.</summary>
-    StandardIcon
+    StandardIcon,
 }

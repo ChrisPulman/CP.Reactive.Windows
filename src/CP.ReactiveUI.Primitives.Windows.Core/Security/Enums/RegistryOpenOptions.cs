@@ -12,6 +12,7 @@ public enum RegistryOpenOptions
 {
     /// <summary>No options.</summary>
     None = 0,
+
     /// <summary>The key is a symbolic link. Registry symbolic links should only be used when absolutely necessary.</summary>
-    OpenLink = 8
+    OpenLink = 8,
 }

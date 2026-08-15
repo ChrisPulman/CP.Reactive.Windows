@@ -49,5 +49,5 @@ public enum DeviceChangeEvent : uint
     /// <summary>The system sends the DBT_CUSTOMEVENT device event when a driver-defined custom event has occurred.</summary>
     CustomEvent = 32_774U,
     /// <summary>The DBT_USERDEFINED device event identifies a user-defined event.</summary>
-    UserDefined = 65_535U
+    UserDefined = 65_535U,
 }

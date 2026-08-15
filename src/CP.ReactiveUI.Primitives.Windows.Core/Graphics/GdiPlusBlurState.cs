@@ -7,4 +7,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 /// <summary>Stores deterministic GDI+ blur state.</summary>
 /// <param name="Operations">The operation group.</param>
 /// <param name="IsBlurEnabled">Whether blur is enabled.</param>
-internal readonly record struct GdiPlusBlurState(GdiPlusBlurOperations Operations, bool IsBlurEnabled);
+internal readonly record struct GdiPlusBlurState(
+    GdiPlusBlurOperations Operations,
+    bool IsBlurEnabled);

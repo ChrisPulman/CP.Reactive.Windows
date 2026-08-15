@@ -4,7 +4,6 @@
 
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.InteropServices;
 using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using ReactiveUI.Primitives.Disposables;
@@ -21,132 +20,18 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Lifecycle;
 /// <remarks>Use this class to enable your application to be automatically restarted after system updates or
 /// shutdowns managed by Windows Restart Manager. It also provides helper methods for detecting restart conditions and
 /// responding to session end events, allowing applications to preserve state and handle shutdowns gracefully.</remarks>
+#if NETFRAMEWORK
 public static class ApplicationRestartManager
+#else
+public static partial class ApplicationRestartManager
+#endif
 {
-    /// <summary>Native kernel32 entry points.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>Kernel32 library name.</summary>
-        private const string Kernel32Dll = "kernel32.dll";
-
-        /// <summary>Resolved UnregisterApplicationRestart entry point.</summary>
-        private static readonly unsafe delegate* unmanaged[Stdcall]<int> UnregisterApplicationRestartPointer = (delegate* unmanaged[Stdcall]<int>)(void*)System.Runtime.InteropServices.NativeLibrary.GetExport(System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, "kernel32.dll")), "UnregisterApplicationRestart");
-
-        /// <summary>Registers the active instance of an application for restart.</summary>
-        /// <param name="commandLine">Command line to pass to the restarted application.</param>
-        /// <param name="flags">Application restart flags.</param>
-        /// <returns>S_OK on success; otherwise, an error value.</returns>
-        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern int RegisterApplicationRestart(string commandLine, ApplicationRestartFlags flags);
-
-        /// <summary>Removes the active instance of an application from the restart list.</summary>
-        /// <returns>S_OK on success; otherwise, an error value.</returns>
-        internal static int UnregisterApplicationRestart() => UnregisterApplicationRestartCore();
-
-        /// <summary>Invokes the resolved restart unregistration function pointer.</summary>
-        /// <returns>Native restart unregistration result.</returns>
-        private static unsafe int UnregisterApplicationRestartCore() => UnregisterApplicationRestartPointer();
-    }
-
-    /// <summary>Composes restart registration operations without invoking them during construction.</summary>
-    /// <param name="register">The registration operation.</param>
-    /// <param name="unregister">The unregistration operation.</param>
-    private sealed class ApplicationRestartOperations(Func<string, ApplicationRestartFlags, int> register, Func<int> unregister)
-    {
-        /// <summary>Registers the application for restart.</summary>
-        /// <param name="commandLine">The restart command line.</param>
-        /// <param name="flags">The restart flags.</param>
-        /// <returns>The native result.</returns>
-        public int Register(string commandLine, ApplicationRestartFlags flags) => register(commandLine, flags);
-
-        /// <summary>Unregisters the application from restart.</summary>
-        /// <returns>The native result.</returns>
-        public int Unregister() => unregister();
-    }
-
-    /// <summary>Forwards native window session messages to the end-session observable.</summary>
-    /// <param name="observer">Observer that receives end-session messages.</param>
-    /// <param name="handlers">Handlers used to pre-handle end-session messages.</param>
-    private sealed class EndSessionMessageObserver(IObserver<EndSessionMessage> observer, EndSessionHandlers handlers) : IObserver<WindowMessage>, IDisposable
-    {
-        /// <summary>Shared message subscription.</summary>
-        private IDisposable _subscription;
-
-        /// <summary>Connects to the shared message window.</summary>
-        /// <returns>The connected observer.</returns>
-        public EndSessionMessageObserver Connect()
-        {
-            _subscription = SharedMessageWindow.WindowMessageEvents.Subscribe(this);
-            return this;
-        }
-
-        /// <inheritdoc />
-        public void Dispose()
-        {
-            _endSessionObservable = null;
-            _subscription?.Dispose();
-        }
-
-        /// <inheritdoc />
-        public void OnCompleted() => observer.OnCompleted();
-
-        /// <inheritdoc />
-        public void OnError(Exception error) => observer.OnError(error);
-
-        /// <inheritdoc />
-        public void OnNext(WindowMessage value)
-        {
-            if (value.Msg == WindowsMessages.WM_QUERYENDSESSION || value.Msg == WindowsMessages.WM_ENDSESSION)
-            {
-                WindowMessage message = value;
-                EndSessionReasons endSessionReason = (EndSessionReasons)checked((uint)message.LParam);
-                if (message.Msg == WindowsMessages.WM_QUERYENDSESSION)
-                {
-                    message = TryHandle(in message, endSessionReason, handlers.OnQuerySession);
-                }
-                else if (message.Msg == WindowsMessages.WM_ENDSESSION)
-                {
-                    message = TryHandle(in message, endSessionReason, handlers.OnEndSession);
-                }
-
-                if (!message.Handled)
-                {
-                    EndSessionMessage endSessionMessage = new(message.Msg, endSessionReason);
-                    observer.OnNext(endSessionMessage);
-                }
-            }
-        }
-
-        /// <summary>Handles a message through a supplied session handler.</summary>
-        /// <param name="message">Window message to update.</param>
-        /// <param name="reason">End-session reason.</param>
-        /// <param name="handler">Handler to invoke.</param>
-        /// <returns>The original message, or a handled copy when a handler processed it.</returns>
-        private static WindowMessage TryHandle(in WindowMessage message, EndSessionReasons reason, Func<EndSessionReasons, bool> handler)
-        {
-            if (handler is null)
-            {
-                return message;
-            }
-
-            bool canEndSession = handler(reason);
-            message.Result = (ulong)((!canEndSession) ? 1 : 0);
-            message.Handled = true;
-            return message;
-        }
-    }
-
-    /// <summary>Stores end-session handlers for a shared message subscription.</summary>
-    /// <param name="OnQuerySession">Handler invoked for query end-session messages.</param>
-    /// <param name="OnEndSession">Handler invoked for end-session messages.</param>
-    private sealed record EndSessionHandlers(Func<EndSessionReasons, bool> OnQuerySession, Func<EndSessionReasons, bool> OnEndSession);
-
     /// <summary>Cached shared end-session observable.</summary>
     private static IObservable<EndSessionMessage> _endSessionObservable;
 
     /// <summary>Restart registration operations used by this process.</summary>
-    private static ApplicationRestartOperations _restartOperations = new(NativeMethods.RegisterApplicationRestart, NativeMethods.UnregisterApplicationRestart);
+    private static ApplicationRestartOperations _restartOperations =
+        new(NativeMethods.RegisterApplicationRestart, NativeMethods.UnregisterApplicationRestart);
 
     /// <summary>Gets the maximum length for the command line arguments, in characters.</summary>
     public static int RestartMaxCmdLine { get; } = 1024;
@@ -247,7 +132,13 @@ public static class ApplicationRestartManager
     ///     An observable stream that emits EndSessionMessage values when a session end event occurs.
     ///     Subscribe to this observable to handle shutdown requests gracefully.
     /// </returns>
-    public static IObservable<EndSessionMessage> ObserveEndSessionMessages(Func<EndSessionReasons, bool> onQuerySession, Func<EndSessionReasons, bool> onEndSession) => _endSessionObservable ??= ReactiveSignal.CreateWithState(new(onQuerySession, onEndSession), (EndSessionHandlers state, IObserver<EndSessionMessage> observer) => new EndSessionMessageObserver(observer, state).Connect()).Share();
+    public static IObservable<EndSessionMessage> ObserveEndSessionMessages(
+        Func<EndSessionReasons, bool> onQuerySession,
+        Func<EndSessionReasons, bool> onEndSession) =>
+        _endSessionObservable ??= ReactiveSignal.CreateWithState(
+            new(onQuerySession, onEndSession),
+            static (EndSessionHandlers state, IObserver<EndSessionMessage> observer) =>
+                new EndSessionMessageObserver(observer, state).Connect()).Share();
 
     /// <summary>Gets restart command-line arguments from a supplied process argument array.</summary>
     /// <param name="args">The process command-line arguments, including the executable path.</param>
@@ -271,7 +162,11 @@ public static class ApplicationRestartManager
     /// <param name="onEndSession">The optional end-session handler.</param>
     /// <param name="connect">A value indicating whether to connect to the shared message stream.</param>
     /// <returns>The message observer and its disposable lifetime.</returns>
-    internal static (IObserver<WindowMessage> Observer, IDisposable Lifetime) CreateEndSessionObserverForTesting(IObserver<EndSessionMessage> observer, Func<EndSessionReasons, bool> onQuerySession, Func<EndSessionReasons, bool> onEndSession, bool connect)
+    internal static (IObserver<WindowMessage> Observer, IDisposable Lifetime) CreateEndSessionObserverForTesting(
+        IObserver<EndSessionMessage> observer,
+        Func<EndSessionReasons, bool> onQuerySession,
+        Func<EndSessionReasons, bool> onEndSession,
+        bool connect)
     {
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(observer);
         EndSessionMessageObserver endSessionObserver = new(observer, new EndSessionHandlers(onQuerySession, onEndSession));
@@ -282,13 +177,15 @@ public static class ApplicationRestartManager
     /// <param name="register">The replacement registration operation.</param>
     /// <param name="unregister">The replacement unregistration operation.</param>
     /// <returns>A scope that restores the previous operations.</returns>
-    internal static IDisposable OverrideRestartOperationsForTesting(Func<string, ApplicationRestartFlags, int> register, Func<int> unregister)
+    internal static IDisposable OverrideRestartOperationsForTesting(
+        Func<string, ApplicationRestartFlags, int> register,
+        Func<int> unregister)
     {
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(register);
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregister);
         ApplicationRestartOperations restartOperations = _restartOperations;
         _restartOperations = new(register, unregister);
-        return Scope.Create(restartOperations, delegate(ApplicationRestartOperations previous)
+        return Scope.Create(restartOperations, static previous =>
         {
             _restartOperations = previous;
         });
@@ -309,13 +206,135 @@ public static class ApplicationRestartManager
     /// <summary>Checks whether an argument is a restart marker.</summary>
     /// <param name="arg">Argument to inspect.</param>
     /// <returns>True when the argument indicates a restart; otherwise, false.</returns>
-    private static bool IsRestartArgument(string arg)
+    private static bool IsRestartArgument(string arg) =>
+        arg.Equals("/restart", StringComparison.OrdinalIgnoreCase)
+        || arg.Equals("-restart", StringComparison.OrdinalIgnoreCase)
+        || arg.Equals("--restart", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Native kernel32 entry points.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
     {
-        if (!arg.Equals("/restart", StringComparison.OrdinalIgnoreCase) && !arg.Equals("-restart", StringComparison.OrdinalIgnoreCase))
+        /// <summary>Registers the active instance of an application for restart.</summary>
+        /// <param name="commandLine">Command line to pass to the restarted application.</param>
+        /// <param name="flags">Application restart flags.</param>
+        /// <returns>S_OK on success; otherwise, an error value.</returns>
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int RegisterApplicationRestart(string commandLine, ApplicationRestartFlags flags);
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int RegisterApplicationRestart(string commandLine, ApplicationRestartFlags flags);
+#endif
+
+        /// <summary>Removes the active instance of an application from the restart list.</summary>
+        /// <returns>S_OK on success; otherwise, an error value.</returns>
+#if NETFRAMEWORK
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern int UnregisterApplicationRestart();
+#else
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int UnregisterApplicationRestart();
+#endif
+    }
+
+    /// <summary>Composes restart registration operations without invoking them during construction.</summary>
+    /// <param name="register">The registration operation.</param>
+    /// <param name="unregister">The unregistration operation.</param>
+    private sealed class ApplicationRestartOperations(Func<string, ApplicationRestartFlags, int> register, Func<int> unregister)
+    {
+        /// <summary>Registers the application for restart.</summary>
+        /// <param name="commandLine">The restart command line.</param>
+        /// <param name="flags">The restart flags.</param>
+        /// <returns>The native result.</returns>
+        public int Register(string commandLine, ApplicationRestartFlags flags) => register(commandLine, flags);
+
+        /// <summary>Unregisters the application from restart.</summary>
+        /// <returns>The native result.</returns>
+        public int Unregister() => unregister();
+    }
+
+    /// <summary>Forwards native window session messages to the end-session observable.</summary>
+    /// <param name="observer">Observer that receives end-session messages.</param>
+    /// <param name="handlers">Handlers used to pre-handle end-session messages.</param>
+    private sealed class EndSessionMessageObserver(IObserver<EndSessionMessage> observer, EndSessionHandlers handlers) : IObserver<WindowMessage>, IDisposable
+    {
+        /// <summary>Shared message subscription.</summary>
+        private IDisposable _subscription;
+
+        /// <summary>Connects to the shared message window.</summary>
+        /// <returns>The connected observer.</returns>
+        public EndSessionMessageObserver Connect()
         {
-            return arg.Equals("--restart", StringComparison.OrdinalIgnoreCase);
+            _subscription = SharedMessageWindow.WindowMessageEvents.Subscribe(this);
+            return this;
         }
 
-        return true;
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            _endSessionObservable = null;
+            _subscription?.Dispose();
+        }
+
+        /// <inheritdoc />
+        public void OnCompleted() => observer.OnCompleted();
+
+        /// <inheritdoc />
+        public void OnError(Exception error) => observer.OnError(error);
+
+        /// <inheritdoc />
+        public void OnNext(WindowMessage value)
+        {
+            if (value.Msg == WindowsMessages.WM_QUERYENDSESSION || value.Msg == WindowsMessages.WM_ENDSESSION)
+            {
+                WindowMessage message = value;
+                EndSessionReasons endSessionReason = (EndSessionReasons)checked((uint)message.LParam);
+                if (message.Msg == WindowsMessages.WM_QUERYENDSESSION)
+                {
+                    message = TryHandle(in message, endSessionReason, handlers.OnQuerySession);
+                }
+                else if (message.Msg == WindowsMessages.WM_ENDSESSION)
+                {
+                    message = TryHandle(in message, endSessionReason, handlers.OnEndSession);
+                }
+
+                if (!message.Handled)
+                {
+                    EndSessionMessage endSessionMessage = new(message.Msg, endSessionReason);
+                    observer.OnNext(endSessionMessage);
+                }
+            }
+        }
+
+        /// <summary>Handles a message through a supplied session handler.</summary>
+        /// <param name="message">Window message to update.</param>
+        /// <param name="reason">End-session reason.</param>
+        /// <param name="handler">Handler to invoke.</param>
+        /// <returns>The original message, or a handled copy when a handler processed it.</returns>
+        private static WindowMessage TryHandle(in WindowMessage message, EndSessionReasons reason, Func<EndSessionReasons, bool> handler)
+        {
+            if (handler is null)
+            {
+                return message;
+            }
+
+            bool canEndSession = handler(reason);
+            message.Result = (ulong)((!canEndSession) ? 1 : 0);
+            message.Handled = true;
+            return message;
+        }
     }
+
+    /// <summary>Stores end-session handlers for a shared message subscription.</summary>
+    /// <param name="OnQuerySession">Handler invoked for query end-session messages.</param>
+    /// <param name="OnEndSession">Handler invoked for end-session messages.</param>
+    private sealed record EndSessionHandlers(Func<EndSessionReasons, bool> OnQuerySession, Func<EndSessionReasons, bool> OnEndSession);
 }

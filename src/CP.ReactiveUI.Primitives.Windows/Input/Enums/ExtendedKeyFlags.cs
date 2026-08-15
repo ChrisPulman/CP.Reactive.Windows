@@ -31,5 +31,5 @@ public enum ExtendedKeyFlags : uint
     /// <summary>Test the context code.</summary>
     AltDown = 0x20U,
     /// <summary>Test the transition-state flag.</summary>
-    Up = 0x80U
+    Up = 0x80U,
 }

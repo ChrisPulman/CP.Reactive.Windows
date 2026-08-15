@@ -19,9 +19,6 @@ public class DeviceNotificationEvent
     /// <summary>The device broadcast header.</summary>
     private readonly DevBroadcastHeader _devBroadcastHeader;
 
-    /// <summary>Gets the type of the event.</summary>
-    public DeviceChangeEvent EventType { get; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Devices.DeviceNotificationEvent" /> class from a WM_DEVICECHANGE message.</summary>
     /// <param name="wordParam">The word parameter.</param>
     /// <param name="longParam">The long parameter.</param>
@@ -31,6 +28,9 @@ public class DeviceNotificationEvent
         _deviceBroadcastPtr = longParam;
         _devBroadcastHeader = Marshal.PtrToStructure<DevBroadcastHeader>(_deviceBroadcastPtr);
     }
+
+    /// <summary>Gets the type of the event.</summary>
+    public DeviceChangeEvent EventType { get; }
 
     /// <summary>Test if the message is a certain DeviceBroadcastDeviceType.</summary>
     /// <param name="deviceBroadcastDeviceType">The device broadcast device type.</param>

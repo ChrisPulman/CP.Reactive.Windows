@@ -88,15 +88,10 @@ public readonly struct NativePoint(int x, int y) : IEquatable<NativePoint>
     public override string ToString() => $"{{X: {X}; Y: {Y};}}";
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (!(obj is NativePoint point))
-        {
-            return obj is Point drawingPoint && Equals(drawingPoint);
-        }
-
-        return Equals(point);
-    }
+    public override bool Equals(object obj) =>
+        !(obj is NativePoint point)
+            ? obj is Point drawingPoint && Equals(drawingPoint)
+            : Equals(point);
 
     /// <inheritdoc />
     public bool Equals(NativePoint other) => X == other.X && Y == other.Y;

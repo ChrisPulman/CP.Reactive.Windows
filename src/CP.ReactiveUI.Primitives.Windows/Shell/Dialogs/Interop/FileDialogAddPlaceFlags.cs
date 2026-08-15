@@ -16,5 +16,5 @@ internal enum FileDialogAddPlaceFlags : uint
     /// <summary>The place is added to the bottom of the default list.</summary>
     Bottom,
     /// <summary>The place is added to the top of the default list.</summary>
-    Top
+    Top,
 }

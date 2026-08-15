@@ -111,7 +111,11 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
     /// <param name="imageKey">Key of the image.</param>
     /// <param name="valueConverter">Function that converts the value to a bitmap.</param>
     /// <returns>The current bitmap scale handler.</returns>
-    public BitmapScaleHandler<TKey, TValue> AddTarget(ToolStripItem toolStripItem, TKey imageKey, Func<TValue, Bitmap> valueConverter) => AddTarget(toolStripItem, imageKey, valueConverter, execute: false);
+    public BitmapScaleHandler<TKey, TValue> AddTarget(
+        ToolStripItem toolStripItem,
+        TKey imageKey,
+        Func<TValue, Bitmap> valueConverter) =>
+        AddTarget(toolStripItem, imageKey, valueConverter, execute: false);
 
     /// <summary>Add a tool strip item as a bitmap target.</summary>
     /// <param name="toolStripItem">The target tool strip item.</param>

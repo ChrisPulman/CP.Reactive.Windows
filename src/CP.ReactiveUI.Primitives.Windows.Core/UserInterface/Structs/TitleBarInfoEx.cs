@@ -107,7 +107,8 @@ public readonly struct TitleBarInfoEx : IEquatable<TitleBarInfoEx>
     /// <summary>Returns the ObjectState of the specified element.</summary>
     /// <param name="titleBarInfoIndex">TitleBarInfoIndexes used to specify the element.</param>
     /// <returns>ObjectStates.</returns>
-    public ObjectStates ElementState(TitleBarInfoIndexes titleBarInfoIndex) => titleBarInfoIndex switch
+    public ObjectStates ElementState(TitleBarInfoIndexes titleBarInfoIndex) =>
+        titleBarInfoIndex switch
         {
             TitleBarInfoIndexes.TitleBar => _nativeState0,
             TitleBarInfoIndexes.Reserved => _nativeState1,
@@ -115,13 +116,17 @@ public readonly struct TitleBarInfoEx : IEquatable<TitleBarInfoEx>
             TitleBarInfoIndexes.MaximizeButton => _nativeState3,
             TitleBarInfoIndexes.HelpButton => _nativeState4,
             TitleBarInfoIndexes.CloseButton => _nativeState5,
-            _ => throw new ArgumentOutOfRangeException(nameof(titleBarInfoIndex), titleBarInfoIndex, null),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(titleBarInfoIndex),
+                titleBarInfoIndex,
+                null),
         };
 
     /// <summary>Returns the Bounds of the specified element.</summary>
     /// <param name="titleBarInfoIndex">TitleBarInfoIndexes used to specify the element.</param>
     /// <returns>RECT.</returns>
-    public NativeRect ElementBounds(TitleBarInfoIndexes titleBarInfoIndex) => titleBarInfoIndex switch
+    public NativeRect ElementBounds(TitleBarInfoIndexes titleBarInfoIndex) =>
+        titleBarInfoIndex switch
         {
             TitleBarInfoIndexes.TitleBar => _nativeRectangle0,
             TitleBarInfoIndexes.Reserved => _nativeRectangle1,
@@ -129,11 +134,15 @@ public readonly struct TitleBarInfoEx : IEquatable<TitleBarInfoEx>
             TitleBarInfoIndexes.MaximizeButton => _nativeRectangle3,
             TitleBarInfoIndexes.HelpButton => _nativeRectangle4,
             TitleBarInfoIndexes.CloseButton => _nativeRectangle5,
-            _ => throw new ArgumentOutOfRangeException(nameof(titleBarInfoIndex), titleBarInfoIndex, null),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(titleBarInfoIndex),
+                titleBarInfoIndex,
+                null),
         };
 
     /// <inheritdoc />
-    public bool Equals(TitleBarInfoEx other) => HasSameTitleBarStates(in other) && HasSameTitleBarRectangles(in other);
+    public bool Equals(TitleBarInfoEx other) =>
+        HasSameTitleBarStates(in other) && HasSameTitleBarRectangles(in other);
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is TitleBarInfoEx other && Equals(other);
@@ -144,10 +153,24 @@ public readonly struct TitleBarInfoEx : IEquatable<TitleBarInfoEx>
     /// <summary>Compares title bar state fields.</summary>
     /// <param name="other">The other value.</param>
     /// <returns>True when state values match.</returns>
-    private bool HasSameTitleBarStates(in TitleBarInfoEx other) => _nativeSize == other._nativeSize && _nativeTitleBarBounds.Equals(other._nativeTitleBarBounds) && _nativeState0 == other._nativeState0 && _nativeState1 == other._nativeState1 && _nativeState2 == other._nativeState2 && _nativeState3 == other._nativeState3 && _nativeState4 == other._nativeState4 && _nativeState5 == other._nativeState5;
+    private bool HasSameTitleBarStates(in TitleBarInfoEx other) =>
+        _nativeSize == other._nativeSize
+        && _nativeTitleBarBounds.Equals(other._nativeTitleBarBounds)
+        && _nativeState0 == other._nativeState0
+        && _nativeState1 == other._nativeState1
+        && _nativeState2 == other._nativeState2
+        && _nativeState3 == other._nativeState3
+        && _nativeState4 == other._nativeState4
+        && _nativeState5 == other._nativeState5;
 
     /// <summary>Compares title bar rectangle fields.</summary>
     /// <param name="other">The other value.</param>
     /// <returns>True when rectangle values match.</returns>
-    private bool HasSameTitleBarRectangles(in TitleBarInfoEx other) => _nativeRectangle0.Equals(other._nativeRectangle0) && _nativeRectangle1.Equals(other._nativeRectangle1) && _nativeRectangle2.Equals(other._nativeRectangle2) && _nativeRectangle3.Equals(other._nativeRectangle3) && _nativeRectangle4.Equals(other._nativeRectangle4) && _nativeRectangle5.Equals(other._nativeRectangle5);
+    private bool HasSameTitleBarRectangles(in TitleBarInfoEx other) =>
+        _nativeRectangle0.Equals(other._nativeRectangle0)
+        && _nativeRectangle1.Equals(other._nativeRectangle1)
+        && _nativeRectangle2.Equals(other._nativeRectangle2)
+        && _nativeRectangle3.Equals(other._nativeRectangle3)
+        && _nativeRectangle4.Equals(other._nativeRectangle4)
+        && _nativeRectangle5.Equals(other._nativeRectangle5);
 }

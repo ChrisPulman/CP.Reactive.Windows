@@ -46,7 +46,7 @@ public static class KeyboardInputGenerator
 
         checked
         {
-            KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * 2];
+            KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * KeyTransitionInputCount];
             int index = 0;
             VirtualKeyCode[] array = keycodes;
             foreach (VirtualKeyCode virtualKeyCode in array)
@@ -78,7 +78,7 @@ public static class KeyboardInputGenerator
 
         checked
         {
-            KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * 2];
+            KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * KeyTransitionInputCount];
             int index = 0;
             foreach (VirtualKeyCode virtualKeyCode in keycodes)
             {

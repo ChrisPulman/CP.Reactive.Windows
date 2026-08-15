@@ -19,12 +19,14 @@ public enum RmShutdownType : uint
     ///     A service that does not respond to a shutdown request is forced to shut down after 20 seconds.
     /// </summary>
     None = 0U,
+
     /// <summary>
     ///     Force unresponsive applications and services to shut down after the timeout period.
     ///     An application that does not respond to a shutdown request by the Restart Manager is forced to shut down after 30 seconds.
     ///     A service that does not respond to a shutdown request is forced to shut down after 20 seconds.
     /// </summary>
     RmForceShutdown = 1U,
+
     /// <summary>Shut down applications if and only if all the applications have been registered for restart using the RegisterApplicationRestart function.</summary>
-    RmShutdownOnlyRegistered = 0x10U
+    RmShutdownOnlyRegistered = 0x10U,
 }

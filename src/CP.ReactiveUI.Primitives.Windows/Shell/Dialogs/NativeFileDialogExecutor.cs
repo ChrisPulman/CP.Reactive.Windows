@@ -13,18 +13,20 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs;
 /// <summary>Production Windows Common Item Dialog executor.</summary>
 internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
 {
+    /// <summary>Successful HRESULT value.</summary>
+    private const int HResultSuccess = 0;
+
     /// <summary>Creates open-file dialog wrappers.</summary>
     private readonly Func<IFileOpenDialog> _createOpenDialog;
 
     /// <summary>Creates save-file dialog wrappers.</summary>
     private readonly Func<IFileSaveDialog> _createSaveDialog;
 
-    /// <summary>Gets the shared production executor.</summary>
-    internal static NativeFileDialogExecutor Instance { get; } = new();
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.NativeFileDialogExecutor" /> class.</summary>
     internal NativeFileDialogExecutor()
-        : this(() => ComDialogHelper.CreateDialog<IFileOpenDialog>(ComDialogHelper.ClsidFileOpenDialog), () => ComDialogHelper.CreateDialog<IFileSaveDialog>(ComDialogHelper.ClsidFileSaveDialog))
+        : this(
+            static () => ComDialogHelper.CreateDialog<IFileOpenDialog>(ComDialogHelper.ClsidFileOpenDialog),
+            static () => ComDialogHelper.CreateDialog<IFileSaveDialog>(ComDialogHelper.ClsidFileSaveDialog))
     {
     }
 
@@ -36,6 +38,9 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
         _createOpenDialog = createOpenDialog ?? throw new ArgumentNullException(nameof(createOpenDialog));
         _createSaveDialog = createSaveDialog ?? throw new ArgumentNullException(nameof(createSaveDialog));
     }
+
+    /// <summary>Gets the shared production executor.</summary>
+    internal static NativeFileDialogExecutor Instance { get; } = new();
 
     /// <inheritdoc />
     public FileDialogResult ShowOpen(FileOpenDialogRequest request)
@@ -63,7 +68,7 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
         ComDialogHelper.ApplyPlaces(dialog.AddPlace, request.Places);
         int num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
-        if (num == -2_147_023_673)
+        if (num == ComDialogHelper.HResultCancelled)
         {
             return FileDialogResult.Cancelled();
         }
@@ -102,7 +107,7 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
         ComDialogHelper.ApplyPlaces(dialog.AddPlace, request.Places);
         int num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
-        if (num == -2_147_023_673)
+        if (num == ComDialogHelper.HResultCancelled)
         {
             return FileDialogResult.Cancelled();
         }
@@ -124,7 +129,7 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
         ComDialogHelper.ApplyInitialDirectory(dialog.SetFolder, request.InitialDirectory);
         int num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
-        if (num == -2_147_023_673)
+        if (num == ComDialogHelper.HResultCancelled)
         {
             return FileDialogResult.Cancelled();
         }
@@ -137,7 +142,7 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
     /// <param name="hr">The dialog HRESULT.</param>
     private static void ThrowIfUnexpectedResult(int hr)
     {
-        if (hr is not 0 and not -2_147_023_673)
+        if (hr is not HResultSuccess and not ComDialogHelper.HResultCancelled)
         {
             Marshal.ThrowExceptionForHR(hr);
         }

@@ -12,6 +12,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 /// <summary>These are extensions to work with the clipboard.</summary>
 public static class ClipboardMiscExtensions
 {
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="clipboardAccessToken">The extended instance.</param>
     extension(IClipboardAccessToken clipboardAccessToken)
     {
         /// <summary>Empties the clipboard, this assumes that a lock has already been retrieved.</summary>

@@ -11,4 +11,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="sessionFlags">The session flags.</param>
 /// <param name="sessionKey">Receives the session key.</param>
 /// <returns>The native result code.</returns>
-internal delegate int StartSessionOperation(out int sessionHandle, int sessionFlags, StringBuilder sessionKey);
+internal delegate int StartSessionOperation(
+    out int sessionHandle,
+    int sessionFlags,
+    StringBuilder sessionKey);

@@ -18,18 +18,27 @@ internal static class NativeNumber<T>
     /// <param name="left">The left value.</param>
     /// <param name="right">The right value.</param>
     /// <returns>The sum.</returns>
-    internal static T Add(T left, T right) => typeof(T) != typeof(int) ? FromFloat(ToFloat(left) + ToFloat(right)) : FromInt(checked(ToInt(left) + ToInt(right)));
+    internal static T Add(T left, T right) =>
+        typeof(T) != typeof(int)
+            ? FromFloat(ToFloat(left) + ToFloat(right))
+            : FromInt(checked(ToInt(left) + ToInt(right)));
 
     /// <summary>Subtracts one value from another.</summary>
     /// <param name="left">The left value.</param>
     /// <param name="right">The right value.</param>
     /// <returns>The difference.</returns>
-    internal static T Subtract(T left, T right) => typeof(T) != typeof(int) ? FromFloat(ToFloat(left) - ToFloat(right)) : FromInt(checked(ToInt(left) - ToInt(right)));
+    internal static T Subtract(T left, T right) =>
+        typeof(T) != typeof(int)
+            ? FromFloat(ToFloat(left) - ToFloat(right))
+            : FromInt(checked(ToInt(left) - ToInt(right)));
 
     /// <summary>Gets the absolute value.</summary>
     /// <param name="value">The value.</param>
     /// <returns>The absolute value.</returns>
-    internal static T Abs(T value) => typeof(T) != typeof(int) ? FromFloat(Math.Abs(ToFloat(value))) : FromInt(Math.Abs(ToInt(value)));
+    internal static T Abs(T value) =>
+        typeof(T) != typeof(int)
+            ? FromFloat(Math.Abs(ToFloat(value)))
+            : FromInt(Math.Abs(ToInt(value)));
 
     /// <summary>Gets the smaller value.</summary>
     /// <param name="left">The left value.</param>
@@ -70,7 +79,8 @@ internal static class NativeNumber<T>
     /// <summary>Converts a value to a single-precision floating-point number.</summary>
     /// <param name="value">The value.</param>
     /// <returns>The converted value.</returns>
-    internal static float ToSingle(T value) => typeof(T) != typeof(int) ? ToFloat(value) : ToInt(value);
+    internal static float ToSingle(T value) =>
+        typeof(T) != typeof(int) ? ToFloat(value) : ToInt(value);
 
     /// <summary>Converts a value to a double-precision floating-point number.</summary>
     /// <param name="value">The value.</param>

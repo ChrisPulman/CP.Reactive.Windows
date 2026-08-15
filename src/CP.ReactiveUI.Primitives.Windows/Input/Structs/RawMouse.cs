@@ -16,21 +16,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 [StructLayout(LayoutKind.Explicit)]
 public readonly record struct RawMouse
 {
-    /// <summary>Gets the mouse state.</summary>
-    public MouseStates State => _flags;
-
-    /// <summary>Gets the button state.</summary>
-    public MouseButtonStates ButtonState => _buttonFlags;
-
-    /// <summary>Gets if usButtonFlags is RI_MOUSE_WHEEL, this member is a signed value that specifies the wheel delta.</summary>
-    public short WheelData => _buttonData;
-
-    /// <summary>Gets the motion in the X direction. This is signed relative motion or absolute motion, depending on the value of usFlags.</summary>
-    public int X => _lastX;
-
-    /// <summary>Gets the motion in the Y direction. This is signed relative motion or absolute motion, depending on the value of usFlags.</summary>
-    public int Y => _lastY;
-
     /// <summary>Stores the native mouse state flags.</summary>
     [FieldOffset(0)]
     private readonly MouseStates _flags;
@@ -62,4 +47,19 @@ public readonly record struct RawMouse
     /// <summary>Stores the native extra information value.</summary>
     [FieldOffset(20)]
     private readonly uint _extraInformation;
+
+    /// <summary>Gets the mouse state.</summary>
+    public MouseStates State => _flags;
+
+    /// <summary>Gets the button state.</summary>
+    public MouseButtonStates ButtonState => _buttonFlags;
+
+    /// <summary>Gets if usButtonFlags is RI_MOUSE_WHEEL, this member is a signed value that specifies the wheel delta.</summary>
+    public short WheelData => _buttonData;
+
+    /// <summary>Gets the motion in the X direction. This is signed relative motion or absolute motion, depending on the value of usFlags.</summary>
+    public int X => _lastX;
+
+    /// <summary>Gets the motion in the Y direction. This is signed relative motion or absolute motion, depending on the value of usFlags.</summary>
+    public int Y => _lastY;
 }

@@ -47,5 +47,5 @@ public enum ExitWindowsFlags : uint
     /// <summary>Hybrid shutdown; on Windows 8, shuts down and begins cool boot (new fast startup feature).</summary>
     EWX_HYBRID_SHUTDOWN = 0x400000U,
     /// <summary>Restarts only the boot application, such as the Windows Boot Manager.</summary>
-    EWX_BOOTOPTIONS = 0x1000000U
+    EWX_BOOTOPTIONS = 0x1000000U,
 }

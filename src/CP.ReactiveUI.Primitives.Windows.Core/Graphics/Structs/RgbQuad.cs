@@ -68,7 +68,11 @@ public struct RgbQuad : IEquatable<RgbQuad>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(RgbQuad other) => _blue == other._blue && _green == other._green && _red == other._red && _reserved == other._reserved;
+    public readonly bool Equals(RgbQuad other) =>
+        _blue == other._blue
+        && _green == other._green
+        && _red == other._red
+        && _reserved == other._reserved;
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is RgbQuad other && Equals(other);

@@ -263,7 +263,7 @@ public sealed class CoverageWave3InputMessagesStateTests
         {
             filters.Add((windowHandle, minimumMessage, maximumMessage));
             message = default;
-            return responses.Dequeue();
+            return responses.Count == 0 ? (sbyte)0 : responses.Dequeue();
         }
 
         void Dispatch(ref Msg message)

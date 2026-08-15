@@ -16,11 +16,26 @@ internal sealed class WindowsNativeCursorApi : INativeCursorApi
     internal static readonly WindowsNativeCursorApi Instance = new();
 
     /// <inheritdoc />
-    public IntPtr CopyImage(IntPtr imageHandle, ImageType type, int cx, int cy, CopyImageFlags flags) => NativeCursorMethods.NativeMethods.CopyImage(imageHandle, type, cx, cy, flags);
+    public IntPtr CopyImage(IntPtr imageHandle, ImageType type, int cx, int cy, CopyImageFlags flags) =>
+        NativeCursorMethods.NativeMethods.CopyImage(imageHandle, type, cx, cy, flags);
 
     /// <inheritdoc />
-    public IntPtr LoadImage(IntPtr instanceHandle, IntPtr name, ImageType type, int cx, int cy, LoadImageFlags loadFlags) => NativeCursorMethods.NativeMethods.LoadImage(instanceHandle, name, type, cx, cy, loadFlags);
+    public IntPtr LoadImage(
+        IntPtr instanceHandle,
+        IntPtr name,
+        ImageType type,
+        int cx,
+        int cy,
+        LoadImageFlags loadFlags) =>
+        NativeCursorMethods.NativeMethods.LoadImage(instanceHandle, name, type, cx, cy, loadFlags);
 
     /// <inheritdoc />
-    public IntPtr LoadImage(IntPtr instanceHandle, string name, ImageType type, int cx, int cy, LoadImageFlags loadFlags) => NativeCursorMethods.NativeMethods.LoadImage(instanceHandle, name, type, cx, cy, loadFlags);
+    public IntPtr LoadImage(
+        IntPtr instanceHandle,
+        string name,
+        ImageType type,
+        int cx,
+        int cy,
+        LoadImageFlags loadFlags) =>
+        NativeCursorMethods.NativeMethods.LoadImage(instanceHandle, name, type, cx, cy, loadFlags);
 }

@@ -361,5 +361,5 @@ public enum VirtualKeyCode
     /// <summary>PA1 key.</summary>
     Pa1 = 253,
     /// <summary>Clear key.</summary>
-    OemClear = 254
+    OemClear = 254,
 }

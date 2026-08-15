@@ -25,18 +25,6 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
     /// <summary>The time after which the active sequence expires.</summary>
     private DateTimeOffset? _expireAfter;
 
-    /// <inheritdoc />
-    public bool HasKeysPressed => CurrentHandler.HasKeysPressed;
-
-    /// <summary>
-    /// Gets or sets this sets the timeout time between key presses.
-    /// If the user waits longer than this TimeSpan, the sequence is reset to the start.
-    /// </summary>
-    public TimeSpan? Timeout { get; set; } = TimeSpan.FromSeconds(1.0);
-
-    /// <summary>Gets get the current handler.</summary>
-    private IKeyboardHookEventHandler CurrentHandler => _keyboardHookEventHandlers[_offset];
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeySequenceHandler" /> class.</summary>
     /// <param name="keyCombinations">IEnumerable with KeyCombinationHandler.</param>
     public KeySequenceHandler(IEnumerable<IKeyboardHookEventHandler> keyCombinations)
@@ -50,6 +38,18 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
     {
         Configure(keyCombinations);
     }
+
+    /// <inheritdoc />
+    public bool HasKeysPressed => CurrentHandler.HasKeysPressed;
+
+    /// <summary>
+    /// Gets or sets this sets the timeout time between key presses.
+    /// If the user waits longer than this TimeSpan, the sequence is reset to the start.
+    /// </summary>
+    public TimeSpan? Timeout { get; set; } = TimeSpan.FromSeconds(1.0);
+
+    /// <summary>Gets get the current handler.</summary>
+    private IKeyboardHookEventHandler CurrentHandler => _keyboardHookEventHandlers[_offset];
 
     /// <summary>Private method to configure the fields.</summary>
     /// <param name="keyCombinations">IEnumerable of IKeyboardHookEventHandler.</param>
@@ -82,7 +82,7 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
             return false;
         }
 
-        bool allHandled = Array.TrueForAll(_isHandled, (b) => b);
+        bool allHandled = Array.TrueForAll(_isHandled, static (b) => b);
         AdvanceOrReset(currentNotPressed);
         return currentHandled && allHandled;
     }

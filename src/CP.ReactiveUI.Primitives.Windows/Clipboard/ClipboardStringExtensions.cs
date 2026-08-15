@@ -12,6 +12,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 /// <summary>These are extensions to work with the clipboard.</summary>
 public static class ClipboardStringExtensions
 {
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="clipboardAccessToken">The extended instance.</param>
     extension(IClipboardAccessToken clipboardAccessToken)
     {
         /// <summary>Place string on the clipboard, this assumes you already locked the clipboard.</summary>
@@ -29,7 +31,8 @@ public static class ClipboardStringExtensions
         /// It uses Unicode (CF_UNICODETEXT) by default, as all other formats are automatically generated from this by Windows.
         /// </summary>
         /// <param name="text">string to place on the clipboard.</param>
-        public void SetAsUnicodeString(string text) => clipboardAccessToken.SetAsUnicodeString(text, 13U);
+        public void SetAsUnicodeString(string text) =>
+            clipboardAccessToken.SetAsUnicodeString(text, (uint)StandardClipboardFormats.UnicodeText);
 
         /// <summary>
         /// Place string on the clipboard, this assumes you already locked the clipboard.
@@ -61,7 +64,8 @@ public static class ClipboardStringExtensions
         /// This by default takes the CF_UNICODETEXT format, as Windows automatically converts.
         /// </summary>
         /// <returns>string.</returns>
-        public string GetAsUnicodeString() => clipboardAccessToken.GetAsUnicodeString(13U);
+        public string GetAsUnicodeString() =>
+            clipboardAccessToken.GetAsUnicodeString((uint)StandardClipboardFormats.UnicodeText);
 
         /// <summary>
         /// Get a string from the clipboard, this assumes you already locked the clipboard.

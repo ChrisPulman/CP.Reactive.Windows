@@ -13,6 +13,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Extension methods for bitmap icon handles.</summary>
 public static class BitmapIconExtensions
 {
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="bitmap">The extended instance.</param>
     extension(Bitmap bitmap)
     {
         /// <summary>Gets a safe icon handle for the bitmap.</summary>

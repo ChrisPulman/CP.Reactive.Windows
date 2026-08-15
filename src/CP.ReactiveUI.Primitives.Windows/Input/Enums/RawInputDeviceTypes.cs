@@ -18,5 +18,5 @@ public enum RawInputDeviceTypes : uint
     /// <summary>RIM_TYPEKEYBOARD: Specified device is a keyboard.</summary>
     Keyboard,
     /// <summary>RIM_TYPEHID: Specified device is not a mouse or a keyboard.</summary>
-    HID
+    HID,
 }

@@ -41,5 +41,5 @@ public enum LoadImageFlags : uint
     /// <summary>Loads the image as a DIB section rather than a compatible bitmap.</summary>
     LR_COPYFROMRESOURCE = 0x4000U,
     /// <summary>Shares the image handle if the image is loaded multiple times.</summary>
-    LR_SHARED = 0x8000U
+    LR_SHARED = 0x8000U,
 }

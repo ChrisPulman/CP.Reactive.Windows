@@ -13,16 +13,16 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>Wrapper of the HwndSourceHook for the WinProcHandler, to allow to specify a disposable.</summary>
 public class WinProcHandlerHook
 {
-    /// <summary>Gets the actual HwndSourceHook.</summary>
-    public HwndSourceHook Hook { get; }
-
-    /// <summary>Gets or sets the optional disposable which is called to make a cleanup possible.</summary>
-    public IDisposable Disposable { get; set; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.WinProcHandlerHook" /> class.</summary>
     /// <param name="hook">HwndSourceHook.</param>
     public WinProcHandlerHook(HwndSourceHook hook)
     {
         Hook = hook;
     }
+
+    /// <summary>Gets the actual HwndSourceHook.</summary>
+    public HwndSourceHook Hook { get; }
+
+    /// <summary>Gets or sets the optional disposable which is called to make a cleanup possible.</summary>
+    public IDisposable Disposable { get; set; }
 }

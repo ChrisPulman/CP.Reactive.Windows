@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System;
+using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
@@ -15,18 +16,72 @@ internal sealed class WindowsNativeHookApi : INativeHookApi
     /// <summary>The singleton instance.</summary>
     internal static readonly WindowsNativeHookApi Instance = new();
 
-    /// <inheritdoc />
-    public IntPtr CallNextHookEx(IntPtr hookHandle, int code, IntPtr parameter, IntPtr data) => NativeHookMethods.NativeMethods.CallNextHookEx(hookHandle, code, parameter, data);
+    /// <summary>The operation that forwards a hook invocation.</summary>
+    private static Func<IntPtr, int, IntPtr, IntPtr, IntPtr> _callNextHookEx = NativeHookMethods.NativeMethods.CallNextHookEx;
+
+    /// <summary>The operation that gets asynchronous key state.</summary>
+    private static Func<VirtualKeyCode, short> _getAsyncKeyState = NativeHookMethods.NativeMethods.GetAsyncKeyState;
+
+    /// <summary>The operation that gets key state.</summary>
+    private static Func<VirtualKeyCode, short> _getKeyState = NativeHookMethods.NativeMethods.GetKeyState;
+
+    /// <summary>The operation that registers a low-level hook.</summary>
+    private static Func<HookTypes, LowLevelHookProc, IntPtr, uint, IntPtr> _setWindowsHookEx = NativeHookMethods.NativeMethods.SetWindowsHookEx;
+
+    /// <summary>The operation that unregisters a low-level hook.</summary>
+    private static Func<IntPtr, bool> _unhookWindowsHookEx = NativeHookMethods.NativeMethods.UnhookWindowsHookEx;
 
     /// <inheritdoc />
-    public short GetAsyncKeyState(VirtualKeyCode keyCode) => NativeHookMethods.NativeMethods.GetAsyncKeyState(keyCode);
+    public IntPtr CallNextHookEx(IntPtr hookHandle, int code, IntPtr parameter, IntPtr data) => _callNextHookEx(hookHandle, code, parameter, data);
 
     /// <inheritdoc />
-    public short GetKeyState(VirtualKeyCode keyCode) => NativeHookMethods.NativeMethods.GetKeyState(keyCode);
+    public short GetAsyncKeyState(VirtualKeyCode keyCode) => _getAsyncKeyState(keyCode);
 
     /// <inheritdoc />
-    public IntPtr SetWindowsHookEx(HookTypes hookType, LowLevelHookProc callback, IntPtr moduleHandle, uint threadId) => NativeHookMethods.NativeMethods.SetWindowsHookEx(hookType, callback, moduleHandle, threadId);
+    public short GetKeyState(VirtualKeyCode keyCode) => _getKeyState(keyCode);
 
     /// <inheritdoc />
-    public bool UnhookWindowsHookEx(IntPtr hookHandle) => NativeHookMethods.NativeMethods.UnhookWindowsHookEx(hookHandle);
+    public IntPtr SetWindowsHookEx(HookTypes hookType, LowLevelHookProc callback, IntPtr moduleHandle, uint threadId) => _setWindowsHookEx(hookType, callback, moduleHandle, threadId);
+
+    /// <inheritdoc />
+    public bool UnhookWindowsHookEx(IntPtr hookHandle) => _unhookWindowsHookEx(hookHandle);
+
+    /// <summary>Overrides native hook operations for deterministic tests.</summary>
+    /// <param name="callNextHookEx">The replacement forwarding operation.</param>
+    /// <param name="getAsyncKeyState">The replacement asynchronous-key-state operation.</param>
+    /// <param name="getKeyState">The replacement key-state operation.</param>
+    /// <param name="setWindowsHookEx">The replacement hook-registration operation.</param>
+    /// <param name="unhookWindowsHookEx">The replacement hook-unregistration operation.</param>
+    /// <returns>A lifetime that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(
+        Func<IntPtr, int, IntPtr, IntPtr, IntPtr> callNextHookEx,
+        Func<VirtualKeyCode, short> getAsyncKeyState,
+        Func<VirtualKeyCode, short> getKeyState,
+        Func<HookTypes, LowLevelHookProc, IntPtr, uint, IntPtr> setWindowsHookEx,
+        Func<IntPtr, bool> unhookWindowsHookEx)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(callNextHookEx);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getAsyncKeyState);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getKeyState);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setWindowsHookEx);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unhookWindowsHookEx);
+        Func<IntPtr, int, IntPtr, IntPtr, IntPtr> previousCallNextHookEx = _callNextHookEx;
+        Func<VirtualKeyCode, short> previousGetAsyncKeyState = _getAsyncKeyState;
+        Func<VirtualKeyCode, short> previousGetKeyState = _getKeyState;
+        Func<HookTypes, LowLevelHookProc, IntPtr, uint, IntPtr> previousSetWindowsHookEx = _setWindowsHookEx;
+        Func<IntPtr, bool> previousUnhookWindowsHookEx = _unhookWindowsHookEx;
+        _callNextHookEx = callNextHookEx;
+        _getAsyncKeyState = getAsyncKeyState;
+        _getKeyState = getKeyState;
+        _setWindowsHookEx = setWindowsHookEx;
+        _unhookWindowsHookEx = unhookWindowsHookEx;
+        return new ActionDisposable(() =>
+        {
+            _callNextHookEx = previousCallNextHookEx;
+            _getAsyncKeyState = previousGetAsyncKeyState;
+            _getKeyState = previousGetKeyState;
+            _setWindowsHookEx = previousSetWindowsHookEx;
+            _unhookWindowsHookEx = previousUnhookWindowsHookEx;
+        });
+    }
 }

@@ -12,9 +12,7 @@ public sealed class SafeMonitorHandle : SafeHandleZeroOrMinusOneIsInvalid
 {
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles.SafeMonitorHandle" /> class.</summary>
     public SafeMonitorHandle()
-        : base(ownsHandle: false)
-    {
-    }
+        : base(ownsHandle: false) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles.SafeMonitorHandle" /> class.</summary>
     /// <param name="preexistingHandle">The native monitor handle.</param>
@@ -23,6 +21,10 @@ public sealed class SafeMonitorHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
         SetHandle(preexistingHandle);
     }
+
+    /// <summary>Invokes the non-owning release path for deterministic verification.</summary>
+    /// <returns>True because monitor handles are not owned by this wrapper.</returns>
+    internal bool ReleaseForTesting() => ReleaseHandle();
 
     /// <inheritdoc />
     protected override bool ReleaseHandle() => true;

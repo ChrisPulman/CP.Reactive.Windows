@@ -50,7 +50,10 @@ public readonly struct Msg : IEquatable<Msg>
     public ulong LParam => _longParam.ToUInt64();
 
     /// <summary>Gets the time of the message.</summary>
-    public DateTimeOffset Time => Clock.GetLocalNow().Subtract(TimeSpan.FromMilliseconds(checked(Environment.TickCount - _time)));
+    public DateTimeOffset Time =>
+        Clock
+            .GetLocalNow()
+            .Subtract(TimeSpan.FromMilliseconds(checked(Environment.TickCount - _time)));
 
     /// <summary>Gets the cursor position, in screen coordinates, when the message was posted.</summary>
     public NativePoint CursorPosition => _cursorPosition;
@@ -77,11 +80,19 @@ public readonly struct Msg : IEquatable<Msg>
     }
 
     /// <inheritdoc />
-    public bool Equals(Msg other) => _windowHandle.Equals(other._windowHandle) && _message == other._message && _wordParam.Equals(other._wordParam) && _longParam.Equals(other._longParam) && _time == other._time && _cursorPosition.Equals(other._cursorPosition);
+    public bool Equals(Msg other) =>
+        _windowHandle.Equals(other._windowHandle)
+        && _message == other._message
+        && _wordParam.Equals(other._wordParam)
+        && _longParam.Equals(other._longParam)
+        && _time == other._time
+        && _cursorPosition.Equals(other._cursorPosition);
 
     /// <inheritdoc />
-    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object obj) => obj is Msg other && Equals(other);
+    public override bool Equals([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] object obj) =>
+        obj is Msg other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(_windowHandle, _message, _wordParam, _longParam, _time, _cursorPosition);
+    public override int GetHashCode() =>
+        HashCode.Combine(_windowHandle, _message, _wordParam, _longParam, _time, _cursorPosition);
 }

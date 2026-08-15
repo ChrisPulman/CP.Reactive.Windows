@@ -16,47 +16,17 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>This can be used to handle WinProc messages, for instance when there is no running WinProc.</summary>
 public class WinProcHandler
 {
-    /// <summary>Adapts a WPF source to the internal message-handler window contract.</summary>
-    /// <param name="source">The WPF source.</param>
-    private sealed class HwndSourceMessageHandlerWindow(HwndSource source) : IMessageHandlerWindow
-    {
-        /// <inheritdoc />
-        public long Handle => source.Handle.ToInt64();
-
-        /// <inheritdoc />
-        public bool IsDisposed => source.IsDisposed;
-
-        /// <inheritdoc />
-        public HwndSource Source => source;
-
-        /// <inheritdoc />
-        public event EventHandler Disposed
-        {
-            add
-            {
-                source.Disposed += value;
-            }
-            remove
-            {
-                source.Disposed -= value;
-            }
-        }
-
-        /// <inheritdoc />
-        public void AddHook(HwndSourceHook hook) => source.AddHook(hook);
-
-        /// <inheritdoc />
-        public void RemoveHook(HwndSourceHook hook) => source.RemoveHook(hook);
-    }
+    /// <summary>The WM_NCDESTROY message.</summary>
+    private const uint NonClientDestroyMessage = 130U;
 
     /// <summary>Hold the singleton.</summary>
-    private static readonly Lazy<WinProcHandler> Singleton = new(() => new WinProcHandler());
+    private static readonly Lazy<WinProcHandler> Singleton = new(static () => new WinProcHandler());
 
     /// <summary>The shared message source.</summary>
     private static IMessageHandlerWindow _messageSource;
 
     /// <summary>Creates the shared message source.</summary>
-    private static Func<IMessageHandlerWindow> _messageWindowFactory = () => new HwndSourceMessageHandlerWindow(CreateMessageWindow());
+    private static Func<IMessageHandlerWindow> _messageWindowFactory = static () => new HwndSourceMessageHandlerWindow(CreateMessageWindow());
 
     /// <summary>Store hooks, so they can be removed.</summary>
     private List<WinProcHandlerHook> _hooks = new();
@@ -79,18 +49,18 @@ public class WinProcHandler
     /// <param name="title">The window title.</param>
     /// <returns>The message window source.</returns>
     public static HwndSource CreateMessageWindow(long parentWindowHandle, string title) => new(new HwndSourceParameters
-        {
-            ParentWindow = checked((nint)parentWindowHandle),
-            Width = 0,
-            Height = 0,
-            PositionX = 0,
-            PositionY = 0,
-            AcquireHwndFocusInMenuMode = false,
-            ExtendedWindowStyle = 0,
-            WindowStyle = 0,
-            WindowClassStyle = 0,
-            WindowName = title
-        });
+    {
+        ParentWindow = checked((nint)parentWindowHandle),
+        Width = 0,
+        Height = 0,
+        PositionX = 0,
+        PositionY = 0,
+        AcquireHwndFocusInMenuMode = false,
+        ExtendedWindowStyle = 0,
+        WindowStyle = 0,
+        WindowClassStyle = 0,
+        WindowName = title,
+    });
 
     /// <summary>Subscribe a hook to handle messages.</summary>
     /// <param name="winProcHandlerHook">WinProcHandlerHook.</param>
@@ -122,6 +92,11 @@ public class WinProcHandler
         _hooks = null;
     }
 
+    /// <summary>Creates the internal message-window adapter for deterministic contract tests.</summary>
+    /// <param name="source">The HWND source to adapt.</param>
+    /// <returns>The message-window adapter.</returns>
+    internal static IMessageHandlerWindow CreateMessageHandlerWindowForTesting(HwndSource source) => new HwndSourceMessageHandlerWindow(source);
+
     /// <summary>Overrides the message-window factory for deterministic tests.</summary>
     /// <param name="messageWindowFactory">The replacement factory.</param>
     /// <returns>A scope that restores the previous factory and source.</returns>
@@ -132,9 +107,9 @@ public class WinProcHandler
         IMessageHandlerWindow previousSource = _messageSource;
         _messageWindowFactory = messageWindowFactory;
         _messageSource = null;
-        return Scope.Create((messageWindowFactory2, previousSource), delegate((Func<IMessageHandlerWindow> previousFactory, IMessageHandlerWindow previousSource) previous)
+        return Scope.Create((MessageWindowFactory: messageWindowFactory2, MessageSource: previousSource), static previous =>
         {
-            (_messageWindowFactory, _messageSource) = previous;
+            (_messageWindowFactory, _messageSource) = (previous.MessageWindowFactory, previous.MessageSource);
         });
     }
 
@@ -149,13 +124,13 @@ public class WinProcHandler
         }
 
         _messageSource = _messageWindowFactory();
-        _messageSource.Disposed += delegate
+        _messageSource.Disposed += (_, _) =>
         {
             handler.UnsubscribeAllHooks();
         };
-        _messageSource.AddHook(delegate(IntPtr windowHandle, int msg, IntPtr param, IntPtr longParam, ref bool handled)
+        _messageSource.AddHook((IntPtr windowHandle, int msg, IntPtr param, IntPtr longParam, ref bool handled) =>
         {
-            if (checked((uint)msg) != 130)
+            if (checked((uint)msg) != NonClientDestroyMessage)
             {
                 return IntPtr.Zero;
             }
@@ -178,5 +153,38 @@ public class WinProcHandler
             _hooks = newHooks;
             winProcHandlerHook.Disposable?.Dispose();
         }
+    }
+
+    /// <summary>Adapts a WPF source to the internal message-handler window contract.</summary>
+    /// <param name="source">The WPF source.</param>
+    private sealed class HwndSourceMessageHandlerWindow(HwndSource source) : IMessageHandlerWindow
+    {
+        /// <inheritdoc />
+        public event EventHandler Disposed
+        {
+            add
+            {
+                source.Disposed += value;
+            }
+            remove
+            {
+                source.Disposed -= value;
+            }
+        }
+
+        /// <inheritdoc />
+        public long Handle => source.Handle.ToInt64();
+
+        /// <inheritdoc />
+        public bool IsDisposed => source.IsDisposed;
+
+        /// <inheritdoc />
+        public HwndSource Source => source;
+
+        /// <inheritdoc />
+        public void AddHook(HwndSourceHook hook) => source.AddHook(hook);
+
+        /// <inheritdoc />
+        public void RemoveHook(HwndSourceHook hook) => source.RemoveHook(hook);
     }
 }

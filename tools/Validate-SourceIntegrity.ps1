@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$resolvedRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
+$resolvedRoot = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $RepositoryRoot).Path)
 $excludedSegments = [System.StringComparison]::OrdinalIgnoreCase
 $checkedExtensions = @('.cs', '.csproj', '.props', '.targets', '.sln', '.slnx')
 $invalidFiles = [System.Collections.Generic.List[string]]::new()
@@ -20,14 +20,15 @@ function Get-RepositoryRelativePath {
         [string] $FilePath
     )
 
-    $root = $RootPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $root = [System.IO.Path]::GetFullPath($RootPath).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+    $fullFilePath = [System.IO.Path]::GetFullPath($FilePath)
     $prefix = $root + [System.IO.Path]::DirectorySeparatorChar
 
-    if ($FilePath.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
-        return $FilePath.Substring($prefix.Length)
+    if ($fullFilePath.StartsWith($prefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $fullFilePath.Substring($prefix.Length)
     }
 
-    return $FilePath
+    return $fullFilePath
 }
 
 Get-ChildItem -LiteralPath $resolvedRoot -Recurse -File |

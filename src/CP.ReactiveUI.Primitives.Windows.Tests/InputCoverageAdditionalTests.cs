@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Additional deterministic coverage for Input helpers, handlers, event args, structs, and monitor paths.</summary>

@@ -3,9 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Drawing.Imaging;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles;
 
 namespace CP.ReactiveUI.Primitives.Windows.Tests;

@@ -33,5 +33,5 @@ public enum ThreadExecutionStateFlags : uint
     /// <summary>Forces the display to be on by resetting the display idle timer.</summary>
     ES_DISPLAY_REQUIRED = 2U,
     /// <summary>Forces the system to be in the working state by resetting the system idle timer.</summary>
-    ES_SYSTEM_REQUIRED = 1U
+    ES_SYSTEM_REQUIRED = 1U,
 }

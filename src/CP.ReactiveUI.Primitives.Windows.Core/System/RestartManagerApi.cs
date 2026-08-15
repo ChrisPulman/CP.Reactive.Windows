@@ -13,7 +13,11 @@ using CP.ReactiveUI.Primitives.Windows.PolyFills;
 namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 
 /// <summary>Restart Manager API functionality See <a href="https://docs.microsoft.com/en-us/windows/win32/rstmgr/restart-manager-portal">Restart Manager</a>.</summary>
+#if NETFRAMEWORK
 public static class RestartManagerApi
+#else
+public static partial class RestartManagerApi
+#endif
 {
     /// <summary>The native application name character capacity.</summary>
     internal const int ApplicationNameCharacterCapacity = 256;
@@ -21,152 +25,9 @@ public static class RestartManagerApi
     /// <summary>The native application name byte offset.</summary>
     internal const int ApplicationNameOffset = 12;
 
-    /// <summary>Native Restart Manager entry points.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>The Restart Manager DLL library name.</summary>
-        private const string Rstrtmgr = "rstrtmgr.dll";
-
-        /// <summary>The loaded Restart Manager module.</summary>
-        private static readonly IntPtr RestartManagerModule = NativeLibrary.Load("rstrtmgr.dll");
-
-        /// <summary>The exported RmRegisterResources function pointer.</summary>
-        private static readonly IntPtr RmRegisterResourcesPointer = NativeLibrary.GetExport(RestartManagerModule, "RmRegisterResources");
-
-        /// <summary>The exported RmGetList function pointer.</summary>
-        private static readonly IntPtr RmGetListPointer = NativeLibrary.GetExport(RestartManagerModule, "RmGetList");
-
-        /// <summary>The exported RmEndSession function pointer.</summary>
-        private static readonly IntPtr RmEndSessionPointer = NativeLibrary.GetExport(RestartManagerModule, "RmEndSession");
-
-        /// <summary>The exported RmShutdown function pointer.</summary>
-        private static readonly IntPtr RmShutdownPointer = NativeLibrary.GetExport(RestartManagerModule, "RmShutdown");
-
-        /// <summary>The exported RmRestart function pointer.</summary>
-        private static readonly IntPtr RmRestartPointer = NativeLibrary.GetExport(RestartManagerModule, "RmRestart");
-
-        /// <summary>Starts a Restart Manager session.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <param name="sessionFlags">Reserved session flags.</param>
-        /// <param name="sessionKey">Session key output buffer.</param>
-        /// <returns>Win32 result code.</returns>
-        [DllImport("rstrtmgr.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe int RmStartSession(out int sessionHandle, int sessionFlags, char* sessionKey);
-
-        /// <summary>Ends a Restart Manager session.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <returns>Win32 result code.</returns>
-        internal static unsafe int RmEndSession(int sessionHandle) => ((delegate* unmanaged[Stdcall]<int, int>)(void*)RmEndSessionPointer)(sessionHandle);
-
-        /// <summary>Registers resources with a Restart Manager session.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <param name="fileCount">Number of file names.</param>
-        /// <param name="rgsFilenames">File names.</param>
-        /// <param name="applicationCount">Number of application records.</param>
-        /// <param name="applications">Application records.</param>
-        /// <param name="serviceCount">Number of service names.</param>
-        /// <param name="rgsServiceNames">Service names.</param>
-        /// <returns>Win32 result code.</returns>
-        internal static unsafe int RmRegisterResources(int sessionHandle, uint fileCount, string[] rgsFilenames, uint applicationCount, RmUniqueProcess[] applications, uint serviceCount, string[] rgsServiceNames)
-        {
-            IntPtr[] filePointers = CreateStringPointers(rgsFilenames, fileCount);
-            IntPtr[] servicePointers = CreateStringPointers(rgsServiceNames, serviceCount);
-            try
-            {
-                fixed (IntPtr* files = filePointers)
-                {
-                    fixed (RmUniqueProcess* applicationPointer = applications)
-                    {
-                        fixed (IntPtr* services = servicePointers)
-                        {
-                            return ((delegate* unmanaged[Stdcall]<int, uint, char**, uint, RmUniqueProcess*, uint, char**, int>)(void*)RmRegisterResourcesPointer)(sessionHandle, fileCount, (char**)files, applicationCount, applicationPointer, serviceCount, (char**)services);
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                FreeStringPointers(filePointers);
-                FreeStringPointers(servicePointers);
-            }
-        }
-
-        /// <summary>Gets affected applications for a Restart Manager session.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <param name="processInfoNeeded">Required process-info count.</param>
-        /// <param name="processInfoCount">Supplied process-info count.</param>
-        /// <param name="affectedApps">Affected applications buffer.</param>
-        /// <param name="rebootReasons">Reboot reason flags.</param>
-        /// <returns>Win32 result code.</returns>
-        internal static unsafe int RmGetList(int sessionHandle, out uint processInfoNeeded, ref uint processInfoCount, RmProcessInfo[] affectedApps, out RmRebootReason rebootReasons)
-        {
-            byte[] nativeAffectedApps = ((affectedApps is null) ? null : new byte[checked(affectedApps.Length * 668)]);
-            fixed (byte* affectedAppsPointer = nativeAffectedApps)
-            {
-                delegate* unmanaged[Stdcall]<int, uint*, uint*, void*, RmRebootReason*, int> getList = (delegate* unmanaged[Stdcall]<int, uint*, uint*, void*, RmRebootReason*, int>)(void*)RmGetListPointer;
-                fixed (uint* needed = &processInfoNeeded)
-                {
-                    fixed (uint* count = &processInfoCount)
-                    {
-                        fixed (RmRebootReason* rebootReasonsPointer = &rebootReasons)
-                        {
-                            int result = getList(sessionHandle, needed, count, affectedAppsPointer, rebootReasonsPointer);
-                            CopyAffectedApps(nativeAffectedApps, affectedApps, processInfoCount);
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>Shuts down affected applications.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <param name="actionFlags">Shutdown flags.</param>
-        /// <param name="status">Status callback pointer.</param>
-        /// <returns>Win32 result code.</returns>
-        internal static unsafe int RmShutdown(int sessionHandle, RmShutdownType actionFlags, IntPtr status) => ((delegate* unmanaged[Stdcall]<int, RmShutdownType, IntPtr, int>)(void*)RmShutdownPointer)(sessionHandle, actionFlags, status);
-
-        /// <summary>Restarts affected applications.</summary>
-        /// <param name="sessionHandle">Restart Manager session handle.</param>
-        /// <param name="restartFlags">Reserved restart flags.</param>
-        /// <param name="status">Status callback pointer.</param>
-        /// <returns>Win32 result code.</returns>
-        internal static unsafe int RmRestart(int sessionHandle, int restartFlags, IntPtr status) => ((delegate* unmanaged[Stdcall]<int, int, IntPtr, int>)(void*)RmRestartPointer)(sessionHandle, restartFlags, status);
-
-        /// <summary>Creates native UTF-16 string pointers for a Restart Manager string array parameter.</summary>
-        /// <param name="values">Managed strings.</param>
-        /// <param name="count">Native string count.</param>
-        /// <returns>Allocated UTF-16 string pointers.</returns>
-        private static nint[] CreateStringPointers(string[] values, uint count)
-        {
-            if (count == 0)
-            {
-                return [];
-            }
-
-            IntPtr[] pointers = new IntPtr[count];
-            for (int i = 0; i < pointers.Length; i = checked(i + 1))
-            {
-                pointers[i] = Marshal.StringToHGlobalUni(values[i]);
-            }
-
-            return pointers;
-        }
-
-        /// <summary>Frees native UTF-16 string pointers.</summary>
-        /// <param name="pointers">Pointers to free.</param>
-        private static void FreeStringPointers(nint[] pointers)
-        {
-            if (pointers is not null)
-            {
-                for (int i = 0; i < pointers.Length; i++)
-                {
-                    Marshal.FreeHGlobal(pointers[i]);
-                }
-            }
-        }
-    }
+    /// <summary>The native application name byte length.</summary>
+    internal const int ApplicationNameByteLength =
+        ApplicationNameCharacterCapacity * Utf16CharacterSize;
 
     /// <summary>The native application status byte offset.</summary>
     internal const int ApplicationStatusOffset = 656;
@@ -192,6 +53,10 @@ public static class RestartManagerApi
     /// <summary>The native service short name character capacity.</summary>
     internal const int ServiceShortNameCharacterCapacity = 64;
 
+    /// <summary>The native service short name byte length.</summary>
+    internal const int ServiceShortNameByteLength =
+        ServiceShortNameCharacterCapacity * Utf16CharacterSize;
+
     /// <summary>The native service short name byte offset.</summary>
     internal const int ServiceShortNameOffset = 524;
 
@@ -202,25 +67,28 @@ public static class RestartManagerApi
     internal const int Utf16CharacterSize = 2;
 
     /// <summary>The maximum session key length to allocate on the stack.</summary>
-    private const int MaxStackSessionKeyLength = 33;
+    private const int MaxStackSessionKeyLength = RmSessionKeyLength + 1;
 
     /// <summary>Invalid session value.</summary>
     private const int RmInvalidSession = -1;
 
     /// <summary>Maximum length of a session key string (in characters).</summary>
-    private const int RmSessionKeyLen = 32;
+    private const int RmSessionKeyLength = 32;
 
     /// <summary>Invalid Terminal Services session ID.</summary>
     private const uint RmInvalidTsSession = uint.MaxValue;
 
+    /// <summary>The native session-start operation used by this process.</summary>
+    private static unsafe RmStartSessionOperation _startSessionOperation = NativeMethods.RmStartSession;
+
     /// <summary>Gets the maximum length of a session key string, in characters.</summary>
-    public static int SessionKeyLength => 32;
+    public static int SessionKeyLength => RmSessionKeyLength;
 
     /// <summary>Gets the invalid session value.</summary>
-    public static int InvalidSession => -1;
+    public static int InvalidSession => RmInvalidSession;
 
     /// <summary>Gets the invalid Terminal Services session ID.</summary>
-    public static uint InvalidTerminalServicesSession => uint.MaxValue;
+    public static uint InvalidTerminalServicesSession => RmInvalidTsSession;
 
     /// <summary>
     ///     Starts a new Restart Manager session.
@@ -238,23 +106,31 @@ public static class RestartManagerApi
     /// <returns>
     ///     Returns ERROR_SUCCESS (0) on success, or an error code on failure.
     /// </returns>
-    public static unsafe int RmStartSession(out int sessionHandlePointer, int sessionFlags, StringBuilder strSessionKey)
+    public static unsafe int RmStartSession(
+        out int sessionHandlePointer,
+        int sessionFlags,
+        StringBuilder strSessionKey)
     {
         Throw.IfNull(strSessionKey);
-        int capacity = strSessionKey.Capacity;
-        Span<char> span = ((capacity > 33) ? ((Span<char>)new char[capacity]) : stackalloc char[capacity]);
-        Span<char> buffer = span;
+        int capacity = Math.Max(strSessionKey.Capacity, MaxStackSessionKeyLength);
+        Span<char> buffer = capacity > MaxStackSessionKeyLength
+            ? new char[capacity]
+            : stackalloc char[MaxStackSessionKeyLength];
         fixed (char* bufferPointer = buffer)
         {
-            int result = NativeMethods.RmStartSession(out sessionHandlePointer, sessionFlags, bufferPointer);
+            int result = _startSessionOperation(
+                out sessionHandlePointer,
+                sessionFlags,
+                bufferPointer);
             if (result != 0)
             {
                 return result;
             }
 
-            int length;
-            for (length = 0; length < capacity && buffer[length] != 0; length = checked(length + 1))
+            int length = 0;
+            while (length < buffer.Length && buffer[length] != 0)
             {
+                length = checked(length + 1);
             }
 
             _ = strSessionKey.Clear();
@@ -298,7 +174,22 @@ public static class RestartManagerApi
     /// <returns>
     ///     Returns ERROR_SUCCESS (0) on success, or an error code on failure.
     /// </returns>
-    public static int RmRegisterResources(int sessionHandle, uint fileCount, string[] rgsFilenames, uint applicationCount, RmUniqueProcess[] applications, uint serviceCount, string[] rgsServiceNames) => NativeMethods.RmRegisterResources(sessionHandle, fileCount, rgsFilenames, applicationCount, applications, serviceCount, rgsServiceNames);
+    public static int RmRegisterResources(
+        int sessionHandle,
+        uint fileCount,
+        string[] rgsFilenames,
+        uint applicationCount,
+        RmUniqueProcess[] applications,
+        uint serviceCount,
+        string[] rgsServiceNames) =>
+        NativeMethods.RmRegisterResources(
+            sessionHandle,
+            fileCount,
+            rgsFilenames,
+            applicationCount,
+            applications,
+            serviceCount,
+            rgsServiceNames);
 
     /// <summary>
     ///     Gets a list of all applications and services that are currently using resources that have been registered with the Restart Manager session.
@@ -324,7 +215,18 @@ public static class RestartManagerApi
     ///     Returns ERROR_MORE_DATA if the affectedApplications buffer is too small.
     ///     Returns an error code on other failures.
     /// </returns>
-    public static int RmGetList(int sessionHandle, out uint processInfoNeeded, ref uint processInfoCount, [In][Out] RmProcessInfo[] affectedApplications, out RmRebootReason lpdwRebootReasons) => NativeMethods.RmGetList(sessionHandle, out processInfoNeeded, ref processInfoCount, affectedApplications, out lpdwRebootReasons);
+    public static int RmGetList(
+        int sessionHandle,
+        out uint processInfoNeeded,
+        ref uint processInfoCount,
+        [In] [Out] RmProcessInfo[] affectedApplications,
+        out RmRebootReason lpdwRebootReasons) =>
+        NativeMethods.RmGetList(
+            sessionHandle,
+            out processInfoNeeded,
+            ref processInfoCount,
+            affectedApplications,
+            out lpdwRebootReasons);
 
     /// <summary>Initiates the shutdown of applications. See <a href="https://docs.microsoft.com/en-us/windows/win32/api/restartmanager/nf-restartmanager-rmshutdown">RmShutdown function</a>.</summary>
     /// <param name="sessionHandle">A handle to an existing Restart Manager session.</param>
@@ -338,7 +240,16 @@ public static class RestartManagerApi
     /// <returns>
     ///     Returns ERROR_SUCCESS (0) on success, or an error code on failure.
     /// </returns>
-    public static int RmShutdown(int sessionHandle, RmShutdownType actionFlags, RmStatusCallback statusCallback) => NativeMethods.RmShutdown(sessionHandle, actionFlags, (statusCallback is null) ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(statusCallback));
+    public static int RmShutdown(
+        int sessionHandle,
+        RmShutdownType actionFlags,
+        RmStatusCallback statusCallback) =>
+        NativeMethods.RmShutdown(
+            sessionHandle,
+            actionFlags,
+            (statusCallback is null)
+                ? IntPtr.Zero
+                : Marshal.GetFunctionPointerForDelegate(statusCallback));
 
     /// <summary>
     ///     Restarts applications and services that have been shut down by the RmShutdown function and that have been registered to be restarted using the RegisterApplicationRestart function.
@@ -353,7 +264,28 @@ public static class RestartManagerApi
     /// <returns>
     ///     Returns ERROR_SUCCESS (0) on success, or an error code on failure.
     /// </returns>
-    public static int RmRestart(int sessionHandle, int restartFlags, RmStatusCallback statusCallback) => NativeMethods.RmRestart(sessionHandle, restartFlags, (statusCallback is null) ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(statusCallback));
+    public static int RmRestart(
+        int sessionHandle,
+        int restartFlags,
+        RmStatusCallback statusCallback) =>
+        NativeMethods.RmRestart(
+            sessionHandle,
+            restartFlags,
+            (statusCallback is null)
+                ? IntPtr.Zero
+                : Marshal.GetFunctionPointerForDelegate(statusCallback));
+
+    /// <summary>Overrides the session-start operation for deterministic tests.</summary>
+    /// <param name="startSessionOperation">The replacement session-start operation.</param>
+    /// <returns>A scope that restores the previous operation.</returns>
+    internal static IDisposable OverrideStartSessionOperationForTesting(
+        RmStartSessionOperation startSessionOperation)
+    {
+        Throw.IfNull(startSessionOperation);
+        RmStartSessionOperation previous = _startSessionOperation;
+        _startSessionOperation = startSessionOperation;
+        return Scope.Create(previous, static operation => _startSessionOperation = operation);
+    }
 
     /// <summary>Copies native process records into the public managed record shape.</summary>
     /// <param name="source">Native process record bytes.</param>
@@ -368,7 +300,8 @@ public static class RestartManagerApi
                 int length = Math.Min((int)count, destination.Length);
                 for (int i = 0; i < length; i++)
                 {
-                    destination[i] = ReadNativeProcessInfo(source.AsSpan(i * 668, 668));
+                    destination[i] = ReadNativeProcessInfo(
+                        source.AsSpan(i * NativeProcessInfoSize, NativeProcessInfoSize));
                 }
             }
         }
@@ -379,11 +312,259 @@ public static class RestartManagerApi
     /// <returns>The managed process record.</returns>
     internal static RmProcessInfo ReadNativeProcessInfo(ReadOnlySpan<byte> source)
     {
-        System.Runtime.InteropServices.ComTypes.FILETIME processStartTime = new System.Runtime.InteropServices.ComTypes.FILETIME
+        System.Runtime.InteropServices.ComTypes.FILETIME processStartTime =
+            new System.Runtime.InteropServices.ComTypes.FILETIME
+            {
+                dwLowDateTime = BinaryPrimitives.ReadInt32LittleEndian(
+                    source.Slice(ProcessStartTimeLowOffset)),
+                dwHighDateTime = BinaryPrimitives.ReadInt32LittleEndian(
+                    source.Slice(ProcessStartTimeHighOffset)),
+            };
+        return new(
+            new RmUniqueProcess(
+                BinaryPrimitives.ReadInt32LittleEndian(source.Slice(ProcessIdOffset)),
+                processStartTime),
+            NativeUtf16String.ReadNullTerminated(
+                source.Slice(ApplicationNameOffset, ApplicationNameByteLength)),
+            NativeUtf16String.ReadNullTerminated(
+                source.Slice(ServiceShortNameOffset, ServiceShortNameByteLength)),
+            (RmAppType)BinaryPrimitives.ReadInt32LittleEndian(source.Slice(ApplicationTypeOffset)),
+            (RmAppStatus)BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(ApplicationStatusOffset)),
+            BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(TerminalServicesSessionIdOffset)),
+            BinaryPrimitives.ReadInt32LittleEndian(source.Slice(RestartableOffset)) != 0);
+    }
+
+    /// <summary>Native Restart Manager entry points.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
+    {
+        /// <summary>The native Restart Manager DLL name.</summary>
+        private const string RstrtmgrLibraryName = "rstrtmgr.dll";
+
+        /// <summary>The loaded Restart Manager module.</summary>
+        private static readonly IntPtr RestartManagerModule = NativeLibrary.Load(RstrtmgrLibraryName);
+
+        /// <summary>The exported RmRegisterResources function pointer.</summary>
+        private static readonly IntPtr RmRegisterResourcesPointer = NativeLibrary.GetExport(
+            RestartManagerModule,
+            nameof(RmRegisterResources));
+
+        /// <summary>The exported RmGetList function pointer.</summary>
+        private static readonly IntPtr RmGetListPointer = NativeLibrary.GetExport(
+            RestartManagerModule,
+            nameof(RmGetList));
+
+        /// <summary>The exported RmEndSession function pointer.</summary>
+        private static readonly IntPtr RmEndSessionPointer = NativeLibrary.GetExport(
+            RestartManagerModule,
+            nameof(RmEndSession));
+
+        /// <summary>The exported RmShutdown function pointer.</summary>
+        private static readonly IntPtr RmShutdownPointer = NativeLibrary.GetExport(
+            RestartManagerModule,
+            nameof(RmShutdown));
+
+        /// <summary>The exported RmRestart function pointer.</summary>
+        private static readonly IntPtr RmRestartPointer = NativeLibrary.GetExport(
+            RestartManagerModule,
+            nameof(RmRestart));
+
+        /// <summary>Starts a Restart Manager session.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <param name="sessionFlags">Reserved session flags.</param>
+        /// <param name="sessionKey">Session key output buffer.</param>
+        /// <returns>Win32 result code.</returns>
+#if NETFRAMEWORK
+        [DllImport(RstrtmgrLibraryName, EntryPoint = nameof(RmStartSession))]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern unsafe int RmStartSession(
+            out int sessionHandle,
+            int sessionFlags,
+            char* sessionKey);
+#else
+        [LibraryImport(RstrtmgrLibraryName, EntryPoint = nameof(RmStartSession))]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static unsafe partial int RmStartSession(
+            out int sessionHandle,
+            int sessionFlags,
+            char* sessionKey);
+#endif
+
+        /// <summary>Ends a Restart Manager session.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <returns>Win32 result code.</returns>
+        internal static unsafe int RmEndSession(int sessionHandle) =>
+            ((delegate* unmanaged[Stdcall]<int, int>)(void*)RmEndSessionPointer)(sessionHandle);
+
+        /// <summary>Registers resources with a Restart Manager session.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <param name="fileCount">Number of file names.</param>
+        /// <param name="rgsFilenames">File names.</param>
+        /// <param name="applicationCount">Number of application records.</param>
+        /// <param name="applications">Application records.</param>
+        /// <param name="serviceCount">Number of service names.</param>
+        /// <param name="rgsServiceNames">Service names.</param>
+        /// <returns>Win32 result code.</returns>
+        internal static unsafe int RmRegisterResources(
+            int sessionHandle,
+            uint fileCount,
+            string[] rgsFilenames,
+            uint applicationCount,
+            RmUniqueProcess[] applications,
+            uint serviceCount,
+            string[] rgsServiceNames)
         {
-            dwLowDateTime = BinaryPrimitives.ReadInt32LittleEndian(source.Slice(4)),
-            dwHighDateTime = BinaryPrimitives.ReadInt32LittleEndian(source.Slice(8))
-        };
-        return new(new RmUniqueProcess(BinaryPrimitives.ReadInt32LittleEndian(source.Slice(0)), processStartTime), NativeUtf16String.ReadNullTerminated(source.Slice(12, 512)), NativeUtf16String.ReadNullTerminated(source.Slice(524, 128)), (RmAppType)BinaryPrimitives.ReadInt32LittleEndian(source.Slice(652)), (RmAppStatus)BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(656)), BinaryPrimitives.ReadUInt32LittleEndian(source.Slice(660)), BinaryPrimitives.ReadInt32LittleEndian(source.Slice(664)) != 0);
+            IntPtr[] filePointers = CreateStringPointers(rgsFilenames, fileCount);
+            IntPtr[] servicePointers = CreateStringPointers(rgsServiceNames, serviceCount);
+            try
+            {
+                fixed (IntPtr* files = filePointers)
+                {
+                    fixed (RmUniqueProcess* applicationPointer = applications)
+                    {
+                        fixed (IntPtr* services = servicePointers)
+                        {
+                            return (
+                                (delegate* unmanaged[Stdcall]<
+                                    int,
+                                    uint,
+                                    char**,
+                                    uint,
+                                    RmUniqueProcess*,
+                                    uint,
+                                    char**,
+                                    int>)
+                                    (void*)RmRegisterResourcesPointer)(
+                                sessionHandle,
+                                fileCount,
+                                (char**)files,
+                                applicationCount,
+                                applicationPointer,
+                                serviceCount,
+                                (char**)services);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                FreeStringPointers(filePointers);
+                FreeStringPointers(servicePointers);
+            }
+        }
+
+        /// <summary>Gets affected applications for a Restart Manager session.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <param name="processInfoNeeded">Required process-info count.</param>
+        /// <param name="processInfoCount">Supplied process-info count.</param>
+        /// <param name="affectedApps">Affected applications buffer.</param>
+        /// <param name="rebootReasons">Reboot reason flags.</param>
+        /// <returns>Win32 result code.</returns>
+        internal static unsafe int RmGetList(
+            int sessionHandle,
+            out uint processInfoNeeded,
+            ref uint processInfoCount,
+            RmProcessInfo[] affectedApps,
+            out RmRebootReason rebootReasons)
+        {
+            byte[] nativeAffectedApps = (
+                (affectedApps is null)
+                    ? null
+                    : new byte[checked(affectedApps.Length * NativeProcessInfoSize)]);
+            fixed (byte* affectedAppsPointer = nativeAffectedApps)
+            {
+                delegate* unmanaged[Stdcall]<
+                    int,
+                    uint*,
+                    uint*,
+                    void*,
+                    RmRebootReason*,
+                    int> getList = (delegate* unmanaged[Stdcall]<
+                    int,
+                    uint*,
+                    uint*,
+                    void*,
+                    RmRebootReason*,
+                    int>)
+                    (void*)RmGetListPointer;
+                fixed (uint* needed = &processInfoNeeded)
+                {
+                    fixed (uint* count = &processInfoCount)
+                    {
+                        fixed (RmRebootReason* rebootReasonsPointer = &rebootReasons)
+                        {
+                            int result = getList(
+                                sessionHandle,
+                                needed,
+                                count,
+                                affectedAppsPointer,
+                                rebootReasonsPointer);
+                            CopyAffectedApps(nativeAffectedApps, affectedApps, processInfoCount);
+                            return result;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>Shuts down affected applications.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <param name="actionFlags">Shutdown flags.</param>
+        /// <param name="status">Status callback pointer.</param>
+        /// <returns>Win32 result code.</returns>
+        internal static unsafe int RmShutdown(
+            int sessionHandle,
+            RmShutdownType actionFlags,
+            IntPtr status) =>
+            (
+                (delegate* unmanaged[Stdcall]<int, RmShutdownType, IntPtr, int>)
+                    (void*)RmShutdownPointer)(sessionHandle, actionFlags, status);
+
+        /// <summary>Restarts affected applications.</summary>
+        /// <param name="sessionHandle">Restart Manager session handle.</param>
+        /// <param name="restartFlags">Reserved restart flags.</param>
+        /// <param name="status">Status callback pointer.</param>
+        /// <returns>Win32 result code.</returns>
+        internal static unsafe int RmRestart(int sessionHandle, int restartFlags, IntPtr status) =>
+            ((delegate* unmanaged[Stdcall]<int, int, IntPtr, int>)(void*)RmRestartPointer)(
+                sessionHandle,
+                restartFlags,
+                status);
+
+        /// <summary>Creates native UTF-16 string pointers for a Restart Manager string array parameter.</summary>
+        /// <param name="values">Managed strings.</param>
+        /// <param name="count">Native string count.</param>
+        /// <returns>Allocated UTF-16 string pointers.</returns>
+        private static nint[] CreateStringPointers(string[] values, uint count)
+        {
+            if (count == 0)
+            {
+                return [];
+            }
+
+            IntPtr[] pointers = new IntPtr[count];
+            for (int i = 0; i < pointers.Length; i = checked(i + 1))
+            {
+                pointers[i] = Marshal.StringToHGlobalUni(values[i]);
+            }
+
+            return pointers;
+        }
+
+        /// <summary>Frees native UTF-16 string pointers.</summary>
+        /// <param name="pointers">Pointers to free.</param>
+        private static void FreeStringPointers(nint[] pointers)
+        {
+            if (pointers is not null)
+            {
+                for (int i = 0; i < pointers.Length; i++)
+                {
+                    Marshal.FreeHGlobal(pointers[i]);
+                }
+            }
+        }
     }
 }

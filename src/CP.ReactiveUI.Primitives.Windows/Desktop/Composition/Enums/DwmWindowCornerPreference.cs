@@ -17,5 +17,5 @@ public enum DwmWindowCornerPreference : uint
     /// <summary>Round the corners, if appropriate.</summary>
     Round,
     /// <summary>Round the corners if appropriate, with a small radius.</summary>
-    RoundSmall
+    RoundSmall,
 }

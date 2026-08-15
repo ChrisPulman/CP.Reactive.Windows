@@ -13,18 +13,44 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 public class NativeRectTypeConverter : TypeConverter
 {
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string nativeRectStringValue)
         {
             string[] xywh = nativeRectStringValue.Split(',');
-            if (xywh.Length == 4 && int.TryParse(xywh[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x) && int.TryParse(xywh[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y) && int.TryParse(xywh[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out var w) && int.TryParse(xywh[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var h))
+            if (
+                xywh.Length == 4
+                && int.TryParse(
+                    xywh[0],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var x)
+                && int.TryParse(
+                    xywh[1],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var y)
+                && int.TryParse(
+                    xywh[2],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var w)
+                && int.TryParse(
+                    xywh[3],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var h))
             {
                 return new NativeRect(x, y, w, h);
             }
@@ -34,5 +60,12 @@ public class NativeRectTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType != typeof(string) || !(value is NativeRect nativeRect) ? base.ConvertTo(context, culture, value, destinationType) : $"{nativeRect.Left},{nativeRect.Top},{nativeRect.Width},{nativeRect.Height}";
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType) =>
+        destinationType != typeof(string) || !(value is NativeRect nativeRect)
+            ? base.ConvertTo(context, culture, value, destinationType)
+            : $"{nativeRect.Left},{nativeRect.Top},{nativeRect.Width},{nativeRect.Height}";
 }

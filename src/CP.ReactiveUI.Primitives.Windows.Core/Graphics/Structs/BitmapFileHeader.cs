@@ -47,11 +47,14 @@ public struct BitmapFileHeader : IEquatable<BitmapFileHeader>
             uint bitmapFileHeaderSize = (uint)Marshal.SizeOf<BitmapFileHeader>();
             return new BitmapFileHeader
             {
-                FileType = 19_778,
+                FileType = BitmapSignature,
                 Size = (int)(bitmapFileHeaderSize + bitmapV5Header.Size + bitmapV5Header.SizeImage),
                 Reserved1 = 0,
                 Reserved2 = 0,
-                OffsetToBitmapBits = (int)(bitmapFileHeaderSize + bitmapV5Header.Size + (bitmapV5Header.ColorsUsed * 4))
+                OffsetToBitmapBits = (int)(
+                    bitmapFileHeaderSize
+                    + bitmapV5Header.Size
+                    + (bitmapV5Header.ColorsUsed * ColorTableEntrySize)),
             };
         }
     }
@@ -66,11 +69,15 @@ public struct BitmapFileHeader : IEquatable<BitmapFileHeader>
             uint bitmapFileHeaderSize = (uint)Marshal.SizeOf<BitmapFileHeader>();
             return new BitmapFileHeader
             {
-                FileType = 19_778,
-                Size = (int)(bitmapFileHeaderSize + bitmapInfoHeader.Size + bitmapInfoHeader.SizeImage),
+                FileType = BitmapSignature,
+                Size = (int)(
+                    bitmapFileHeaderSize + bitmapInfoHeader.Size + bitmapInfoHeader.SizeImage),
                 Reserved1 = 0,
                 Reserved2 = 0,
-                OffsetToBitmapBits = (int)(bitmapFileHeaderSize + bitmapInfoHeader.Size + (bitmapInfoHeader.ColorsUsed * 4))
+                OffsetToBitmapBits = (int)(
+                    bitmapFileHeaderSize
+                    + bitmapInfoHeader.Size
+                    + (bitmapInfoHeader.ColorsUsed * ColorTableEntrySize)),
             };
         }
     }
@@ -94,10 +101,16 @@ public struct BitmapFileHeader : IEquatable<BitmapFileHeader>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(BitmapFileHeader other) => FileType == other.FileType && Size == other.Size && Reserved1 == other.Reserved1 && Reserved2 == other.Reserved2 && OffsetToBitmapBits == other.OffsetToBitmapBits;
+    public readonly bool Equals(BitmapFileHeader other) =>
+        FileType == other.FileType
+        && Size == other.Size
+        && Reserved1 == other.Reserved1
+        && Reserved2 == other.Reserved2
+        && OffsetToBitmapBits == other.OffsetToBitmapBits;
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is BitmapFileHeader other && Equals(other);
+    public override readonly bool Equals(object obj) =>
+        obj is BitmapFileHeader other && Equals(other);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => typeof(BitmapFileHeader).GetHashCode();

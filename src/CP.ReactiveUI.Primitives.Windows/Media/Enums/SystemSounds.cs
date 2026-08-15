@@ -25,5 +25,5 @@ public enum SystemSounds
     /// <summary>Sound/event that is associated with the Windows "Start".</summary>
     SystemStart,
     /// <summary>Sound/event that is associated with the Windows "Welcome".</summary>
-    SystemWelcome
+    SystemWelcome,
 }

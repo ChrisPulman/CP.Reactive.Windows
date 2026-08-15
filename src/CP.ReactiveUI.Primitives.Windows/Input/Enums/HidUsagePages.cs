@@ -72,5 +72,5 @@ public enum HidUsagePages
     /// <summary>Camera controls.</summary>
     Camera = Unicode | MonitorPage0,
     /// <summary>Arcade controls.</summary>
-    Arcade = MonitorPage1 | Unicode
+    Arcade = MonitorPage1 | Unicode,
 }

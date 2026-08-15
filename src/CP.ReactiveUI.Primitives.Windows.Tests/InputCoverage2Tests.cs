@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Deterministic coverage for input native composition seams and low-level hook translation.</summary>
@@ -14,6 +12,9 @@ public sealed class InputCoverage2Tests
 
     /// <summary>The system key-down message id.</summary>
     private const int WmSysKeyDown = 0x0104;
+
+    /// <summary>The system key-up message id.</summary>
+    private const int WmSysKeyUp = 0x0105;
 
     /// <summary>The offset of KBDLLHOOKSTRUCT.vkCode.</summary>
     private const int KeyboardVirtualKeyCodeOffset = 0;
@@ -113,6 +114,37 @@ public sealed class InputCoverage2Tests
             await Assert.That(observed.Count).IsEqualTo(1);
             await Assert.That(observed[0].IsModifier).IsTrue();
             await Assert.That(observed[0].IsCapsLockActive).IsTrue();
+        }
+        finally
+        {
+            _ = NativeHookMethods.SetApiForTesting(previousApi);
+        }
+    }
+
+    /// <summary>Tests a lock-key release preserves the native lock state rather than toggling it.</summary>
+    /// <returns>A task representing the asynchronous test.</returns>
+    [Test]
+    public async Task KeyboardHook_LockKeyRelease_DoesNotToggleLockStateAsync()
+    {
+        var fake = new FakeNativeHookApi();
+        var previousApi = NativeHookMethods.SetApiForTesting(fake);
+        try
+        {
+            var observed = new List<KeyboardHookEventArgs>();
+            using var subscription = KeyboardHook.KeyboardHookEvents.SubscribeOnNext(observed.Add);
+            var data = AllocateKeyboardHookData(VirtualKeyCode.Capital, ExtendedKeyFlags.None, UIntFortyTwo);
+            try
+            {
+                _ = fake.Invoke(0, (IntPtr)WmSysKeyUp, data);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(data);
+            }
+
+            await Assert.That(observed.Count).IsEqualTo(One);
+            await Assert.That(observed[0].IsKeyDown).IsFalse();
+            await Assert.That(observed[0].IsCapsLockActive).IsFalse();
         }
         finally
         {

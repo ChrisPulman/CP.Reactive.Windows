@@ -197,6 +197,32 @@ public sealed class CoverageFinalMessagesTests
         await Assert.That(hookSource.RemoveHookCount).IsEqualTo(SingleCount);
     }
 
+    /// <summary>Verifies abstract WPF hook-source messages work without setup or teardown callbacks.</summary>
+    /// <returns>A task representing the asynchronous test.</returns>
+    [Test]
+    public async Task WinProcWindowsHookSourcePublishesWithoutSetupCallbacksAsync()
+    {
+        var hookSource = new FakeWindowMessageHookSource();
+        var observedMessages = new List<WindowMessageInfo>();
+        var completed = false;
+
+        using (WinProcWindowsExtensions
+            .ObserveWindowMessages<object>(hookSource, null, null)
+            .Subscribe(
+                observedMessages.Add,
+                static _ => { },
+                () => completed = true))
+        {
+            hookSource.Dispatch(WindowsMessages.WM_APP, WordParameter, LongParameter);
+        }
+
+        await Assert.That(observedMessages.Count).IsEqualTo(SingleCount);
+        await Assert.That(observedMessages[0].Message).IsEqualTo(WindowsMessages.WM_APP);
+        await Assert.That(completed).IsFalse();
+        await Assert.That(hookSource.AddHookCount).IsEqualTo(SingleCount);
+        await Assert.That(hookSource.RemoveHookCount).IsEqualTo(SingleCount);
+    }
+
     /// <summary>Verifies WPF window-message extension wrappers validate and defer missing HWND sources.</summary>
     /// <returns>A task representing the asynchronous test.</returns>
     [Test]
@@ -209,10 +235,37 @@ public sealed class CoverageFinalMessagesTests
         await Assert.That(() => hwndSource.ObserveWindowMessages()).Throws<NotSupportedException>();
         await Assert.That(() => window.ObserveWindowMessages()).Throws<NotSupportedException>();
 
-        using var subscription = hiddenWindow.ObserveWindowMessages().Subscribe(static _ => { });
+        IDisposable subscription = hiddenWindow.ObserveWindowMessages().Subscribe(static _ => { });
+        subscription.Dispose();
         hiddenWindow.Close();
 
         await Assert.That(subscription).IsNotNull();
+
+        var deferredWindow = new Window();
+        using var deferredSubscription = deferredWindow.ObserveWindowMessages().Subscribe(static _ => { });
+        deferredWindow.Show();
+        deferredWindow.Close();
+
+        var initializedWindow = new Window();
+        initializedWindow.Show();
+        IDisposable initializedSubscription = initializedWindow.ObserveWindowMessages().Subscribe(static _ => { });
+        initializedSubscription.Dispose();
+        initializedWindow.Close();
+    }
+
+    /// <summary>Verifies the concrete HWND adapter supports symmetric event registration.</summary>
+    /// <returns>A task representing the asynchronous test.</returns>
+    [Test]
+    public async Task WinProcHandlerHwndAdapterRemovesDisposedHandlersAsync()
+    {
+        using var source = WinProcHandler.CreateMessageWindow(0L, $"CP.Reactive.Tests.{Guid.NewGuid():N}");
+        IMessageHandlerWindow adapter = WinProcHandler.CreateMessageHandlerWindowForTesting(source);
+        EventHandler handler = static (_, _) => { };
+
+        adapter.Disposed += handler;
+        adapter.Disposed -= handler;
+
+        await Assert.That(adapter.Handle).IsEqualTo(source.Handle.ToInt64());
     }
 
     /// <summary>Verifies WinProcHandler manages duplicate subscriptions and teardown paths.</summary>
@@ -235,7 +288,8 @@ public sealed class CoverageFinalMessagesTests
             callbackCount++;
             handled = true;
             return (nint)MessageResult;
-        }) { Disposable = new CallbackDisposable(() => disposableCount++) };
+        })
+        { Disposable = new CallbackDisposable(() => disposableCount++) };
 
         var subscription = handler.Subscribe(hook);
         var duplicateSubscription = handler.Subscribe(hook);
@@ -276,7 +330,8 @@ public sealed class CoverageFinalMessagesTests
             GC.KeepAlive(longParam);
             GC.KeepAlive(handled);
             return IntPtr.Zero;
-        }) { Disposable = new CallbackDisposable(() => disposableCount++) };
+        })
+        { Disposable = new CallbackDisposable(() => disposableCount++) };
 
         var subscription = handler.Subscribe(hook);
         handler.UnsubscribeAllHooks();

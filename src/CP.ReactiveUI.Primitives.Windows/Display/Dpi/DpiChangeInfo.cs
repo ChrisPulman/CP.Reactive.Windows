@@ -10,12 +10,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi;
 /// <summary>Stores information about a DPI change.</summary>
 public class DpiChangeInfo
 {
-    /// <summary>Gets the DPI from before the change.</summary>
-    public int PreviousDpi { get; }
-
-    /// <summary>Gets the new DPI.</summary>
-    public int NewDpi { get; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.DpiChangeInfo" /> class.</summary>
     /// <param name="previousDpi">The DPI before the change.</param>
     /// <param name="newDpi">The DPI after the change.</param>
@@ -24,4 +18,10 @@ public class DpiChangeInfo
         PreviousDpi = previousDpi;
         NewDpi = newDpi;
     }
+
+    /// <summary>Gets the DPI from before the change.</summary>
+    public int PreviousDpi { get; }
+
+    /// <summary>Gets the new DPI.</summary>
+    public int NewDpi { get; }
 }

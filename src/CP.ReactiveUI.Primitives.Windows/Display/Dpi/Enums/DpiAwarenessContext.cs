@@ -43,5 +43,5 @@ public enum DpiAwarenessContext
     ///     * Improved scaling of comctl32 controls - Various comctl32 controls have improved DPI scaling behavior in Per Monitor v2 contexts.
     ///     * Improved theming behavior - UxTheme handles opened in the context of a Per Monitor v2 window will operate in terms of the DPI associated with that window.
     /// </summary>
-    PerMonitorAwareV2 = -4
+    PerMonitorAwareV2 = -4,
 }

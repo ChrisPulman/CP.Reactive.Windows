@@ -53,12 +53,12 @@ public class CapturedCursor : IDisposable
     /// are not null. Changes to the cloned instance do not affect the original instance.</remarks>
     /// <returns>A new CapturedCursor object with the same property values as the current instance.</returns>
     public CapturedCursor Clone() => new CapturedCursor
-        {
-            ColorLayer = ((ColorLayer is not null) ? new Bitmap(ColorLayer) : null),
-            MaskLayer = ((MaskLayer is not null) ? new Bitmap(MaskLayer) : null),
-            HotSpot = HotSpot,
-            Size = Size
-        };
+    {
+        ColorLayer = ((ColorLayer is not null) ? new Bitmap(ColorLayer) : null),
+        MaskLayer = ((MaskLayer is not null) ? new Bitmap(MaskLayer) : null),
+        HotSpot = HotSpot,
+        Size = Size,
+    };
 
     /// <summary>Releases managed resources held by this cursor.</summary>
     /// <param name="disposing">A value indicating whether managed resources should be disposed.</param>

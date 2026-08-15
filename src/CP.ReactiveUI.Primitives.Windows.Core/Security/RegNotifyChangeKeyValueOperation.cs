@@ -14,4 +14,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Security;
 /// <param name="eventHandle">Event handle.</param>
 /// <param name="asynchronous">Whether notification is asynchronous.</param>
 /// <returns>Win32 result code.</returns>
-internal delegate int RegNotifyChangeKeyValueOperation(SafeRegistryHandle key, bool watchSubtree, RegistryNotifyFilter notifyFilter, SafeWaitHandle eventHandle, bool asynchronous);
+internal delegate int RegNotifyChangeKeyValueOperation(
+    SafeRegistryHandle key,
+    bool watchSubtree,
+    RegistryNotifyFilter notifyFilter,
+    SafeWaitHandle eventHandle,
+    bool asynchronous);

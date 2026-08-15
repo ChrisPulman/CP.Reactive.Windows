@@ -37,7 +37,13 @@ internal sealed class NativeRestartManagerSessionApi : IRestartManagerSessionApi
     /// <param name="getList">Gets affected applications for a Restart Manager session.</param>
     /// <param name="shutdown">Shuts down affected applications.</param>
     /// <param name="restart">Restarts affected applications.</param>
-    internal NativeRestartManagerSessionApi(StartSessionOperation startSession, Func<int, int> endSession, RegisterResourcesOperation registerResources, GetListOperation getList, ShutdownOperation shutdown, RestartOperation restart)
+    internal NativeRestartManagerSessionApi(
+        StartSessionOperation startSession,
+        Func<int, int> endSession,
+        RegisterResourcesOperation registerResources,
+        GetListOperation getList,
+        ShutdownOperation shutdown,
+        RestartOperation restart)
     {
         _startSession = startSession;
         _endSession = endSession;
@@ -49,28 +55,63 @@ internal sealed class NativeRestartManagerSessionApi : IRestartManagerSessionApi
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Kernel.NativeRestartManagerSessionApi" /> class.</summary>
     private NativeRestartManagerSessionApi()
-        : this(RestartManagerApi.RmStartSession, RestartManagerApi.RmEndSession, RestartManagerApi.RmRegisterResources, RestartManagerApi.RmGetList, RestartManagerApi.RmShutdown, RestartManagerApi.RmRestart)
-    {
-    }
+        : this(
+            RestartManagerApi.RmStartSession,
+            RestartManagerApi.RmEndSession,
+            RestartManagerApi.RmRegisterResources,
+            RestartManagerApi.RmGetList,
+            RestartManagerApi.RmShutdown,
+            RestartManagerApi.RmRestart) { }
 
     /// <summary>Gets the singleton native Restart Manager API implementation.</summary>
     internal static NativeRestartManagerSessionApi Instance { get; } = new();
 
     /// <inheritdoc />
-    public int StartSession(out int sessionHandle, int sessionFlags, StringBuilder sessionKey) => _startSession(out sessionHandle, sessionFlags, sessionKey);
+    public int StartSession(out int sessionHandle, int sessionFlags, StringBuilder sessionKey) =>
+        _startSession(out sessionHandle, sessionFlags, sessionKey);
 
     /// <inheritdoc />
     public int EndSession(int sessionHandle) => _endSession(sessionHandle);
 
     /// <inheritdoc />
-    public int RegisterResources(int sessionHandle, uint fileCount, string[] filenames, uint applicationCount, RmUniqueProcess[] applications, uint serviceCount, string[] serviceNames) => _registerResources(sessionHandle, fileCount, filenames, applicationCount, applications, serviceCount, serviceNames);
+    public int RegisterResources(
+        int sessionHandle,
+        uint fileCount,
+        string[] filenames,
+        uint applicationCount,
+        RmUniqueProcess[] applications,
+        uint serviceCount,
+        string[] serviceNames) =>
+        _registerResources(
+            sessionHandle,
+            fileCount,
+            filenames,
+            applicationCount,
+            applications,
+            serviceCount,
+            serviceNames);
 
     /// <inheritdoc />
-    public int GetList(int sessionHandle, out uint processInfoNeeded, ref uint processInfoCount, RmProcessInfo[] affectedApplications, out RmRebootReason rebootReasons) => _getList(sessionHandle, out processInfoNeeded, ref processInfoCount, affectedApplications, out rebootReasons);
+    public int GetList(
+        int sessionHandle,
+        out uint processInfoNeeded,
+        ref uint processInfoCount,
+        RmProcessInfo[] affectedApplications,
+        out RmRebootReason rebootReasons) =>
+        _getList(
+            sessionHandle,
+            out processInfoNeeded,
+            ref processInfoCount,
+            affectedApplications,
+            out rebootReasons);
 
     /// <inheritdoc />
-    public int Shutdown(int sessionHandle, RmShutdownType shutdownType, RmStatusCallback statusCallback) => _shutdown(sessionHandle, shutdownType, statusCallback);
+    public int Shutdown(
+        int sessionHandle,
+        RmShutdownType shutdownType,
+        RmStatusCallback statusCallback) => _shutdown(sessionHandle, shutdownType, statusCallback);
 
     /// <inheritdoc />
-    public int Restart(int sessionHandle, int restartFlags, RmStatusCallback statusCallback) => _restart(sessionHandle, restartFlags, statusCallback);
+    public int Restart(int sessionHandle, int restartFlags, RmStatusCallback statusCallback) =>
+        _restart(sessionHandle, restartFlags, statusCallback);
 }

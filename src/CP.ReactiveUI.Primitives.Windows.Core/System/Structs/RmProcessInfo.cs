@@ -20,7 +20,14 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel.Structs;
 /// <param name="terminalServicesSessionId">The Terminal Services session identifier.</param>
 /// <param name="restartable">A value indicating whether the application can be restarted.</param>
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-public readonly struct RmProcessInfo(RmUniqueProcess process, string applicationName, string serviceShortName, RmAppType applicationType, RmAppStatus applicationStatus, uint terminalServicesSessionId, bool restartable) : IEquatable<RmProcessInfo>
+public readonly struct RmProcessInfo(
+    RmUniqueProcess process,
+    string applicationName,
+    string serviceShortName,
+    RmAppType applicationType,
+    RmAppStatus applicationStatus,
+    uint terminalServicesSessionId,
+    bool restartable) : IEquatable<RmProcessInfo>
 {
     /// <summary>The maximum Restart Manager application name length.</summary>
     private const int RmMaxAppName = 255;
@@ -74,11 +81,26 @@ public readonly struct RmProcessInfo(RmUniqueProcess process, string application
     }
 
     /// <inheritdoc />
-    public bool Equals(RmProcessInfo other) => Process == other.Process && string.Equals(ApplicationName, other.ApplicationName, StringComparison.Ordinal) && string.Equals(ServiceShortName, other.ServiceShortName, StringComparison.Ordinal) && ApplicationType == other.ApplicationType && ApplicationStatus == other.ApplicationStatus && TerminalServicesSessionId == other.TerminalServicesSessionId && Restartable == other.Restartable;
+    public bool Equals(RmProcessInfo other) =>
+        Process == other.Process
+        && string.Equals(ApplicationName, other.ApplicationName, StringComparison.Ordinal)
+        && string.Equals(ServiceShortName, other.ServiceShortName, StringComparison.Ordinal)
+        && ApplicationType == other.ApplicationType
+        && ApplicationStatus == other.ApplicationStatus
+        && TerminalServicesSessionId == other.TerminalServicesSessionId
+        && Restartable == other.Restartable;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is RmProcessInfo other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Process, ApplicationName, ServiceShortName, ApplicationType, ApplicationStatus, TerminalServicesSessionId, Restartable);
+    public override int GetHashCode() =>
+        HashCode.Combine(
+            Process,
+            ApplicationName,
+            ServiceShortName,
+            ApplicationType,
+            ApplicationStatus,
+            TerminalServicesSessionId,
+            Restartable);
 }

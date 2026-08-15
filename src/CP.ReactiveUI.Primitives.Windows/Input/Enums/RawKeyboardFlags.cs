@@ -26,5 +26,5 @@ public enum RawKeyboardFlags
     /// <summary>No clue.</summary>
     TerminalServerShadow = 0x10,
     /// <summary>No clue.</summary>
-    TerminalServerVkPacket = 0x20
+    TerminalServerVkPacket = 0x20,
 }

@@ -159,5 +159,5 @@ public enum StandardClipboardFormats : uint
     /// </summary>
     StartOfApplicationDefinedGdiObjectRange = 768U,
     /// <summary>See CF_GDIOBJFIRST.</summary>
-    EndOfApplicationDefinedGdiObjectRange = 1023U
+    EndOfApplicationDefinedGdiObjectRange = 1023U,
 }

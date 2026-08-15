@@ -30,5 +30,5 @@ public enum KeyEventFlags : uint
     /// </summary>
     Unicode = 4U,
     /// <summary>If specified, wScan identifies the key and VirtualKeyCode is ignored.</summary>
-    Scancode = 8U
+    Scancode = 8U,
 }

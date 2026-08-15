@@ -9,6 +9,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 /// <summary>Helper method for the NativeSizeExtensions struct.</summary>
 public static class NativeSizeExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="size">The target value.</param>
     extension(NativeSize size)
     {
         /// <summary>Create a new NativeSize, from the supplied one, using the specified width.</summary>

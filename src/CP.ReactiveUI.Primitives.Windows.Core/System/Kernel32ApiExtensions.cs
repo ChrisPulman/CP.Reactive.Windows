@@ -10,6 +10,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <summary>Kernel32 extension members.</summary>
 public static class Kernel32ApiExtensions
 {
+    /// <summary>Provides process-specific Kernel32 operations.</summary>
+    /// <param name="process">The process to query.</param>
     extension(Process process)
     {
         /// <summary>Method to get the process path for a process.</summary>

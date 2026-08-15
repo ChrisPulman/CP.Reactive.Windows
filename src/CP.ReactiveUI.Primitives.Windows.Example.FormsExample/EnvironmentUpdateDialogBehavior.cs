@@ -27,8 +27,20 @@ internal sealed class EnvironmentUpdateDialogBehavior : IDisposable
     /// <param name="log">The log source for diagnostics.</param>
     public EnvironmentUpdateDialogBehavior(Form form, ILog log)
     {
-        Throw.IfNull(form);
-        Throw.IfNull(log);
+#if NETFRAMEWORK
+        if (form is null)
+        {
+            throw new ArgumentNullException(nameof(form));
+        }
+
+        if (log is null)
+        {
+            throw new ArgumentNullException(nameof(log));
+        }
+#else
+        ArgumentNullException.ThrowIfNull(form);
+        ArgumentNullException.ThrowIfNull(log);
+#endif
 
         _form = form;
         _log = log;

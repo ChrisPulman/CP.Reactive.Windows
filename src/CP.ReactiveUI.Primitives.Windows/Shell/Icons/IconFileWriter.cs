@@ -18,22 +18,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Helper class for creating icon files using the proper ICO file format structures.</summary>
 public static class IconFileWriter
 {
-    /// <summary>Stores a cursor image and hotspot pair.</summary>
-    /// <param name="Image">The cursor image.</param>
-    /// <param name="Hotspot">The cursor hotspot.</param>
-    private readonly record struct CursorImage(Image Image, Point Hotspot);
-
-    /// <summary>Stores an encoded icon image.</summary>
-    /// <param name="Size">The source image size.</param>
-    /// <param name="Data">The encoded image data.</param>
-    private readonly record struct EncodedIconImage(Size Size, MemoryStream Data);
-
-    /// <summary>Stores an encoded cursor image.</summary>
-    /// <param name="Size">The source image size.</param>
-    /// <param name="Hotspot">The cursor hotspot.</param>
-    /// <param name="Data">The encoded image data.</param>
-    private readonly record struct EncodedCursorImage(Size Size, Point Hotspot, MemoryStream Data);
-
     /// <summary>Defines the modern PNG icon bit depth.</summary>
     private const ushort PngIconBitCount = 32;
 
@@ -68,7 +52,12 @@ public static class IconFileWriter
                 uint offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
                 foreach (EncodedIconImage encodedImage in encodedImages)
                 {
-                    IconDirEntry entry = IconDirEntry.CreateForIcon(encodedImage.Size.Width, encodedImage.Size.Height, 32, (uint)encodedImage.Data.Length, offset);
+                    IconDirEntry entry = IconDirEntry.CreateForIcon(
+                        encodedImage.Size.Width,
+                        encodedImage.Size.Height,
+                        PngIconBitCount,
+                        (uint)encodedImage.Data.Length,
+                        offset);
                     WriteIconDirEntry(binaryWriter, entry);
                     offset += (uint)encodedImage.Data.Length;
                 }
@@ -126,7 +115,13 @@ public static class IconFileWriter
                 uint offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
                 foreach (EncodedCursorImage encodedImage in encodedImages)
                 {
-                    IconDirEntry entry = IconDirEntry.CreateForCursor(encodedImage.Size.Width, encodedImage.Size.Height, (ushort)encodedImage.Hotspot.X, (ushort)encodedImage.Hotspot.Y, (uint)encodedImage.Data.Length, offset);
+                    IconDirEntry entry = IconDirEntry.CreateForCursor(
+                        encodedImage.Size.Width,
+                        encodedImage.Size.Height,
+                        (ushort)encodedImage.Hotspot.X,
+                        (ushort)encodedImage.Hotspot.Y,
+                        (uint)encodedImage.Data.Length,
+                        offset);
                     WriteIconDirEntry(binaryWriter, entry);
                     offset += (uint)encodedImage.Data.Length;
                 }
@@ -252,4 +247,20 @@ public static class IconFileWriter
             encodedImage2.Data.Dispose();
         }
     }
+
+    /// <summary>Stores a cursor image and hotspot pair.</summary>
+    /// <param name="Image">The cursor image.</param>
+    /// <param name="Hotspot">The cursor hotspot.</param>
+    private readonly record struct CursorImage(Image Image, Point Hotspot);
+
+    /// <summary>Stores an encoded icon image.</summary>
+    /// <param name="Size">The source image size.</param>
+    /// <param name="Data">The encoded image data.</param>
+    private readonly record struct EncodedIconImage(Size Size, MemoryStream Data);
+
+    /// <summary>Stores an encoded cursor image.</summary>
+    /// <param name="Size">The source image size.</param>
+    /// <param name="Hotspot">The cursor hotspot.</param>
+    /// <param name="Data">The encoded image data.</param>
+    private readonly record struct EncodedCursorImage(Size Size, Point Hotspot, MemoryStream Data);
 }

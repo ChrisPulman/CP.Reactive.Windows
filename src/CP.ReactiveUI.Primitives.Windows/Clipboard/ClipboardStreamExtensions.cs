@@ -16,6 +16,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 /// <summary>These are extensions to work with the clipboard.</summary>
 public static class ClipboardStreamExtensions
 {
+    /// <summary>Stream operations used by this type.</summary>
+    private static ClipboardStreamOperations _operations = new(CopyToClipboardMemory, static readInfo => readInfo.Size);
+
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="clipboardAccessToken">The extended instance.</param>
     extension(IClipboardAccessToken clipboardAccessToken)
     {
         /// <summary>Set the content for the specified format.</summary>
@@ -120,27 +125,6 @@ public static class ClipboardStreamExtensions
         }
     }
 
-    /// <summary>Composes clipboard stream operations without invoking them during construction.</summary>
-    /// <param name="copyToClipboard">The clipboard copy operation.</param>
-    /// <param name="getSize">The readable data size operation.</param>
-    private sealed class ClipboardStreamOperations(Action<IClipboardAccessToken, uint, Stream, long> copyToClipboard, Func<ClipboardNativeInfo, int> getSize)
-    {
-        /// <summary>Copies a stream into clipboard-owned memory.</summary>
-        /// <param name="clipboardAccessToken">The clipboard access token.</param>
-        /// <param name="formatId">The clipboard format identifier.</param>
-        /// <param name="stream">The stream to copy.</param>
-        /// <param name="length">The number of bytes to copy.</param>
-        public void CopyToClipboard(IClipboardAccessToken clipboardAccessToken, uint formatId, Stream stream, long length) => copyToClipboard(clipboardAccessToken, formatId, stream, length);
-
-        /// <summary>Gets the readable clipboard data size.</summary>
-        /// <param name="readInfo">The clipboard native memory information.</param>
-        /// <returns>The readable byte count.</returns>
-        public int GetSize(ClipboardNativeInfo readInfo) => getSize(readInfo);
-    }
-
-    /// <summary>Stream operations used by this type.</summary>
-    private static ClipboardStreamOperations _operations = new(CopyToClipboardMemory, (readInfo) => readInfo.Size);
-
     /// <summary>Overrides stream operations for deterministic tests.</summary>
     /// <param name="copyToClipboard">The replacement clipboard copy operation.</param>
     /// <param name="getSize">The replacement readable data size operation.</param>
@@ -151,10 +135,7 @@ public static class ClipboardStreamExtensions
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getSize);
         ClipboardStreamOperations operations = _operations;
         _operations = new(copyToClipboard, getSize);
-        return Scope.Create(operations, delegate(ClipboardStreamOperations previous)
-        {
-            _operations = previous;
-        });
+        return Scope.Create(operations, static previous => _operations = previous);
     }
 
     /// <summary>Creates a managed stream copy from the supplied clipboard native memory.</summary>
@@ -217,5 +198,30 @@ public static class ClipboardStreamExtensions
         using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, length);
         using UnmanagedMemoryStream unsafeMemoryStream = new((byte*)(void*)writeInfo.MemoryPtr, length, length, FileAccess.Write);
         stream.CopyTo(unsafeMemoryStream);
+    }
+
+    /// <summary>Composes clipboard stream operations without invoking them during construction.</summary>
+    /// <param name="copyToClipboard">The clipboard copy operation.</param>
+    /// <param name="getSize">The readable data size operation.</param>
+    private sealed class ClipboardStreamOperations(
+        Action<IClipboardAccessToken, uint, Stream, long> copyToClipboard,
+        Func<ClipboardNativeInfo, int> getSize)
+    {
+        /// <summary>Copies a stream into clipboard-owned memory.</summary>
+        /// <param name="clipboardAccessToken">The clipboard access token.</param>
+        /// <param name="formatId">The clipboard format identifier.</param>
+        /// <param name="stream">The stream to copy.</param>
+        /// <param name="length">The number of bytes to copy.</param>
+        public void CopyToClipboard(
+            IClipboardAccessToken clipboardAccessToken,
+            uint formatId,
+            Stream stream,
+            long length) =>
+            copyToClipboard(clipboardAccessToken, formatId, stream, length);
+
+        /// <summary>Gets the readable clipboard data size.</summary>
+        /// <param name="readInfo">The clipboard native memory information.</param>
+        /// <returns>The readable byte count.</returns>
+        public int GetSize(ClipboardNativeInfo readInfo) => getSize(readInfo);
     }
 }

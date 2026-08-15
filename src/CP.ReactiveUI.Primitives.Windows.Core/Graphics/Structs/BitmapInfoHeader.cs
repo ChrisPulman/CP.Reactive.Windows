@@ -18,6 +18,9 @@ public struct BitmapInfoHeader : IEquatable<BitmapInfoHeader>
     /// <summary>Number of bytes in each bitfield color mask.</summary>
     private const uint BitfieldColorMaskSize = 4U;
 
+    /// <summary>Number of bytes in all bitfield color masks.</summary>
+    private const uint BitfieldColorMaskByteCount = BitfieldColorMaskCount * BitfieldColorMaskSize;
+
     /// <summary>Number of bits to shift to convert bits per pixel to bytes per pixel.</summary>
     private const int BitsPerByteShift = 3;
 
@@ -155,27 +158,32 @@ public struct BitmapInfoHeader : IEquatable<BitmapInfoHeader>
     public readonly bool IsDibV5 => _size >= checked((uint)Marshal.SizeOf<BitmapV5Header>());
 
     /// <summary>Gets the offset to the pixels.</summary>
-    public readonly uint OffsetToPixels => _compression != BitmapCompressionMethods.BI_BITFIELDS ? _size : checked(_size + 12);
+    public readonly uint OffsetToPixels =>
+        _compression != BitmapCompressionMethods.BI_BITFIELDS
+            ? _size
+            : checked(_size + BitfieldColorMaskByteCount);
 
     /// <summary>Create a BitmapInfoHeader with values.</summary>
     /// <param name="width">The width of the bitmap.</param>
     /// <param name="height">The height of the bitmap.</param>
     /// <param name="bpp">The bits per pixel of the bitmap.</param>
     /// <returns>The created bitmap information header.</returns>
-    public static BitmapInfoHeader Create(int width, int height, ushort bpp) => checked(new BitmapInfoHeader
-        {
-            Size = (uint)Marshal.SizeOf<BitmapInfoHeader>(),
-            Planes = 1,
-            Compression = BitmapCompressionMethods.BI_RGB,
-            Width = width,
-            Height = height,
-            BitCount = bpp,
-            SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
-            XPelsPerMeter = 0,
-            YPelsPerMeter = 0,
-            ColorsUsed = 0U,
-            ColorsImportant = 0U
-        });
+    public static BitmapInfoHeader Create(int width, int height, ushort bpp) =>
+        checked(
+            new BitmapInfoHeader
+            {
+                Size = (uint)Marshal.SizeOf<BitmapInfoHeader>(),
+                Planes = DevicePlaneCount,
+                Compression = BitmapCompressionMethods.BI_RGB,
+                Width = width,
+                Height = height,
+                BitCount = bpp,
+                SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
+                XPelsPerMeter = 0,
+                YPelsPerMeter = 0,
+                ColorsUsed = 0U,
+                ColorsImportant = 0U,
+            });
 
     /// <summary>Determines whether two bitmap information headers are equal.</summary>
     /// <param name="left">The left header.</param>
@@ -196,10 +204,31 @@ public struct BitmapInfoHeader : IEquatable<BitmapInfoHeader>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(BitmapInfoHeader other) => (_size, _width, _height, _planes, _bitCount, _compression).Equals((other._size, other._width, other._height, other._planes, other._bitCount, other._compression)) && (_sizeImage, _horizontalPixelsPerMeter, _verticalPixelsPerMeter, _colorsUsed, _colorsImportant).Equals((other._sizeImage, other._horizontalPixelsPerMeter, other._verticalPixelsPerMeter, other._colorsUsed, other._colorsImportant));
+    public readonly bool Equals(BitmapInfoHeader other) =>
+        (_size, _width, _height, _planes, _bitCount, _compression).Equals(
+            (
+                other._size,
+                other._width,
+                other._height,
+                other._planes,
+                other._bitCount,
+                other._compression))
+        && (
+            _sizeImage,
+            _horizontalPixelsPerMeter,
+            _verticalPixelsPerMeter,
+            _colorsUsed,
+            _colorsImportant).Equals(
+            (
+                other._sizeImage,
+                other._horizontalPixelsPerMeter,
+                other._verticalPixelsPerMeter,
+                other._colorsUsed,
+                other._colorsImportant));
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is BitmapInfoHeader other && Equals(other);
+    public override readonly bool Equals(object obj) =>
+        obj is BitmapInfoHeader other && Equals(other);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => 0;

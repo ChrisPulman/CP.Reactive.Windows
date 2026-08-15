@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows.Enums;
 #else
@@ -52,5 +50,5 @@ public enum InteropWindowRetrieveSettings : uint
     /// <summary>Cache all, with children, don't force reloading.</summary>
     CacheAllWithChildren = CacheAll | Children,
     /// <summary>Cache all, don't force reloading.</summary>
-    CacheAllChildZorder = CacheAll | ZOrderedChildren
+    CacheAllChildZorder = CacheAll | ZOrderedChildren,
 }

@@ -29,8 +29,15 @@ public readonly struct NativeSize : IEquatable<NativeSize>, IComparable<NativeSi
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSize" /> struct.</summary>
     /// <param name="size">The drawing size to copy.</param>
     public NativeSize(System.Drawing.Size size)
-        : this(size.Width, size.Height)
+        : this(size.Width, size.Height) { }
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSize" /> struct.</summary>
+    /// <param name="width">The width.</param>
+    /// <param name="height">The height.</param>
+    public NativeSize(int width, int height)
     {
+        _width = width;
+        _height = height;
     }
 
     /// <summary>Gets the zero-width and zero-height native size.</summary>
@@ -45,15 +52,6 @@ public readonly struct NativeSize : IEquatable<NativeSize>, IComparable<NativeSi
     /// <summary>Gets a value indicating whether the area is zero.</summary>
     /// <returns>true if the size is empty.</returns>
     public bool IsEmpty => checked(_width * _height) == 0;
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSize" /> struct.</summary>
-    /// <param name="width">The width.</param>
-    /// <param name="height">The height.</param>
-    public NativeSize(int width, int height)
-    {
-        _width = width;
-        _height = height;
-    }
 
     /// <summary>Implicit cast from System.Windows.Size to NativeSize</summary>
     /// <param name="size">System.Windows.Size</param>
@@ -174,7 +172,8 @@ public readonly struct NativeSize : IEquatable<NativeSize>, IComparable<NativeSi
     }
 
     /// <inheritdoc />
-    public int CompareTo(NativeSize other) => (other.Width * other.Height).CompareTo(Width * Height);
+    public int CompareTo(NativeSize other) =>
+        (other.Width * other.Height).CompareTo(Width * Height);
 
     /// <inheritdoc />
     public override string ToString() => $"{{Width: {_width}; Height: {_height};}}";
@@ -184,12 +183,9 @@ public readonly struct NativeSize : IEquatable<NativeSize>, IComparable<NativeSi
     {
         if (!(obj is NativeSize size))
         {
-            if (!(obj is System.Drawing.Size drawingSize))
-            {
-                return obj is System.Windows.Size windowsSize && Equals(windowsSize);
-            }
-
-            return Equals(drawingSize);
+            return !(obj is System.Drawing.Size drawingSize)
+                ? obj is System.Windows.Size windowsSize && Equals(windowsSize)
+                : Equals(drawingSize);
         }
 
         return Equals(size);

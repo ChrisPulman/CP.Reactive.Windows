@@ -12,12 +12,14 @@ public enum GlobalMemorySettings : uint
 {
     /// <summary>Allocates fixed memory. The return value is a pointer.</summary>
     None = 0U,
+
     /// <summary>
     /// Allocates movable memory. Memory blocks are never moved in physical memory, but they can be moved within the default heap.
     /// The return value is a handle to the memory object. To translate the handle into a pointer, use the GlobalLock function.
     /// This value cannot be combined with Fixed.
     /// </summary>
     Movable = 2U,
+
     /// <summary>Initializes memory contents to zero.</summary>
-    ZeroInit = 0x40U
+    ZeroInit = 0x40U,
 }

@@ -13,18 +13,34 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 public class NativeSizeTypeConverter : TypeConverter
 {
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string sizeStringValue)
         {
             string[] hw = sizeStringValue.Split(',');
-            if (hw.Length == 2 && int.TryParse(hw[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var h) && int.TryParse(hw[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var w))
+            if (
+                hw.Length == 2
+                && int.TryParse(
+                    hw[0],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var h)
+                && int.TryParse(
+                    hw[1],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var w))
             {
                 return new NativeSize(h, w);
             }
@@ -34,5 +50,12 @@ public class NativeSizeTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType != typeof(string) || !(value is NativeSize nativeSize) ? base.ConvertTo(context, culture, value, destinationType) : $"{nativeSize.Height},{nativeSize.Width}";
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType) =>
+        destinationType != typeof(string) || !(value is NativeSize nativeSize)
+            ? base.ConvertTo(context, culture, value, destinationType)
+            : $"{nativeSize.Height},{nativeSize.Width}";
 }

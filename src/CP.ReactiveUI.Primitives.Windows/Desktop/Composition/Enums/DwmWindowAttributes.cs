@@ -157,5 +157,5 @@ public enum DwmWindowAttributes
     /// </summary>
     VisibleFrameBorderThickness = 37,
     /// <summary>The maximum recognized DWMWINDOWATTRIBUTE value, used for validation purposes.</summary>
-    Last = 38
+    Last = 38,
 }

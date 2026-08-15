@@ -19,27 +19,6 @@ public static class Win32
     /// <summary>The HRESULT severity bit used to identify failures.</summary>
     private const uint HResultSeverityFailure = 2_147_483_648U;
 
-    /// <summary>Contains native Windows API bindings.</summary>
-    private static class NativeMethods
-    {
-        /// <summary>The loaded kernel32 module handle.</summary>
-        private static readonly IntPtr Kernel32Module = NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, "kernel32.dll"));
-
-        /// <summary>The exported FormatMessageW function pointer.</summary>
-        private static readonly IntPtr FormatMessagePointer = NativeLibrary.GetExport(Kernel32Module, "FormatMessageW");
-
-        /// <summary>Formats a system message string for the specified message identifier.</summary>
-        /// <param name="flags">The formatting options.</param>
-        /// <param name="source">The message source.</param>
-        /// <param name="messageId">The requested message identifier.</param>
-        /// <param name="languageId">The requested language identifier.</param>
-        /// <param name="buffer">The destination buffer.</param>
-        /// <param name="size">The destination buffer size.</param>
-        /// <param name="arguments">Optional format arguments.</param>
-        /// <returns>The number of characters written to the buffer.</returns>
-        internal static unsafe int FormatMessage(uint flags, IntPtr source, uint messageId, uint languageId, char* buffer, int size, IntPtr arguments) => ((delegate* unmanaged[Stdcall]<uint, IntPtr, uint, uint, char*, int, IntPtr, int>)(void*)FormatMessagePointer)(flags, source, messageId, languageId, buffer, size, arguments);
-    }
-
     /// <summary>The mask used to keep the Win32 error code portion.</summary>
     private const uint HResultCodeMask = 65_535U;
 
@@ -52,18 +31,24 @@ public static class Win32
     /// <summary>The stack buffer length for formatted messages.</summary>
     private const int MessageBufferCapacity = 256;
 
+    /// <summary>The byte offset between UTF-16 characters in the stack buffer.</summary>
+    private const nint Utf16CharacterByteOffset = (nint)2;
+
     /// <summary>Get the error code from the Win32Error.</summary>
     /// <param name="errorCode">The Win32 error code.</param>
     /// <returns>The HRESULT representation of the Win32 error.</returns>
     public static long GetHResult(Win32Error errorCode)
     {
-        int error = checked((int)errorCode);
-        return (error & 0x80000000U) != 2_147_483_648U ? (uint)(-2_147_024_896 | (int)checked((uint)(unchecked((long)error) & 0xFFFFL))) : error;
+        uint error = (uint)errorCode;
+        return (error & HResultSeverityFailure) != HResultSeverityFailure
+            ? HResultFacilityWin32 | (error & HResultCodeMask)
+            : unchecked((int)error);
     }
 
     /// <summary>Get the last Win32 error as an exception.</summary>
     /// <returns>The last Win32 error code recorded for the current thread.</returns>
-    public static Win32Error GetLastErrorCode() => (Win32Error)checked((uint)Marshal.GetLastWin32Error());
+    public static Win32Error GetLastErrorCode() =>
+        (Win32Error)checked((uint)Marshal.GetLastWin32Error());
 
     /// <summary>Get the message for a Win32 error.</summary>
     /// <param name="errorCode">Win32Error</param>
@@ -79,19 +64,76 @@ public static class Win32
     /// <returns>string with the message.</returns>
     public static unsafe string GetMessage(Win32Error errorCode, uint languageId)
     {
-        char* buffer = stackalloc char[256];
-        int characterCount = NativeMethods.FormatMessage(12_800U, IntPtr.Zero, (uint)errorCode, languageId, buffer, 256, IntPtr.Zero);
+        char* buffer = stackalloc char[MessageBufferCapacity];
+        int characterCount = NativeMethods.FormatMessage(
+            FormatMessageFlags,
+            IntPtr.Zero,
+            (uint)errorCode,
+            languageId,
+            buffer,
+            MessageBufferCapacity,
+            IntPtr.Zero);
         if (characterCount == 0)
         {
             return $"Unknown error (0x{checked((int)errorCode):x})";
         }
 
         StringBuilder result = new();
-        for (int i = 0; i < characterCount && (char.IsLetterOrDigit(*(char*)((byte*)buffer + checked(unchecked((nint)i) * (nint)2))) || char.IsPunctuation(*(char*)((byte*)buffer + checked(unchecked((nint)i) * (nint)2))) || char.IsSymbol(*(char*)((byte*)buffer + checked(unchecked((nint)i) * (nint)2))) || char.IsWhiteSpace(*(char*)((byte*)buffer + checked(unchecked((nint)i) * (nint)2)))); i = checked(i + 1))
+        for (int i = 0; i < characterCount; i = checked(i + 1))
         {
-            _ = result.Append(*(char*)((byte*)buffer + checked(unchecked((nint)i) * (nint)2)));
+            char currentCharacter = *(char*)(
+                (byte*)buffer + checked(unchecked((nint)i) * Utf16CharacterByteOffset));
+            if (!ShouldKeepMessageCharacter(currentCharacter))
+            {
+                break;
+            }
+
+            _ = result.Append(currentCharacter);
         }
 
         return result.ToString().Replace("\r\n", string.Empty);
+    }
+
+    /// <summary>Determines whether a formatted message character should be copied.</summary>
+    /// <param name="character">The character to inspect.</param>
+    /// <returns>true when the character belongs to the printable message.</returns>
+    private static bool ShouldKeepMessageCharacter(char character) =>
+        char.IsLetterOrDigit(character)
+        || char.IsPunctuation(character)
+        || char.IsSymbol(character)
+        || char.IsWhiteSpace(character);
+
+    /// <summary>Contains native Windows API bindings.</summary>
+    private static class NativeMethods
+    {
+        /// <summary>The loaded kernel32 module handle.</summary>
+        private static readonly IntPtr Kernel32Module = NativeLibrary.Load(
+            Path.Combine(Environment.SystemDirectory, "kernel32.dll"));
+
+        /// <summary>The exported FormatMessageW function pointer.</summary>
+        private static readonly IntPtr FormatMessagePointer = NativeLibrary.GetExport(
+            Kernel32Module,
+            "FormatMessageW");
+
+        /// <summary>Formats a system message string for the specified message identifier.</summary>
+        /// <param name="flags">The formatting options.</param>
+        /// <param name="source">The message source.</param>
+        /// <param name="messageId">The requested message identifier.</param>
+        /// <param name="languageId">The requested language identifier.</param>
+        /// <param name="buffer">The destination buffer.</param>
+        /// <param name="size">The destination buffer size.</param>
+        /// <param name="arguments">Optional format arguments.</param>
+        /// <returns>The number of characters written to the buffer.</returns>
+        internal static unsafe int FormatMessage(
+            uint flags,
+            IntPtr source,
+            uint messageId,
+            uint languageId,
+            char* buffer,
+            int size,
+            IntPtr arguments) =>
+            (
+                (delegate* unmanaged[Stdcall]<uint, IntPtr, uint, uint, char*, int, IntPtr, int>)
+                    (void*)FormatMessagePointer)(flags, source, messageId, languageId, buffer, size, arguments);
     }
 }

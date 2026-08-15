@@ -22,5 +22,5 @@ public enum DpiHostingBehavior
     /// <summary>
     ///     Mixed DPI hosting behavior. This enables the creation and re-parenting of child windows with different DPI_AWARENESS_CONTEXT. These child windows will be independently scaled by the OS.
     /// </summary>
-    Mixed
+    Mixed,
 }

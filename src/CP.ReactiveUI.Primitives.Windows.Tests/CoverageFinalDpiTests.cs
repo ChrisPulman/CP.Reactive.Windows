@@ -4,8 +4,6 @@
 
 using System.Windows.Controls;
 using System.Windows.Media;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Wpf;
 using CP.ReactiveUI.Primitives.Windows.Native.Enums;
 
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
@@ -188,7 +186,7 @@ public sealed class CoverageFinalDpiTests
         grid.UpdateLayoutTransform(OneAndHalfDouble);
         var scaledTransform = child.LayoutTransform as ScaleTransform;
 
-        grid.UpdateLayoutTransform(HalfFloat);
+        grid.UpdateLayoutTransform((double)DpiCalculator.DefaultScreenDpi / DpiCalculator.DefaultScreenDpi);
 
         await Assert.That(scaledTransform).IsNotNull();
         await Assert.That(scaledTransform.ScaleX).IsEqualTo(OneAndHalfDouble);

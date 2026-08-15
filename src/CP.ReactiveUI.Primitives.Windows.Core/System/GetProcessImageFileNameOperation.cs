@@ -9,4 +9,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="imageFileName">Output image file name buffer.</param>
 /// <param name="size">Output buffer size.</param>
 /// <returns>Number of copied characters.</returns>
-internal unsafe delegate int GetProcessImageFileNameOperation(nint processHandle, char* imageFileName, int size);
+internal unsafe delegate int GetProcessImageFileNameOperation(
+    nint processHandle,
+    char* imageFileName,
+    int size);

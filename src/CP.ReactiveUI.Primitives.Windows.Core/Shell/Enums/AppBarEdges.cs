@@ -9,10 +9,13 @@ public enum AppBarEdges : uint
 {
     /// <summary>Left edge.</summary>
     Left,
+
     /// <summary>Top edge.</summary>
     Top,
+
     /// <summary>Right edge.</summary>
     Right,
+
     /// <summary>Bottom edge.</summary>
-    Bottom
+    Bottom,
 }

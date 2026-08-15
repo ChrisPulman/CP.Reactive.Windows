@@ -14,4 +14,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Security;
 /// <param name="desiredAccess">Requested access rights.</param>
 /// <param name="openedKey">Opened registry key handle.</param>
 /// <returns>Win32 result code.</returns>
-internal delegate int RegOpenKeyOperation(nint key, string subKey, RegistryOpenOptions options, RegistryKeySecurityAccessRights desiredAccess, out SafeRegistryHandle openedKey);
+internal delegate int RegOpenKeyOperation(
+    nint key,
+    string subKey,
+    RegistryOpenOptions options,
+    RegistryKeySecurityAccessRights desiredAccess,
+    out SafeRegistryHandle openedKey);

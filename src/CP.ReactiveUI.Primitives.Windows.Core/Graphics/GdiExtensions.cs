@@ -12,31 +12,46 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 /// <summary>Provides extensions for GDI types.</summary>
 public static class GdiExtensions
 {
+    /// <summary>Provides bitmap-specific GDI handle helpers.</summary>
+    /// <param name="bitmap">The bitmap to extend.</param>
     extension(Bitmap bitmap)
     {
         /// <summary>Gets a SafeHBitmapHandle so callers can use automatic HBITMAP cleanup.</summary>
         public SafeHBitmapHandle SafeHBitmapHandle => new(bitmap);
     }
 
+    /// <summary>Provides graphics-specific GDI drawing helpers.</summary>
+    /// <param name="graphics">The graphics target to extend.</param>
     extension(Graphics graphics)
     {
         /// <summary>Gets a SafeHandle for GetHdc so callers can use automatic device context cleanup.</summary>
         /// <returns>SafeGraphicsDcHandle.</returns>
-        public SafeGraphicsDcHandle GetSafeDeviceContext() => SafeGraphicsDcHandle.FromGraphics(graphics);
+        public SafeGraphicsDcHandle GetSafeDeviceContext() =>
+            SafeGraphicsDcHandle.FromGraphics(graphics);
 
         /// <summary>Performs a BitBlt operation from a bitmap into the graphics target.</summary>
         /// <param name="sourceBitmap">Bitmap.</param>
         /// <param name="source">Rectangle.</param>
         /// <param name="destination">Point.</param>
         /// <param name="rasterOperations">RasterOperations.</param>
-        public void BitBlt(Bitmap sourceBitmap, Rectangle source, NativePoint destination, RasterOperations rasterOperations)
+        public void BitBlt(
+            Bitmap sourceBitmap,
+            Rectangle source,
+            NativePoint destination,
+            RasterOperations rasterOperations)
         {
             using SafeGraphicsDcHandle targetDeviceContext = graphics.GetSafeDeviceContext();
-            using SafeCompatibleDcHandle compatibleDeviceContext = Gdi32Api.CreateCompatibleDC(targetDeviceContext);
+            using SafeCompatibleDcHandle compatibleDeviceContext = Gdi32Api.CreateCompatibleDC(
+                targetDeviceContext);
             using SafeHBitmapHandle bitmapHandle = new(sourceBitmap.GetHbitmap());
             using (compatibleDeviceContext.SelectObject(bitmapHandle))
             {
-                _ = Gdi32Api.BitBlt(targetDeviceContext, new(destination.X, destination.Y, source.Width, source.Height), compatibleDeviceContext, new(source.Left, source.Top), rasterOperations);
+                _ = Gdi32Api.BitBlt(
+                    targetDeviceContext,
+                    new(destination.X, destination.Y, source.Width, source.Height),
+                    compatibleDeviceContext,
+                    new(source.Left, source.Top),
+                    rasterOperations);
             }
         }
 
@@ -45,18 +60,30 @@ public static class GdiExtensions
         /// <param name="source">The source bitmap rectangle.</param>
         /// <param name="destination">The destination graphics rectangle.</param>
         /// <param name="rasterOperation">RasterOperations.</param>
-        public void StretchBlt(Bitmap sourceBitmap, Rectangle source, Rectangle destination, RasterOperations rasterOperation)
+        public void StretchBlt(
+            Bitmap sourceBitmap,
+            Rectangle source,
+            Rectangle destination,
+            RasterOperations rasterOperation)
         {
             using SafeGraphicsDcHandle targetDeviceContext = graphics.GetSafeDeviceContext();
-            using SafeCompatibleDcHandle compatibleDeviceContext = Gdi32Api.CreateCompatibleDC(targetDeviceContext);
+            using SafeCompatibleDcHandle compatibleDeviceContext = Gdi32Api.CreateCompatibleDC(
+                targetDeviceContext);
             using SafeHBitmapHandle bitmapHandle = new(sourceBitmap);
             using (compatibleDeviceContext.SelectObject(bitmapHandle))
             {
-                _ = Gdi32Api.StretchBlt(targetDeviceContext, destination, compatibleDeviceContext, source, rasterOperation);
+                _ = Gdi32Api.StretchBlt(
+                    targetDeviceContext,
+                    destination,
+                    compatibleDeviceContext,
+                    source,
+                    rasterOperation);
             }
         }
     }
 
+    /// <summary>Provides region visibility helpers.</summary>
+    /// <param name="region">The region to extend.</param>
     extension(Region region)
     {
         /// <summary>
@@ -72,7 +99,9 @@ public static class GdiExtensions
             {
                 Point topRight = new(rectangle.X + rectangle.Width, rectangle.Y);
                 Point bottomLeft = new(rectangle.X, rectangle.Y + rectangle.Height);
-                Point bottomRight = new(rectangle.X + rectangle.Width, rectangle.Y + rectangle.Height);
+                Point bottomRight = new(
+                    rectangle.X + rectangle.Width,
+                    rectangle.Y + rectangle.Height);
                 bool num = region.IsVisible(topLeft);
                 bool topRightVisible = region.IsVisible(topRight);
                 bool bottomLeftVisible = region.IsVisible(bottomLeft);

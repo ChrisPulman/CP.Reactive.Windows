@@ -18,6 +18,9 @@ public struct BitmapV5Header : IEquatable<BitmapV5Header>
     /// <summary>Number of bytes in each bitfield color mask.</summary>
     private const uint BitfieldColorMaskSize = 4U;
 
+    /// <summary>Number of bytes used by all bitfield color masks.</summary>
+    private const uint BitfieldColorMaskByteCount = BitfieldColorMaskCount * BitfieldColorMaskSize;
+
     /// <summary>Number of bits to shift to convert bits per pixel to bytes per pixel.</summary>
     private const int BitsPerByteShift = 3;
 
@@ -35,6 +38,18 @@ public struct BitmapV5Header : IEquatable<BitmapV5Header>
 
     /// <summary>Alpha channel bit shift.</summary>
     private const int AlphaMaskShift = 24;
+
+    /// <summary>Default red channel mask.</summary>
+    private const uint DefaultRedMask = ColorChannelMask << RedMaskShift;
+
+    /// <summary>Default green channel mask.</summary>
+    private const uint DefaultGreenMask = ColorChannelMask << GreenMaskShift;
+
+    /// <summary>Default blue channel mask.</summary>
+    private const uint DefaultBlueMask = ColorChannelMask;
+
+    /// <summary>Default alpha channel mask.</summary>
+    private const uint DefaultAlphaMask = ColorChannelMask << AlphaMaskShift;
 
     /// <summary>Stable hash code for a mutable native header.</summary>
     private const int StableMutableHashCode = 0;
@@ -142,40 +157,45 @@ public struct BitmapV5Header : IEquatable<BitmapV5Header>
     public readonly bool IsDibV5 => Size >= checked((uint)Marshal.SizeOf<BitmapV5Header>());
 
     /// <summary>Gets the offset to the pixels.</summary>
-    public readonly uint OffsetToPixels => Compression != BitmapCompressionMethods.BI_BITFIELDS ? Size : checked(Size + 12);
+    public readonly uint OffsetToPixels =>
+        Compression != BitmapCompressionMethods.BI_BITFIELDS
+            ? Size
+            : checked(Size + BitfieldColorMaskByteCount);
 
     /// <summary>Create a BitmapV5Header with values.</summary>
     /// <param name="width">The width of the bitmap.</param>
     /// <param name="height">The height of the bitmap.</param>
     /// <param name="bpp">The bits per pixel of the bitmap.</param>
     /// <returns>The created bitmap V5 header.</returns>
-    public static BitmapV5Header Create(int width, int height, ushort bpp) => checked(new BitmapV5Header
-        {
-            Size = (uint)Marshal.SizeOf<BitmapV5Header>(),
-            Planes = 1,
-            Compression = BitmapCompressionMethods.BI_RGB,
-            Width = width,
-            Height = height,
-            BitCount = bpp,
-            SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
-            XPelsPerMeter = 0,
-            YPelsPerMeter = 0,
-            ColorsUsed = 0U,
-            ColorsImportant = 0U,
-            RedMask = 16_711_680U,
-            GreenMask = 65_280U,
-            BlueMask = 255U,
-            AlphaMask = 4_278_190_080U,
-            ColorSpace = ColorSpace.LCS_sRGB,
-            Endpoints = new CieXyzTriple { Blue = CieXyz.Create(0U), Green = CieXyz.Create(0U), Red = CieXyz.Create(0U) },
-            GammaRed = 0U,
-            GammaGreen = 0U,
-            GammaBlue = 0U,
-            Intent = ColorSpace.LCS_GM_IMAGES,
-            ProfileData = 0U,
-            ProfileSize = 0U,
-            Reserved = 0U
-        });
+    public static BitmapV5Header Create(int width, int height, ushort bpp) =>
+        checked(
+            new BitmapV5Header
+            {
+                Size = (uint)Marshal.SizeOf<BitmapV5Header>(),
+                Planes = DevicePlaneCount,
+                Compression = BitmapCompressionMethods.BI_RGB,
+                Width = width,
+                Height = height,
+                BitCount = bpp,
+                SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
+                XPelsPerMeter = 0,
+                YPelsPerMeter = 0,
+                ColorsUsed = 0U,
+                ColorsImportant = 0U,
+                RedMask = DefaultRedMask,
+                GreenMask = DefaultGreenMask,
+                BlueMask = DefaultBlueMask,
+                AlphaMask = DefaultAlphaMask,
+                ColorSpace = ColorSpace.LCS_sRGB,
+                Endpoints = new CieXyzTriple { Blue = CieXyz.Create(0U), Green = CieXyz.Create(0U), Red = CieXyz.Create(0U) },
+                GammaRed = 0U,
+                GammaGreen = 0U,
+                GammaBlue = 0U,
+                Intent = ColorSpace.LCS_GM_IMAGES,
+                ProfileData = 0U,
+                ProfileSize = 0U,
+                Reserved = 0U,
+            });
 
     /// <summary>Determines whether two bitmap V5 headers are equal.</summary>
     /// <param name="left">The left header.</param>
@@ -196,10 +216,15 @@ public struct BitmapV5Header : IEquatable<BitmapV5Header>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(BitmapV5Header other) => EqualsBitmapInfo(other) && EqualsColorMasks(other) && EqualsColorSpace(other) && EqualsProfile(other);
+    public readonly bool Equals(BitmapV5Header other) =>
+        EqualsBitmapInfo(other)
+        && EqualsColorMasks(other)
+        && EqualsColorSpace(other)
+        && EqualsProfile(other);
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is BitmapV5Header other && Equals(other);
+    public override readonly bool Equals(object obj) =>
+        obj is BitmapV5Header other && Equals(other);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => 0;
@@ -207,20 +232,43 @@ public struct BitmapV5Header : IEquatable<BitmapV5Header>
     /// <summary>Compares the BITMAPINFOHEADER-compatible fields.</summary>
     /// <param name="other">The header to compare with this instance.</param>
     /// <returns><see langword="true" /> when the fields are equal; otherwise, <see langword="false" />.</returns>
-    private readonly bool EqualsBitmapInfo(BitmapV5Header other) => (Size, Width, Height, Planes, BitCount, Compression, SizeImage).Equals((other.Size, other.Width, other.Height, other.Planes, other.BitCount, other.Compression, other.SizeImage)) && (XPelsPerMeter, YPelsPerMeter, ColorsUsed, ColorsImportant).Equals((other.XPelsPerMeter, other.YPelsPerMeter, other.ColorsUsed, other.ColorsImportant));
+    private readonly bool EqualsBitmapInfo(BitmapV5Header other) =>
+        (Size, Width, Height, Planes, BitCount, Compression, SizeImage).Equals(
+            (
+                other.Size,
+                other.Width,
+                other.Height,
+                other.Planes,
+                other.BitCount,
+                other.Compression,
+                other.SizeImage))
+        && (XPelsPerMeter, YPelsPerMeter, ColorsUsed, ColorsImportant).Equals(
+            (other.XPelsPerMeter, other.YPelsPerMeter, other.ColorsUsed, other.ColorsImportant));
 
     /// <summary>Compares the bitfield color masks.</summary>
     /// <param name="other">The header to compare with this instance.</param>
     /// <returns><see langword="true" /> when the fields are equal; otherwise, <see langword="false" />.</returns>
-    private readonly bool EqualsColorMasks(BitmapV5Header other) => (RedMask, GreenMask, BlueMask, AlphaMask).Equals((other.RedMask, other.GreenMask, other.BlueMask, other.AlphaMask));
+    private readonly bool EqualsColorMasks(BitmapV5Header other) =>
+        (RedMask, GreenMask, BlueMask, AlphaMask).Equals(
+            (other.RedMask, other.GreenMask, other.BlueMask, other.AlphaMask));
 
     /// <summary>Compares the bitmap color-space fields.</summary>
     /// <param name="other">The header to compare with this instance.</param>
     /// <returns><see langword="true" /> when the fields are equal; otherwise, <see langword="false" />.</returns>
-    private readonly bool EqualsColorSpace(BitmapV5Header other) => (ColorSpace, Endpoints, GammaRed, GammaGreen, GammaBlue, Intent).Equals((other.ColorSpace, other.Endpoints, other.GammaRed, other.GammaGreen, other.GammaBlue, other.Intent));
+    private readonly bool EqualsColorSpace(BitmapV5Header other) =>
+        (ColorSpace, Endpoints, GammaRed, GammaGreen, GammaBlue, Intent).Equals(
+            (
+                other.ColorSpace,
+                other.Endpoints,
+                other.GammaRed,
+                other.GammaGreen,
+                other.GammaBlue,
+                other.Intent));
 
     /// <summary>Compares the bitmap profile fields.</summary>
     /// <param name="other">The header to compare with this instance.</param>
     /// <returns><see langword="true" /> when the fields are equal; otherwise, <see langword="false" />.</returns>
-    private readonly bool EqualsProfile(BitmapV5Header other) => (ProfileData, ProfileSize, Reserved).Equals((other.ProfileData, other.ProfileSize, other.Reserved));
+    private readonly bool EqualsProfile(BitmapV5Header other) =>
+        (ProfileData, ProfileSize, Reserved).Equals(
+            (other.ProfileData, other.ProfileSize, other.Reserved));
 }

@@ -21,5 +21,5 @@ public enum DeviceNotifyFlags : uint
     /// Notifies the recipient of device interface events for all device interface classes. (The dbcc_classguid member is ignored.)
     /// This value can be used only if the dbch_devicetype member is DBT_DEVTYP_DEVICEINTERFACE.
     /// </summary>
-    AllInterfaceClasses = 4U
+    AllInterfaceClasses = 4U,
 }

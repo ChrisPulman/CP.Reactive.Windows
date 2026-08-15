@@ -13,5 +13,5 @@ public enum HidUsagesConsumer
     /// <summary>No HID usage.</summary>
     None,
     /// <summary>Consumer Control.</summary>
-    ConsumerControl
+    ConsumerControl,
 }

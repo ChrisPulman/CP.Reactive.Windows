@@ -67,26 +67,11 @@ public readonly struct DevBroadcastHeader : IEquatable<DevBroadcastHeader>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is DevBroadcastHeader other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is DevBroadcastHeader other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(DevBroadcastHeader other)
-    {
-        if (_size == other._size && _deviceType == other._deviceType)
-        {
-            return _reserved == other._reserved;
-        }
-
-        return false;
-    }
+    public bool Equals(DevBroadcastHeader other) =>
+        _size == other._size && _deviceType == other._deviceType && _reserved == other._reserved;
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_size, _deviceType, _reserved);

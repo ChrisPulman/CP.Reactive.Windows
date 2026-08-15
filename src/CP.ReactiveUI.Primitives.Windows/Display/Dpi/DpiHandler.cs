@@ -23,17 +23,17 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi;
 /// </summary>
 public sealed class DpiHandler : IDisposable
 {
-    /// <summary>The DPI message processing result.</summary>
-    /// <param name="DpiChanged">A value indicating whether DPI data was found.</param>
-    /// <param name="CurrentDpi">The current DPI value.</param>
-    /// <param name="Handled">A value indicating whether the native message was handled.</param>
-    private readonly record struct DpiMessageResult(bool DpiChanged, int CurrentDpi, bool Handled);
-
     /// <summary>The low-word mask used to extract the X-axis DPI from WM_DPICHANGED.</summary>
     private const int LowWordMask = 65_535;
 
     /// <summary>The logger for DPI handling.</summary>
     private static readonly ILog Log = LogManager.GetLogger(typeof(DpiHandler));
+
+    /// <summary>Gets whether Windows 10 DPI APIs are available.</summary>
+    private static Func<bool> _isWindows10OrLater = static () => WindowsVersion.IsWindows10OrLater;
+
+    /// <summary>Positions a window after a DPI change.</summary>
+    private static SetWindowPositionOperation _setWindowPosition = User32Api.SetWindowPos;
 
     /// <summary>The DPI change signal.</summary>
     private readonly Signal<DpiChangeInfo> _onDpiChanged = new();
@@ -43,12 +43,6 @@ public sealed class DpiHandler : IDisposable
 
     /// <summary>Stores whether the handler is running via a listener workaround.</summary>
     private bool _needsListenerWorkaround;
-
-    /// <summary>Gets the current DPI for the UI element related to this handler.</summary>
-    public int CurrentDpi { get; private set; }
-
-    /// <summary>Gets or sets the message handler that must be disposed with this instance.</summary>
-    internal IDisposable MessageHandler { get; set; }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.DpiHandler" /> class.</summary>
     public DpiHandler()
@@ -64,12 +58,18 @@ public sealed class DpiHandler : IDisposable
         _scopedThreadDpiAwarenessContext = NativeDpiMethods.DefaultScopedThreadDpiAwarenessContext();
     }
 
+    /// <summary>Gets the current DPI for the UI element related to this handler.</summary>
+    public int CurrentDpi { get; private set; }
+
+    /// <summary>Gets or sets the message handler that must be disposed with this instance.</summary>
+    internal IDisposable MessageHandler { get; set; }
+
     /// <summary>Enables non-client DPI scaling when the operating system supports it.</summary>
     /// <param name="windowHandle">The window handle.</param>
     /// <returns><see langword="true" /> when non-client DPI scaling was enabled.</returns>
     public static bool TryEnableNonClientDpiScaling(IntPtr windowHandle)
     {
-        if (!WindowsVersion.IsWindows10OrLater)
+        if (!_isWindows10OrLater())
         {
             return false;
         }
@@ -233,6 +233,29 @@ public sealed class DpiHandler : IDisposable
         _onDpiChanged.Dispose();
     }
 
+    /// <summary>Exchanges the Windows 10 availability check for deterministic tests.</summary>
+    /// <param name="isWindows10OrLater">The replacement availability check.</param>
+    /// <returns>The previous availability check.</returns>
+    internal static Func<bool> ExchangeWindows10Availability(Func<bool> isWindows10OrLater)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isWindows10OrLater);
+        Func<bool> previousIsWindows10OrLater = _isWindows10OrLater;
+        _isWindows10OrLater = isWindows10OrLater;
+        return previousIsWindows10OrLater;
+    }
+
+    /// <summary>Exchanges the DPI window-position operation for deterministic tests.</summary>
+    /// <param name="setWindowPosition">The replacement window-position operation.</param>
+    /// <returns>The previous window-position operation.</returns>
+    internal static SetWindowPositionOperation ExchangeWindowPositionOperation(
+        SetWindowPositionOperation setWindowPosition)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setWindowPosition);
+        SetWindowPositionOperation previousSetWindowPosition = _setWindowPosition;
+        _setWindowPosition = setWindowPosition;
+        return previousSetWindowPosition;
+    }
+
     /// <summary>Handles WPF and WinForms window DPI messages.</summary>
     /// <param name="windowHandle">The window handle.</param>
     /// <param name="msg">The Windows message.</param>
@@ -273,27 +296,27 @@ public sealed class DpiHandler : IDisposable
     /// <param name="windowMessageInfo">The window message information.</param>
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessWindowMessage(WindowMessageInfo windowMessageInfo) => windowMessageInfo.Message switch
-        {
-            WindowsMessages.WM_NCCREATE => ProcessNonClientCreate(windowMessageInfo),
-            WindowsMessages.WM_CREATE => ProcessWindowCreate(windowMessageInfo),
-            WindowsMessages.WM_DPICHANGED => ProcessWindowDpiChanged(windowMessageInfo),
-            WindowsMessages.WM_PAINT => ProcessWindowPaint(windowMessageInfo),
-            WindowsMessages.WM_SETICON => ProcessWindowSetIcon(windowMessageInfo),
-            WindowsMessages.WM_DPICHANGED_BEFOREPARENT => ProcessParentDpiMessage(windowMessageInfo, "before"),
-            WindowsMessages.WM_DPICHANGED_AFTERPARENT => ProcessParentDpiMessage(windowMessageInfo, "after"),
-            WindowsMessages.WM_DESTROY => ProcessWindowDestroy(windowMessageInfo),
-            _ => default(DpiMessageResult),
-        };
+    {
+        WindowsMessages.WM_NCCREATE => ProcessNonClientCreate(windowMessageInfo),
+        WindowsMessages.WM_CREATE => ProcessWindowCreate(windowMessageInfo),
+        WindowsMessages.WM_DPICHANGED => ProcessWindowDpiChanged(windowMessageInfo),
+        WindowsMessages.WM_PAINT => ProcessWindowPaint(windowMessageInfo),
+        WindowsMessages.WM_SETICON => ProcessWindowSetIcon(windowMessageInfo),
+        WindowsMessages.WM_DPICHANGED_BEFOREPARENT => ProcessParentDpiMessage(windowMessageInfo, "before"),
+        WindowsMessages.WM_DPICHANGED_AFTERPARENT => ProcessParentDpiMessage(windowMessageInfo, "after"),
+        WindowsMessages.WM_DESTROY => ProcessWindowDestroy(windowMessageInfo),
+        _ => default(DpiMessageResult),
+    };
 
     /// <summary>Processes a context-menu message into a DPI change result.</summary>
     /// <param name="windowMessageInfo">The window message information.</param>
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessContextMenuMessage(WindowMessageInfo windowMessageInfo) => windowMessageInfo.Message switch
-        {
-            WindowsMessages.WM_SHOWWINDOW => ProcessContextMenuShow(windowMessageInfo),
-            WindowsMessages.WM_DESTROY => ProcessContextMenuDestroy(),
-            _ => default(DpiMessageResult),
-        };
+    {
+        WindowsMessages.WM_SHOWWINDOW => ProcessContextMenuShow(windowMessageInfo),
+        WindowsMessages.WM_DESTROY => ProcessContextMenuDestroy(),
+        _ => default(DpiMessageResult),
+    };
 
     /// <summary>Processes a non-client create message.</summary>
     /// <param name="windowMessageInfo">The window message information.</param>
@@ -325,10 +348,17 @@ public sealed class DpiHandler : IDisposable
         nint windowHandle = (nint)windowMessageInfo.Handle;
         LogVerbose("Processing {0} event, resizing / positioning window {1}", windowMessageInfo.Message, windowHandle);
         NativeRect advisedRectangle = Marshal.PtrToStructure<NativeRect>((nint)windowMessageInfo.LongParam);
-        _ = User32Api.SetWindowPos(windowHandle, IntPtr.Zero, advisedRectangle.Left, advisedRectangle.Top, advisedRectangle.Width, advisedRectangle.Height, WindowPos.SWP_NOACTIVATE | WindowPos.SWP_NOOWNERZORDER | WindowPos.SWP_NOZORDER);
+        _ = _setWindowPosition(
+            windowHandle,
+            IntPtr.Zero,
+            advisedRectangle.Left,
+            advisedRectangle.Top,
+            advisedRectangle.Width,
+            advisedRectangle.Height,
+            WindowPos.SWP_NOACTIVATE | WindowPos.SWP_NOOWNERZORDER | WindowPos.SWP_NOZORDER);
         checked
         {
-            int currentDpi = (int)unchecked((nint)windowMessageInfo.WordParam) & 0xFFFF;
+            int currentDpi = (int)unchecked((nint)windowMessageInfo.WordParam) & LowWordMask;
             return new(DpiChanged: true, currentDpi, Handled: true);
         }
     }
@@ -336,15 +366,10 @@ public sealed class DpiHandler : IDisposable
     /// <summary>Processes a paint message.</summary>
     /// <param name="windowMessageInfo">The window message information.</param>
     /// <returns>The DPI change result.</returns>
-    private DpiMessageResult ProcessWindowPaint(WindowMessageInfo windowMessageInfo)
-    {
-        if (CurrentDpi != 0)
-        {
-            return default;
-        }
-
-        return new(DpiChanged: true, NativeDpiMethods.GetDpi((nint)windowMessageInfo.Handle), Handled: false);
-    }
+    private DpiMessageResult ProcessWindowPaint(WindowMessageInfo windowMessageInfo) =>
+        CurrentDpi != 0
+            ? default
+            : new(DpiChanged: true, NativeDpiMethods.GetDpi((nint)windowMessageInfo.Handle), Handled: false);
 
     /// <summary>Processes a set-icon message.</summary>
     /// <param name="windowMessageInfo">The window message information.</param>
@@ -444,4 +469,10 @@ public sealed class DpiHandler : IDisposable
             Log.DebugFormat(message, arguments);
         }
     }
+
+    /// <summary>The DPI message processing result.</summary>
+    /// <param name="DpiChanged">A value indicating whether DPI data was found.</param>
+    /// <param name="CurrentDpi">The current DPI value.</param>
+    /// <param name="Handled">A value indicating whether the native message was handled.</param>
+    private readonly record struct DpiMessageResult(bool DpiChanged, int CurrentDpi, bool Handled);
 }

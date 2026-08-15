@@ -13,18 +13,34 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 public class NativePointTypeConverter : TypeConverter
 {
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string pointStringValue)
         {
             string[] xy = pointStringValue.Split(',');
-            if (xy.Length == 2 && int.TryParse(xy[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var x) && int.TryParse(xy[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var y))
+            if (
+                xy.Length == 2
+                && int.TryParse(
+                    xy[0],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var x)
+                && int.TryParse(
+                    xy[1],
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out var y))
             {
                 return new NativePoint(x, y);
             }
@@ -34,5 +50,12 @@ public class NativePointTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType != typeof(string) || !(value is NativePoint nativePoint) ? base.ConvertTo(context, culture, value, destinationType) : $"{nativePoint.X},{nativePoint.Y}";
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType) =>
+        destinationType != typeof(string) || !(value is NativePoint nativePoint)
+            ? base.ConvertTo(context, culture, value, destinationType)
+            : $"{nativePoint.X},{nativePoint.Y}";
 }

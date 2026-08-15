@@ -10,11 +10,21 @@ using ReactiveUI.Primitives.Disposables;
 
 namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 
-/// <summary>Description of PsAPI.</summary>
+/// <summary>Provides access to Process Status API functions.</summary>
+#if NETFRAMEWORK
 public static class PsApi
+#else
+public static partial class PsApi
+#endif
 {
+    /// <summary>The capacity of the fixed-size path buffers.</summary>
+    private const int PathBufferCapacity = 512;
+
     /// <summary>PSAPI operations used by this process.</summary>
-    private static unsafe PsApiOperations _operations = new(NativeMethods.EmptyWorkingSet, NativeMethods.GetModuleFileNameEx, NativeMethods.GetProcessImageFileName);
+    private static unsafe PsApiOperations _operations = new(
+        NativeMethods.EmptyWorkingSet,
+        NativeMethods.GetModuleFileNameEx,
+        NativeMethods.GetProcessImageFileName);
 
     /// <summary>Removes as many pages as possible from the current process.</summary>
     public static void EmptyWorkingSet()
@@ -23,8 +33,73 @@ public static class PsApi
         _ = EmptyWorkingSet(currentProcess.Handle);
     }
 
-    /// <summary>Native psapi entry points.</summary>
+    /// <summary>Retrieves the fully qualified path for the file containing the specified module.</summary>
+    /// <param name="processHandle">A handle to the process that contains the module.</param>
+    /// <param name="moduleHandle">A module handle, or <see cref="IntPtr.Zero"/> for the executable.</param>
+    /// <returns>The module file name, or <see langword="null"/> when it cannot be retrieved.</returns>
+    public static unsafe string GetModuleFilename(IntPtr processHandle, IntPtr moduleHandle)
+    {
+        char* pathBuffer = stackalloc char[PathBufferCapacity];
+        int characterCount = _operations.GetModuleFileNameEx(
+            processHandle,
+            moduleHandle,
+            pathBuffer,
+            PathBufferCapacity);
+        return characterCount <= 0 ? null : new(pathBuffer, 0, characterCount);
+    }
+
+    /// <summary>Retrieves the fully qualified executable image path for the specified process.</summary>
+    /// <param name="processHandle">A handle to the process that contains the executable.</param>
+    /// <returns>The process image file name, or <see langword="null"/> when it cannot be retrieved.</returns>
+    public static unsafe string GetProcessImageFileName(IntPtr processHandle)
+    {
+        char* pathBuffer = stackalloc char[PathBufferCapacity];
+        int characterCount = GetProcessImageFileName(
+            processHandle,
+            pathBuffer,
+            PathBufferCapacity);
+        return characterCount <= 0 ? null : new(pathBuffer, 0, characterCount);
+    }
+
+    /// <summary>Retrieves the executable image file name for the specified process.</summary>
+    /// <param name="processHandle">A handle to the process that contains the executable.</param>
+    /// <param name="imageFileName">Receives the executable image file name.</param>
+    /// <param name="size">The capacity of <paramref name="imageFileName"/> in characters.</param>
+    /// <returns>The number of copied characters, or zero when the function fails.</returns>
+    public static unsafe int GetProcessImageFileName(
+        IntPtr processHandle,
+        [Out] char* imageFileName,
+        int size) => _operations.GetProcessImageFileName(processHandle, imageFileName, size);
+
+    /// <summary>Overrides native PSAPI operations for deterministic tests.</summary>
+    /// <param name="emptyWorkingSet">The replacement empty-working-set operation.</param>
+    /// <param name="getModuleFileName">The replacement module-file-name operation.</param>
+    /// <param name="getProcessImageFileName">The replacement process-image-file-name operation.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(
+        EmptyWorkingSetOperation emptyWorkingSet,
+        GetModuleFileNameOperation getModuleFileName,
+        GetProcessImageFileNameOperation getProcessImageFileName)
+    {
+        Throw.IfNull(emptyWorkingSet);
+        Throw.IfNull(getModuleFileName);
+        Throw.IfNull(getProcessImageFileName);
+        PsApiOperations operations = _operations;
+        _operations = new(emptyWorkingSet, getModuleFileName, getProcessImageFileName);
+        return Scope.Create(operations, static previous => _operations = previous);
+    }
+
+    /// <summary>Removes as many pages as possible from the working set of the specified process.</summary>
+    /// <param name="processHandle">A handle to the process.</param>
+    /// <returns>Nonzero if the working set was emptied; otherwise, zero.</returns>
+    private static int EmptyWorkingSet(IntPtr processHandle) => _operations.EmptyWorkingSet(processHandle);
+
+    /// <summary>Native PSAPI entry points.</summary>
+#if NETFRAMEWORK
     private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
     {
         /// <summary>The PSAPI DLL library name.</summary>
         private const string PsApiDll = "psapi.dll";
@@ -32,9 +107,15 @@ public static class PsApi
         /// <summary>Removes as many pages as possible from a process working set.</summary>
         /// <param name="processHandle">Process handle.</param>
         /// <returns>Nonzero on success; otherwise, zero.</returns>
-        [DllImport("psapi.dll", SetLastError = true)]
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(PsApiDll, SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static extern int EmptyWorkingSet(IntPtr processHandle);
+#else
+        [LibraryImport(PsApiDll, SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial int EmptyWorkingSet(IntPtr processHandle);
+#endif
 
         /// <summary>Gets the module file name for a process module.</summary>
         /// <param name="processHandle">Process handle.</param>
@@ -42,25 +123,54 @@ public static class PsApi
         /// <param name="filename">Output file name buffer.</param>
         /// <param name="size">Output buffer size.</param>
         /// <returns>Number of copied characters.</returns>
-        [DllImport("psapi.dll", EntryPoint = "GetModuleFileNameExW", SetLastError = true)]
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(PsApiDll, EntryPoint = "GetModuleFileNameExW", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe int GetModuleFileNameEx(IntPtr processHandle, IntPtr moduleHandle, char* filename, int size);
+        internal static extern unsafe int GetModuleFileNameEx(
+            IntPtr processHandle,
+            IntPtr moduleHandle,
+            char* filename,
+            int size);
+#else
+        [LibraryImport(PsApiDll, EntryPoint = "GetModuleFileNameExW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static unsafe partial int GetModuleFileNameEx(
+            IntPtr processHandle,
+            IntPtr moduleHandle,
+            char* filename,
+            int size);
+#endif
 
         /// <summary>Gets the executable image file name for a process.</summary>
         /// <param name="processHandle">Process handle.</param>
         /// <param name="imageFileName">Output image file name buffer.</param>
         /// <param name="size">Output buffer size.</param>
         /// <returns>Number of copied characters.</returns>
-        [DllImport("psapi.dll", EntryPoint = "GetProcessImageFileNameW", SetLastError = true)]
+#if NET462 || NET472 || NET48 || NET481
+        [DllImport(PsApiDll, EntryPoint = "GetProcessImageFileNameW", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern unsafe int GetProcessImageFileName(IntPtr processHandle, char* imageFileName, int size);
+        internal static extern unsafe int GetProcessImageFileName(
+            IntPtr processHandle,
+            char* imageFileName,
+            int size);
+#else
+        [LibraryImport(PsApiDll, EntryPoint = "GetProcessImageFileNameW", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static unsafe partial int GetProcessImageFileName(
+            IntPtr processHandle,
+            char* imageFileName,
+            int size);
+#endif
     }
 
     /// <summary>Composes PSAPI operations without invoking them during construction.</summary>
     /// <param name="emptyWorkingSet">The empty-working-set operation.</param>
     /// <param name="getModuleFileName">The module-file-name operation.</param>
     /// <param name="getProcessImageFileName">The process-image-file-name operation.</param>
-    private sealed class PsApiOperations(EmptyWorkingSetOperation emptyWorkingSet, GetModuleFileNameOperation getModuleFileName, GetProcessImageFileNameOperation getProcessImageFileName)
+    private sealed class PsApiOperations(
+        EmptyWorkingSetOperation emptyWorkingSet,
+        GetModuleFileNameOperation getModuleFileName,
+        GetProcessImageFileNameOperation getProcessImageFileName)
     {
         /// <summary>Invokes the configured empty-working-set operation.</summary>
         /// <param name="processHandle">The process handle.</param>
@@ -73,67 +183,20 @@ public static class PsApi
         /// <param name="filename">The output filename buffer.</param>
         /// <param name="size">The output buffer size.</param>
         /// <returns>The configured operation result.</returns>
-        public unsafe int GetModuleFileNameEx(IntPtr processHandle, IntPtr moduleHandle, char* filename, int size) => getModuleFileName(processHandle, moduleHandle, filename, size);
+        public unsafe int GetModuleFileNameEx(
+            IntPtr processHandle,
+            IntPtr moduleHandle,
+            char* filename,
+            int size) => getModuleFileName(processHandle, moduleHandle, filename, size);
 
         /// <summary>Invokes the configured process-image-file-name operation.</summary>
         /// <param name="processHandle">The process handle.</param>
         /// <param name="imageFileName">The output image filename buffer.</param>
         /// <param name="size">The output buffer size.</param>
         /// <returns>The configured operation result.</returns>
-        public unsafe int GetProcessImageFileName(IntPtr processHandle, char* imageFileName, int size) => getProcessImageFileName(processHandle, imageFileName, size);
+        public unsafe int GetProcessImageFileName(
+            IntPtr processHandle,
+            char* imageFileName,
+            int size) => getProcessImageFileName(processHandle, imageFileName, size);
     }
-
-    /// <summary>Retrieves the fully qualified path for the file containing the specified module.</summary>
-    /// <param name="processHandle">IntPtr, A handle to the process that contains the module.</param>
-    /// <param name="moduleHandle">
-    /// A handle to the module. If this parameter is NULL, GetModuleFileNameEx returns the path of the executable file
-    /// of the process specified in processHandle.
-    /// </param>
-    /// <returns>Module file name.</returns>
-    public static unsafe string GetModuleFilename(IntPtr processHandle, IntPtr moduleHandle)
-    {
-        char* pathBuffer = stackalloc char[512];
-        int characterCount = _operations.GetModuleFileNameEx(processHandle, moduleHandle, pathBuffer, 512);
-        return characterCount <= 0 ? null : new(pathBuffer, 0, characterCount);
-    }
-
-    /// <summary>Retrieves the fully qualified path for the file containing the specified module.</summary>
-    /// <param name="processHandle">IntPtr, A handle to the process that contains the module.</param>
-    /// <returns>Process image file name.</returns>
-    public static unsafe string GetProcessImageFileName(IntPtr processHandle)
-    {
-        char* pathBuffer = stackalloc char[512];
-        int characterCount = GetProcessImageFileName(processHandle, pathBuffer, 512);
-        return characterCount <= 0 ? null : new(pathBuffer, 0, characterCount);
-    }
-
-    /// <summary>Retrieves the name of the executable file for the specified process.</summary>
-    /// <param name="processHandle">IntPtr, A handle to the process that contains the module.</param>
-    /// <param name="imageFileName">char * that receives the full path to the executable file.</param>
-    /// <param name="size">int</param>
-    /// <returns>If the function succeeds, the return value specifies the length of the string copied to the buffer.</returns>
-    public static unsafe int GetProcessImageFileName(IntPtr processHandle, [Out] char* imageFileName, int size) => _operations.GetProcessImageFileName(processHandle, imageFileName, size);
-
-    /// <summary>Overrides native PSAPI operations for deterministic tests.</summary>
-    /// <param name="emptyWorkingSet">The replacement empty-working-set operation.</param>
-    /// <param name="getModuleFileName">The replacement module-file-name operation.</param>
-    /// <param name="getProcessImageFileName">The replacement process-image-file-name operation.</param>
-    /// <returns>A scope that restores the previous operations.</returns>
-    internal static IDisposable OverrideOperationsForTesting(EmptyWorkingSetOperation emptyWorkingSet, GetModuleFileNameOperation getModuleFileName, GetProcessImageFileNameOperation getProcessImageFileName)
-    {
-        Throw.IfNull(emptyWorkingSet);
-        Throw.IfNull(getModuleFileName);
-        Throw.IfNull(getProcessImageFileName);
-        PsApiOperations operations = _operations;
-        _operations = new(emptyWorkingSet, getModuleFileName, getProcessImageFileName);
-        return Scope.Create(operations, delegate(PsApiOperations previous)
-        {
-            _operations = previous;
-        });
-    }
-
-    /// <summary>Removes as many pages as possible from the working set of the specified process.</summary>
-    /// <param name="processHandle">A handle to the process.</param>
-    /// <returns>Nonzero if the working set was emptied; otherwise, zero.</returns>
-    private static int EmptyWorkingSet(IntPtr processHandle) => _operations.EmptyWorkingSet(processHandle);
 }

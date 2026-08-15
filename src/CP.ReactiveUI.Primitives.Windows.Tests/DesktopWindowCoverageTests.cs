@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Windows;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Windows.Enums;
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Additional desktop window coverage for interop windows and native window helpers.</summary>

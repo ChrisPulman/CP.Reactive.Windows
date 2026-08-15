@@ -15,5 +15,5 @@ public enum ImageType : uint
     /// <summary>Copies or loads a cursor.</summary>
     IMAGE_ICON,
     /// <summary>Copies or loads an icon.</summary>
-    IMAGE_CURSOR
+    IMAGE_CURSOR,
 }

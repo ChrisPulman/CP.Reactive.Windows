@@ -2,32 +2,59 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using CP.ReactiveUI.Primitives.Windows.Native;
-using CP.ReactiveUI.Primitives.Windows.Native.Extensions;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
-using log4net;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 #endif
 /// <summary>Extensions for interop windows; get and set members update the supplied window cache.</summary>
+#if NETFRAMEWORK
 public static class InteropWindowExtensions
+#else
+public static partial class InteropWindowExtensions
+#endif
 {
+    /// <summary>Delta reported for one Windows mouse-wheel detent.</summary>
+    private const int MouseWheelDelta = 120;
+
+    /// <summary>Scale factor used by WM_HSCROLL thumb positioning.</summary>
+    private const int HorizontalThumbPositionScale = 65_536;
+
+    /// <summary>Base value used by WM_HSCROLL thumb positioning.</summary>
+    private const int HorizontalThumbPositionBase = 4;
+
+    /// <summary>Bit shift used by WM_VSCROLL thumb positioning.</summary>
+    private const int VerticalThumbPositionShift = 16;
+
+    /// <summary>Byte offset for the RGNDATA rectangle count.</summary>
+    private const int RegionDataRectangleCountOffset = 8;
+
+    /// <summary>Byte size of an RGNDATAHEADER structure.</summary>
+    private const int RegionDataHeaderSize = 32;
+
+    /// <summary>Byte size of a native RECT structure.</summary>
+    private const int NativeRectangleByteSize = 16;
+
+    /// <summary>Byte offset for the left value in a native RECT.</summary>
+    private const int NativeRectangleLeftOffset = 0;
+
+    /// <summary>Byte offset for the top value in a native RECT.</summary>
+    private const int NativeRectangleTopOffset = 4;
+
+    /// <summary>Byte offset for the right value in a native RECT.</summary>
+    private const int NativeRectangleRightOffset = 8;
+
+    /// <summary>Byte offset for the bottom value in a native RECT.</summary>
+    private const int NativeRectangleBottomOffset = 12;
+
+    /// <summary>Logger for native window operations.</summary>
+    private static readonly ILog Log = LogManager.GetLogger(typeof(InteropWindowExtensions));
+
+    /// <summary>Composable native operations used by interop-window extensions.</summary>
+    private static InteropWindowOperations _operations = new();
+
+    /// <summary>Provides cached native-window operations.</summary>
+    /// <param name="interopWindow">The native window to operate on.</param>
     extension(IInteropWindow interopWindow)
     {
         /// <summary>Tests if the interopWindow still exists.</summary>
@@ -95,7 +122,8 @@ public static class InteropWindowExtensions
             }
 
             interopWindow.HasZOrderedChildren = false;
-            List<IInteropWindow> children = (List<IInteropWindow>)(interopWindow.Children = []);
+            List<IInteropWindow> children = [];
+            interopWindow.Children = children;
             foreach (IInteropWindow child in WindowsEnumerator.EnumerateWindows(interopWindow))
             {
                 child.ParentWindow = interopWindow;
@@ -147,7 +175,10 @@ public static class InteropWindowExtensions
             _ = User32Api.GetWindowInfo(interopWindow.Handle, ref windowInfo);
             if (autoCorrect)
             {
-                if (DwmApi.IsDwmEnabled && DwmApi.GetExtendedFrameBounds(interopWindow.Handle, out var extendedFrameBounds) && (interopWindow.IsApp() || (WindowsVersion.IsWindows10OrLater && !interopWindow.IsMaximized())))
+                if (DwmApi.IsDwmEnabled
+                    && DwmApi.GetExtendedFrameBounds(interopWindow.Handle, out var extendedFrameBounds)
+                    && (interopWindow.IsApp()
+                        || (WindowsVersion.IsWindows10OrLater && !interopWindow.IsMaximized())))
                 {
                     windowInfo.Bounds = extendedFrameBounds;
                 }
@@ -179,7 +210,7 @@ public static class InteropWindowExtensions
                 return interopWindow.Parent.Value;
             }
 
-            IntPtr parent = User32Api.GetParent(interopWindow.Handle);
+            IntPtr parent = Volatile.Read(ref _operations).GetParent(interopWindow.Handle);
             IInteropWindow parentWindow = interopWindow.ParentWindow;
             if (parentWindow is null || parentWindow.Handle != parent)
             {
@@ -253,17 +284,18 @@ public static class InteropWindowExtensions
         /// <returns>The window region, or null when no region is available.</returns>
         public Region GetRegion()
         {
-            using (SafeRegionHandle region = Gdi32Api.CreateRectRgn(0, 0, 0, 0))
+            InteropWindowOperations operations = Volatile.Read(ref _operations);
+            using (SafeRegionHandle region = operations.CreateRectRegion())
             {
                 if (region.IsInvalid)
                 {
                     return null;
                 }
 
-                RegionResults result = User32Api.GetWindowRgn(interopWindow.Handle, region);
+                RegionResults result = operations.GetWindowRegion(interopWindow.Handle, region);
                 if (result is not RegionResults.Error and not RegionResults.NullRegion)
                 {
-                    return CreateRegionFromHandle(region);
+                    return operations.CreateRegion(region);
                 }
             }
 
@@ -316,7 +348,8 @@ public static class InteropWindowExtensions
             ScrollInfo initialScrollInfo = ScrollInfo.Create(ScrollInfoMask.All);
             checked
             {
-                if (User32Api.GetScrollInfo(interopWindow.Handle, scrollBarType, ref initialScrollInfo) && initialScrollInfo.Minimum != initialScrollInfo.Maximum)
+                InteropWindowOperations operations = Volatile.Read(ref _operations);
+                if (operations.GetScrollInfo(interopWindow.Handle, scrollBarType, ref initialScrollInfo) && initialScrollInfo.Minimum != initialScrollInfo.Maximum)
                 {
                     WindowScroller result = new WindowScroller
                     {
@@ -324,13 +357,13 @@ public static class InteropWindowExtensions
                         ScrollBarWindow = interopWindow,
                         ScrollBarType = scrollBarType,
                         InitialScrollInfo = initialScrollInfo,
-                        WheelDelta = (int)(120 * unchecked(initialScrollInfo.PageSize / WindowScroller.ScrollWheelLinesFromRegistry))
+                        WheelDelta = (int)(MouseWheelDelta * unchecked(initialScrollInfo.PageSize / WindowScroller.ScrollWheelLinesFromRegistry)),
                     };
                     interopWindow.CanScroll = true;
                     return result;
                 }
 
-                if (User32Api.GetScrollInfo(interopWindow.Handle, ScrollBarTypes.Control, ref initialScrollInfo) && initialScrollInfo.Minimum != initialScrollInfo.Maximum)
+                if (operations.GetScrollInfo(interopWindow.Handle, ScrollBarTypes.Control, ref initialScrollInfo) && initialScrollInfo.Minimum != initialScrollInfo.Maximum)
                 {
                     WindowScroller result2 = new WindowScroller
                     {
@@ -338,7 +371,7 @@ public static class InteropWindowExtensions
                         ScrollBarWindow = interopWindow,
                         ScrollBarType = ScrollBarTypes.Control,
                         InitialScrollInfo = initialScrollInfo,
-                        WheelDelta = (int)(120 * unchecked(initialScrollInfo.PageSize / WindowScroller.ScrollWheelLinesFromRegistry))
+                        WheelDelta = (int)(MouseWheelDelta * unchecked(initialScrollInfo.PageSize / WindowScroller.ScrollWheelLinesFromRegistry)),
                     };
                     interopWindow.CanScroll = true;
                     return result2;
@@ -364,7 +397,8 @@ public static class InteropWindowExtensions
             }
 
             interopWindow.HasZOrderedChildren = true;
-            List<IInteropWindow> children = (List<IInteropWindow>)(interopWindow.Children = []);
+            List<IInteropWindow> children = [];
+            interopWindow.Children = children;
             foreach (IInteropWindow child in InteropWindowQueryExtensions.GetTopWindows(interopWindow))
             {
                 child.ParentWindow = interopWindow;
@@ -377,24 +411,26 @@ public static class InteropWindowExtensions
         /// <summary>Returns if this window is docked to the left of another window.</summary>
         /// <param name="otherWindow">IInteropWindow to compare against.</param>
         /// <returns>bool true if docked.</returns>
-        public bool IsDockedToLeftOf(IInteropWindow otherWindow) => interopWindow.IsDockedToLeftOf(otherWindow, (window) => window.GetInfo().Bounds);
+        public bool IsDockedToLeftOf(IInteropWindow otherWindow) => interopWindow.IsDockedToLeftOf(otherWindow, static (window) => window.GetInfo().Bounds);
 
         /// <summary>Returns if this window is docked to the left of another window.</summary>
         /// <param name="otherWindow">IInteropWindow to compare against.</param>
         /// <param name="retrieveBoundsFunc">Function which returns the bounds for the IInteropWindow.</param>
         /// <returns>bool true if docked.</returns>
-        public bool IsDockedToLeftOf(IInteropWindow otherWindow, Func<IInteropWindow, NativeRect> retrieveBoundsFunc) => retrieveBoundsFunc(interopWindow).IsDockedToLeftOf(retrieveBoundsFunc(otherWindow));
+        public bool IsDockedToLeftOf(IInteropWindow otherWindow, Func<IInteropWindow, NativeRect> retrieveBoundsFunc) =>
+            retrieveBoundsFunc(interopWindow).IsDockedToLeftOf(retrieveBoundsFunc(otherWindow));
 
         /// <summary>Returns if this window is docked to the right of another window.</summary>
         /// <param name="otherWindow">IInteropWindow to compare against.</param>
         /// <returns>bool true if docked.</returns>
-        public bool IsDockedToRightOf(IInteropWindow otherWindow) => interopWindow.IsDockedToRightOf(otherWindow, (window) => window.GetInfo().Bounds);
+        public bool IsDockedToRightOf(IInteropWindow otherWindow) => interopWindow.IsDockedToRightOf(otherWindow, static (window) => window.GetInfo().Bounds);
 
         /// <summary>Returns if this window is docked to the right of another window.</summary>
         /// <param name="otherWindow">IInteropWindow to compare against.</param>
         /// <param name="retrieveBoundsFunc">Function which returns the bounds for the IInteropWindow.</param>
         /// <returns>bool true if docked.</returns>
-        public bool IsDockedToRightOf(IInteropWindow otherWindow, Func<IInteropWindow, NativeRect> retrieveBoundsFunc) => retrieveBoundsFunc(interopWindow).IsDockedToRightOf(retrieveBoundsFunc(otherWindow));
+        public bool IsDockedToRightOf(IInteropWindow otherWindow, Func<IInteropWindow, NativeRect> retrieveBoundsFunc) =>
+            retrieveBoundsFunc(interopWindow).IsDockedToRightOf(retrieveBoundsFunc(otherWindow));
 
         /// <summary>Retrieve if the window is maximized.</summary>
         /// <returns>bool true if maximized.</returns>
@@ -520,43 +556,41 @@ public static class InteropWindowExtensions
 
         /// <summary>Set the window as foreground window.</summary>
         /// <returns>A task that completes when the foreground request has been sent.</returns>
-        public async ValueTask ToForegroundAsync()
+        public ValueTask ToForegroundAsync()
         {
             if (!interopWindow.IsVisible())
             {
-                return;
+                return default;
             }
 
-            IntPtr foregroundWindow = User32Api.GetForegroundWindow();
+            InteropWindowOperations operations = Volatile.Read(ref _operations);
+            IntPtr foregroundWindow = operations.GetForegroundWindow();
             if (foregroundWindow == interopWindow.Handle)
             {
-                return;
+                return default;
             }
 
             if (interopWindow.IsMinimized())
             {
                 _ = interopWindow.Restore();
-                while (interopWindow.IsMinimized())
-                {
-                    await Task.Delay(50).ConfigureAwait(continueOnCapturedContext: false);
-                }
             }
 
-            int threadId1 = User32Api.GetWindowThreadProcessId(foregroundWindow, IntPtr.Zero);
-            int threadId2 = User32Api.GetWindowThreadProcessId(interopWindow.Handle, IntPtr.Zero);
+            int threadId1 = operations.GetWindowThreadProcessId(foregroundWindow);
+            int threadId2 = operations.GetWindowThreadProcessId(interopWindow.Handle);
             if (threadId1 != threadId2)
             {
-                _ = User32Api.AttachThreadInput(threadId1, threadId2, 1);
-                _ = User32Api.SetForegroundWindow(interopWindow.Handle);
-                _ = User32Api.AttachThreadInput(threadId1, threadId2, 0);
+                _ = operations.AttachThreadInput(threadId1, threadId2, true);
+                _ = operations.SetForegroundWindow(interopWindow.Handle);
+                _ = operations.AttachThreadInput(threadId1, threadId2, false);
             }
             else
             {
-                _ = User32Api.SetForegroundWindow(interopWindow.Handle);
+                _ = operations.SetForegroundWindow(interopWindow.Handle);
             }
 
-            _ = User32Api.BringWindowToTop(interopWindow.Handle);
-            _ = User32Api.SetForegroundWindow(interopWindow.Handle);
+            _ = operations.BringWindowToTop(interopWindow.Handle);
+            _ = operations.SetForegroundWindow(interopWindow.Handle);
+            return default;
         }
 
         /// <summary>Move the specified window to a new location.</summary>
@@ -564,7 +598,14 @@ public static class InteropWindowExtensions
         /// <returns>IInteropWindow for fluent calls.</returns>
         public IInteropWindow MoveTo(NativePoint location)
         {
-            _ = User32Api.SetWindowPos(interopWindow.Handle, IntPtr.Zero, location.X, location.Y, 0, 0, WindowPos.SWP_NOACTIVATE | WindowPos.SWP_NOSIZE | WindowPos.SWP_NOZORDER | WindowPos.SWP_SHOWWINDOW);
+            _ = User32Api.SetWindowPos(
+                interopWindow.Handle,
+                IntPtr.Zero,
+                location.X,
+                location.Y,
+                0,
+                0,
+                WindowPos.SWP_NOACTIVATE | WindowPos.SWP_NOSIZE | WindowPos.SWP_NOZORDER | WindowPos.SWP_SHOWWINDOW);
             interopWindow.Info = null;
             return interopWindow;
         }
@@ -574,7 +615,7 @@ public static class InteropWindowExtensions
         public IEnumerable<IInteropWindow> GetLinkedWindows()
         {
             int selectedProcessId = interopWindow.GetProcessId();
-            foreach (IInteropWindow window in InteropWindowQueryExtensions.GetTopLevelWindows())
+            foreach (IInteropWindow window in Volatile.Read(ref _operations).GetTopLevelWindows())
             {
                 if (window.Handle != interopWindow.Handle && window.GetProcessId() == selectedProcessId)
                 {
@@ -589,41 +630,7 @@ public static class InteropWindowExtensions
         public bool GetVisibleLocation(out NativePoint formLocation)
         {
             NativeRect windowRectangle = interopWindow.GetInfo().Bounds;
-            formLocation = windowRectangle.Location;
-            IReadOnlyList<DisplayInfo> displays = DisplayTopology.GetSnapshot();
-            DisplayInfo primaryDisplay = FindPrimaryDisplay(displays);
-            if (primaryDisplay is null)
-            {
-                return false;
-            }
-
-            using (Region workingArea = new(primaryDisplay.Bounds))
-            {
-                foreach (DisplayInfo display in displays)
-                {
-                    if (!display.IsPrimary)
-                    {
-                        workingArea.Union(display.Bounds);
-                    }
-                }
-
-                if (workingArea.AreRectangleCornersVisisble(windowRectangle))
-                {
-                    return true;
-                }
-
-                foreach (DisplayInfo display2 in displays)
-                {
-                    Rectangle newWindowRectangle = new(display2.WorkingArea.Location, windowRectangle.Size);
-                    if (workingArea.AreRectangleCornersVisisble(newWindowRectangle))
-                    {
-                        formLocation = display2.Bounds.Location;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return GetVisibleLocation(windowRectangle, DisplayTopology.GetSnapshot(), out formLocation);
         }
 
         /// <summary>Return a bitmap representing the Window as GDI+ draws it.</summary>
@@ -657,66 +664,60 @@ public static class InteropWindowExtensions
         }
     }
 
-    /// <summary>Contains native region entry points.</summary>
-    private static class NativeMethods
+    /// <summary>Replaces native operations for a bounded deterministic test scope.</summary>
+    /// <param name="operations">The operations to use while the returned scope is alive.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static OperationsOverride OverrideOperationsForTesting(InteropWindowOperations operations)
     {
-        /// <summary>Gets the region data size for a native region.</summary>
-        /// <param name="regionHandle">The region safe handle.</param>
-        /// <param name="dataSize">The supplied buffer size.</param>
-        /// <param name="regionData">The native region data pointer.</param>
-        /// <returns>The required or copied data size.</returns>
-        [DllImport("gdi32.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern uint GetRegionData(SafeHandle regionHandle, uint dataSize, IntPtr regionData);
-
-        /// <summary>Gets the region data for a native region.</summary>
-        /// <param name="regionHandle">The region safe handle.</param>
-        /// <param name="dataSize">The supplied buffer size.</param>
-        /// <param name="regionData">The managed region data buffer.</param>
-        /// <returns>The copied data size.</returns>
-        [DllImport("gdi32.dll")]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern uint GetRegionData(SafeHandle regionHandle, uint dataSize, [Out] byte[] regionData);
+        Throw.IfNull(operations);
+        return new(Interlocked.Exchange(ref _operations, operations));
     }
 
-    /// <summary>Delta reported for one Windows mouse-wheel detent.</summary>
-    private const int MouseWheelDelta = 120;
+    /// <summary>Gets a visible location from supplied cached window and display geometry.</summary>
+    /// <param name="windowRectangle">Bounds of the window to position.</param>
+    /// <param name="displays">Display snapshot used to find a visible location.</param>
+    /// <param name="formLocation">The selected visible location.</param>
+    /// <returns>true when a location was found.</returns>
+    internal static bool GetVisibleLocation(
+        NativeRect windowRectangle,
+        IReadOnlyList<DisplayInfo> displays,
+        out NativePoint formLocation)
+    {
+        formLocation = windowRectangle.Location;
+        DisplayInfo primaryDisplay = FindPrimaryDisplay(displays);
+        if (primaryDisplay is null)
+        {
+            return false;
+        }
 
-    /// <summary>Delay between minimized-window restore checks.</summary>
-    private const int ForegroundRestorePollMilliseconds = 50;
+        using (Region workingArea = new(primaryDisplay.Bounds))
+        {
+            foreach (DisplayInfo display in displays)
+            {
+                if (!display.IsPrimary)
+                {
+                    workingArea.Union(display.Bounds);
+                }
+            }
 
-    /// <summary>Scale factor used by WM_HSCROLL thumb positioning.</summary>
-    private const int HorizontalThumbPositionScale = 65_536;
+            if (workingArea.AreRectangleCornersVisisble(windowRectangle))
+            {
+                return true;
+            }
 
-    /// <summary>Base value used by WM_HSCROLL thumb positioning.</summary>
-    private const int HorizontalThumbPositionBase = 4;
+            foreach (DisplayInfo display2 in displays)
+            {
+                Rectangle newWindowRectangle = new(display2.WorkingArea.Location, windowRectangle.Size);
+                if (workingArea.AreRectangleCornersVisisble(newWindowRectangle))
+                {
+                    formLocation = display2.Bounds.Location;
+                    return true;
+                }
+            }
+        }
 
-    /// <summary>Bit shift used by WM_VSCROLL thumb positioning.</summary>
-    private const int VerticalThumbPositionShift = 16;
-
-    /// <summary>Byte offset for the RGNDATA rectangle count.</summary>
-    private const int RegionDataRectangleCountOffset = 8;
-
-    /// <summary>Byte size of an RGNDATAHEADER structure.</summary>
-    private const int RegionDataHeaderSize = 32;
-
-    /// <summary>Byte size of a native RECT structure.</summary>
-    private const int NativeRectangleByteSize = 16;
-
-    /// <summary>Byte offset for the left value in a native RECT.</summary>
-    private const int NativeRectangleLeftOffset = 0;
-
-    /// <summary>Byte offset for the top value in a native RECT.</summary>
-    private const int NativeRectangleTopOffset = 4;
-
-    /// <summary>Byte offset for the right value in a native RECT.</summary>
-    private const int NativeRectangleRightOffset = 8;
-
-    /// <summary>Byte offset for the bottom value in a native RECT.</summary>
-    private const int NativeRectangleBottomOffset = 12;
-
-    /// <summary>Logger for native window operations.</summary>
-    private static readonly ILog Log = LogManager.GetLogger(typeof(InteropWindowExtensions));
+        return false;
+    }
 
     /// <summary>Applies a captured window region as transparent pixels.</summary>
     /// <param name="region">The captured window region.</param>
@@ -735,7 +736,7 @@ public static class InteropWindowExtensions
     /// <returns>The managed region.</returns>
     internal static Region CreateRegionFromData(byte[] regionDataBytes)
     {
-        int rectangleCount = BitConverter.ToInt32(regionDataBytes, 8);
+        int rectangleCount = BitConverter.ToInt32(regionDataBytes, RegionDataRectangleCountOffset);
         if (rectangleCount <= 0)
         {
             return null;
@@ -747,16 +748,16 @@ public static class InteropWindowExtensions
         {
             for (int index = 0; index < rectangleCount; index++)
             {
-                int offset = 32 + (index * 16);
-                if (offset + 16 > regionDataBytes.Length)
+                int offset = RegionDataHeaderSize + (index * NativeRectangleByteSize);
+                if (offset + NativeRectangleByteSize > regionDataBytes.Length)
                 {
                     break;
                 }
 
-                int left = BitConverter.ToInt32(regionDataBytes, offset);
-                int top = BitConverter.ToInt32(regionDataBytes, offset + 4);
-                int right = BitConverter.ToInt32(regionDataBytes, offset + 8);
-                int bottom = BitConverter.ToInt32(regionDataBytes, offset + 12);
+                int left = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleLeftOffset);
+                int top = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleTopOffset);
+                int right = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleRightOffset);
+                int bottom = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleBottomOffset);
                 region.Union(Rectangle.FromLTRB(left, top, right, bottom));
             }
 
@@ -786,15 +787,7 @@ public static class InteropWindowExtensions
     /// <summary>Gets the pixel format for a window capture.</summary>
     /// <param name="region">The optional captured window region.</param>
     /// <returns>The pixel format for the capture bitmap.</returns>
-    internal static PixelFormat GetCapturePixelFormat(Region region)
-    {
-        if (region is not null)
-        {
-            return PixelFormat.Format32bppArgb;
-        }
-
-        return PixelFormat.Format24bppRgb;
-    }
+    internal static PixelFormat GetCapturePixelFormat(Region region) => region is null ? PixelFormat.Format24bppRgb : PixelFormat.Format32bppArgb;
 
     /// <summary>Checks whether a retrieve setting is enabled.</summary>
     /// <param name="settings">The configured settings.</param>
@@ -810,26 +803,6 @@ public static class InteropWindowExtensions
         {
             throw new ArgumentException("Can't have both Children & ZOrderedChildren", nameof(retrieveSettings));
         }
-    }
-
-    /// <summary>Creates a managed region from native region data.</summary>
-    /// <param name="regionHandle">The region safe handle.</param>
-    /// <returns>The managed region.</returns>
-    private static Region CreateRegionFromHandle(SafeHandle regionHandle)
-    {
-        uint dataSize = NativeMethods.GetRegionData(regionHandle, 0U, IntPtr.Zero);
-        if (dataSize == 0 || dataSize > int.MaxValue)
-        {
-            return null;
-        }
-
-        byte[] regionDataBytes = new byte[checked((int)dataSize)];
-        if (NativeMethods.GetRegionData(regionHandle, dataSize, regionDataBytes) != 0)
-        {
-            return CreateRegionFromData(regionDataBytes);
-        }
-
-        return null;
     }
 
     /// <summary>Reads cacheable scalar window state.</summary>
@@ -927,5 +900,157 @@ public static class InteropWindowExtensions
         {
             graphics.ReleaseHdc(deviceContext);
         }
+    }
+
+    /// <summary>Restores a previous operation set when disposed.</summary>
+    internal sealed class OperationsOverride : IDisposable
+    {
+        /// <summary>The operation set to restore.</summary>
+        private readonly InteropWindowOperations _previous;
+
+        /// <summary>Tracks whether restoration has already occurred.</summary>
+        private int _disposed;
+
+        /// <summary>Initializes a new instance of the <see cref="OperationsOverride"/> class.</summary>
+        /// <param name="previous">The previous operations.</param>
+        internal OperationsOverride(InteropWindowOperations previous) => _previous = previous;
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _ = Interlocked.Exchange(ref _operations, _previous);
+            }
+        }
+    }
+
+    /// <summary>Native operations used by the interop-window extension implementation.</summary>
+    internal class InteropWindowOperations
+    {
+        /// <summary>Creates a managed region from supplied native-region data operations.</summary>
+        /// <param name="regionHandle">The region handle.</param>
+        /// <param name="getSize">Gets the required native-region data size.</param>
+        /// <param name="getData">Copies native-region data into a managed buffer.</param>
+        /// <returns>The managed region, or null when data is unavailable.</returns>
+        internal static Region CreateRegionFromHandle(
+            SafeHandle regionHandle,
+            Func<SafeHandle, uint> getSize,
+            Func<SafeHandle, uint, byte[], uint> getData)
+        {
+            Throw.IfNull(regionHandle);
+            Throw.IfNull(getSize);
+            Throw.IfNull(getData);
+            uint dataSize = getSize(regionHandle);
+            if (dataSize == 0 || dataSize > int.MaxValue)
+            {
+                return null;
+            }
+
+            byte[] regionDataBytes = new byte[checked((int)dataSize)];
+            return getData(regionHandle, dataSize, regionDataBytes) == 0
+                ? null
+                : CreateRegionFromData(regionDataBytes);
+        }
+
+        /// <summary>Creates an empty native region.</summary>
+        /// <returns>The native region wrapper.</returns>
+        internal virtual SafeRegionHandle CreateRectRegion() => Gdi32Api.CreateRectRgn(0, 0, 0, 0);
+
+        /// <summary>Gets the current region state for a window.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <param name="region">The target native region.</param>
+        /// <returns>The native region result.</returns>
+        internal virtual RegionResults GetWindowRegion(IntPtr windowHandle, SafeRegionHandle region) => User32Api.GetWindowRgn(windowHandle, region);
+
+        /// <summary>Creates a managed region from a native region.</summary>
+        /// <param name="region">The native region.</param>
+        /// <returns>The managed region.</returns>
+        internal virtual Region CreateRegion(SafeHandle region) =>
+            CreateRegionFromHandle(
+                region,
+                static handle => NativeMethods.GetRegionData(handle, 0U, IntPtr.Zero),
+                NativeMethods.GetRegionData);
+
+        /// <summary>Gets scroll information for a window.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <param name="scrollBarType">The scroll bar type.</param>
+        /// <param name="scrollInfo">The target scroll information.</param>
+        /// <returns>true when information was retrieved.</returns>
+        internal virtual bool GetScrollInfo(IntPtr windowHandle, ScrollBarTypes scrollBarType, ref ScrollInfo scrollInfo) => User32Api.GetScrollInfo(windowHandle, scrollBarType, ref scrollInfo);
+
+        /// <summary>Gets the foreground window.</summary>
+        /// <returns>The foreground window handle.</returns>
+        internal virtual IntPtr GetForegroundWindow() => User32Api.GetForegroundWindow();
+
+        /// <summary>Gets the parent of a window.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <returns>The parent window handle.</returns>
+        internal virtual IntPtr GetParent(IntPtr windowHandle) => User32Api.GetParent(windowHandle);
+
+        /// <summary>Gets a window's owning thread.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <returns>The owning thread identifier.</returns>
+        internal virtual int GetWindowThreadProcessId(IntPtr windowHandle) => User32Api.GetWindowThreadProcessId(windowHandle, IntPtr.Zero);
+
+        /// <summary>Connects or disconnects two input queues.</summary>
+        /// <param name="firstThreadId">The first thread identifier.</param>
+        /// <param name="secondThreadId">The second thread identifier.</param>
+        /// <param name="attach">Whether to attach rather than detach.</param>
+        /// <returns>true when the operation succeeds.</returns>
+        internal virtual bool AttachThreadInput(int firstThreadId, int secondThreadId, bool attach) =>
+            User32Api.AttachThreadInput(firstThreadId, secondThreadId, attach ? 1 : 0) != IntPtr.Zero;
+
+        /// <summary>Requests foreground activation.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <returns>true when the request succeeds.</returns>
+        internal virtual bool SetForegroundWindow(IntPtr windowHandle) => User32Api.SetForegroundWindow(windowHandle);
+
+        /// <summary>Moves a window to the top of its z-order.</summary>
+        /// <param name="windowHandle">The window handle.</param>
+        /// <returns>true when the request succeeds.</returns>
+        internal virtual bool BringWindowToTop(IntPtr windowHandle) => User32Api.BringWindowToTop(windowHandle);
+
+        /// <summary>Enumerates top-level windows.</summary>
+        /// <returns>The top-level windows.</returns>
+        internal virtual IEnumerable<IInteropWindow> GetTopLevelWindows() => InteropWindowQueryExtensions.GetTopLevelWindows();
+    }
+
+    /// <summary>Contains native region entry points.</summary>
+#if NETFRAMEWORK
+    private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
+    {
+        /// <summary>Gets the region data size for a native region.</summary>
+        /// <param name="regionHandle">The region safe handle.</param>
+        /// <param name="dataSize">The supplied buffer size.</param>
+        /// <param name="regionData">The native region data pointer.</param>
+        /// <returns>The required or copied data size.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdi32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern uint GetRegionData(SafeHandle regionHandle, uint dataSize, IntPtr regionData);
+#else
+        [LibraryImport("gdi32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial uint GetRegionData(SafeHandle regionHandle, uint dataSize, IntPtr regionData);
+#endif
+
+        /// <summary>Gets the region data for a native region.</summary>
+        /// <param name="regionHandle">The region safe handle.</param>
+        /// <param name="dataSize">The supplied buffer size.</param>
+        /// <param name="regionData">The managed region data buffer.</param>
+        /// <returns>The copied data size.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdi32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern uint GetRegionData(SafeHandle regionHandle, uint dataSize, [Out] byte[] regionData);
+#else
+        [LibraryImport("gdi32.dll")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial uint GetRegionData(SafeHandle regionHandle, uint dataSize, [Out] byte[] regionData);
+#endif
     }
 }

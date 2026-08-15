@@ -24,5 +24,5 @@ public enum MouseButtons
     /// <summary>Extra button 1.</summary>
     XButton1 = 0x800000,
     /// <summary>Extra button 2.</summary>
-    XButton2 = 0x1000000
+    XButton2 = 0x1000000,
 }

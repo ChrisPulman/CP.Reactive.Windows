@@ -76,7 +76,8 @@ public struct WindowPlacement : IEquatable<WindowPlacement>
 
     /// <summary>Gets the default (empty) value.</summary>
     /// <returns>The initialized window placement.</returns>
-    public static WindowPlacement Create() => new WindowPlacement { _nativeSize = Marshal.SizeOf<WindowPlacement>() };
+    public static WindowPlacement Create() =>
+        new WindowPlacement { _nativeSize = Marshal.SizeOf<WindowPlacement>() };
 
     /// <summary>Compares two WindowPlacement values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -97,13 +98,22 @@ public struct WindowPlacement : IEquatable<WindowPlacement>
     }
 
     /// <inheritdoc />
-    public override readonly string ToString() => $"{{Flags: {_nativeFlags}; ShowCmd: {_nativeShowCommand}; MinPosition: {_nativeMinimumPosition}; MaxPosition: {_nativeMaximumPosition}; NormalPosition: {_nativeNormalPosition}}}";
+    public override readonly string ToString() =>
+        $"{{Flags: {_nativeFlags}; ShowCmd: {_nativeShowCommand}; MinPosition: {_nativeMinimumPosition};"
+        + $" MaxPosition: {_nativeMaximumPosition}; NormalPosition: {_nativeNormalPosition}}}";
 
     /// <inheritdoc />
-    public readonly bool Equals(WindowPlacement other) => _nativeSize == other._nativeSize && _nativeFlags == other._nativeFlags && _nativeShowCommand == other._nativeShowCommand && _nativeMinimumPosition.Equals(other._nativeMinimumPosition) && _nativeMaximumPosition.Equals(other._nativeMaximumPosition) && _nativeNormalPosition.Equals(other._nativeNormalPosition);
+    public readonly bool Equals(WindowPlacement other) =>
+        _nativeSize == other._nativeSize
+        && _nativeFlags == other._nativeFlags
+        && _nativeShowCommand == other._nativeShowCommand
+        && _nativeMinimumPosition.Equals(other._nativeMinimumPosition)
+        && _nativeMaximumPosition.Equals(other._nativeMaximumPosition)
+        && _nativeNormalPosition.Equals(other._nativeNormalPosition);
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is WindowPlacement other && Equals(other);
+    public override readonly bool Equals(object obj) =>
+        obj is WindowPlacement other && Equals(other);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => 0;

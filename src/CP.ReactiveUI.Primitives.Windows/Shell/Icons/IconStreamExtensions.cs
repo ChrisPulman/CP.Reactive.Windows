@@ -14,6 +14,23 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Extension methods for icon streams.</summary>
 public static class IconStreamExtensions
 {
+    /// <summary>The byte offset of an icon directory entry's image offset field.</summary>
+    private const int IconDirectoryEntryOffset = 12;
+
+    /// <summary>The icon directory header size, in bytes.</summary>
+    private const int IconDirectoryHeaderSize = 6;
+
+    /// <summary>The byte offset of an icon directory entry's image size field.</summary>
+    private const int IconDirectoryImageSizeOffset = 8;
+
+    /// <summary>The icon directory entry size, in bytes.</summary>
+    private const int IconDirectorySize = 16;
+
+    /// <summary>The byte offset of the icon count field.</summary>
+    private const int IconCountOffset = 4;
+
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="iconStream">The extended instance.</param>
     extension(Stream iconStream)
     {
         /// <summary>Extracts a Vista PNG icon from an icon stream.</summary>
@@ -27,16 +44,18 @@ public static class IconStreamExtensions
                 {
                     byte[] sourceBuffer = new byte[iconStream.Length];
                     _ = iconStream.Read(sourceBuffer, 0, (int)iconStream.Length);
-                    short count = BitConverter.ToInt16(sourceBuffer, 4);
+                    short count = BitConverter.ToInt16(sourceBuffer, IconCountOffset);
                     for (int index = 0; index < count; index++)
                     {
-                        int entryOffset = 6 + (16 * index);
+                        int entryOffset = IconDirectoryHeaderSize + (IconDirectorySize * index);
                         byte num = sourceBuffer[entryOffset];
                         byte height = sourceBuffer[entryOffset + 1];
                         if (num == 0 && height == 0)
                         {
-                            int imageSize = BitConverter.ToInt32(sourceBuffer, entryOffset + 8);
-                            int imageOffset = BitConverter.ToInt32(sourceBuffer, entryOffset + 12);
+                            int imageSize =
+                                BitConverter.ToInt32(sourceBuffer, entryOffset + IconDirectoryImageSizeOffset);
+                            int imageOffset =
+                                BitConverter.ToInt32(sourceBuffer, entryOffset + IconDirectoryEntryOffset);
                             using (MemoryStream destinationStream = new())
                             {
                                 destinationStream.Write(sourceBuffer, imageOffset, imageSize);
@@ -61,19 +80,4 @@ public static class IconStreamExtensions
             }
         }
     }
-
-    /// <summary>The byte offset of an icon directory entry's image offset field.</summary>
-    private const int IconDirectoryEntryOffset = 12;
-
-    /// <summary>The icon directory header size, in bytes.</summary>
-    private const int IconDirectoryHeaderSize = 6;
-
-    /// <summary>The byte offset of an icon directory entry's image size field.</summary>
-    private const int IconDirectoryImageSizeOffset = 8;
-
-    /// <summary>The icon directory entry size, in bytes.</summary>
-    private const int IconDirectorySize = 16;
-
-    /// <summary>The byte offset of the icon count field.</summary>
-    private const int IconCountOffset = 4;
 }

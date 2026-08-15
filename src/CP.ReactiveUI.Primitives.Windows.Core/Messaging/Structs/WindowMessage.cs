@@ -13,7 +13,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Structs;
 /// <param name="msg">The message identifier.</param>
 /// <param name="wordParameter">The message word parameter.</param>
 /// <param name="longParameter">The message long parameter.</param>
-public sealed class WindowMessage(nint hwnd, WindowsMessages msg, nint wordParameter, nint longParameter)
+public sealed class WindowMessage(
+    nint hwnd,
+    WindowsMessages msg,
+    nint wordParameter,
+    nint longParameter)
 {
     /// <summary>Gets the handle value for the window that receives the message.</summary>
     public long Hwnd { get; } = hwnd;

@@ -13,12 +13,69 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop;
 /// <summary>Owns unmanaged COMDLG_FILTERSPEC storage for a file dialog call.</summary>
 internal sealed class NativeFilterSpecs : IDisposable
 {
+    /// <summary>The number of native pointers in one COMDLG_FILTERSPEC.</summary>
+    private const int PointersPerFilter = 2;
+
+    /// <summary>The owned string pointers.</summary>
+    private readonly SafeHGlobalHandle[] _strings;
+
+    /// <summary>The native filter-spec pointer.</summary>
+    private readonly SafeHGlobalHandle _handle;
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.NativeFilterSpecs" /> class.</summary>
+    /// <param name="filters">The managed filters.</param>
+    internal NativeFilterSpecs(FilterSpec[] filters)
+    {
+        Count = filters.Length;
+        checked
+        {
+            _strings = new SafeHGlobalHandle[filters.Length * PointersPerFilter];
+            _handle = new(IntPtr.Size * _strings.Length);
+            for (int index = 0; index < filters.Length; index++)
+            {
+                int nameIndex = index * PointersPerFilter;
+                int specIndex = nameIndex + 1;
+                _strings[nameIndex] = SafeHGlobalHandle.FromString(filters[index].Name);
+                _strings[specIndex] = SafeHGlobalHandle.FromString(filters[index].Spec);
+                _handle.WritePointer(nameIndex * IntPtr.Size, _strings[nameIndex]);
+                _handle.WritePointer(specIndex * IntPtr.Size, _strings[specIndex]);
+            }
+        }
+    }
+
+    /// <summary>Gets the number of filters.</summary>
+    internal int Count { get; }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        SafeHGlobalHandle[] strings = _strings;
+        for (int i = 0; i < strings.Length; i++)
+        {
+            strings[i].Dispose();
+        }
+
+        _handle.Dispose();
+    }
+
+    /// <summary>Calls IFileDialog.SetFileTypes with the owned native buffer.</summary>
+    /// <param name="method">The native SetFileTypes method.</param>
+    /// <param name="dialogHandle">The dialog interface pointer.</param>
+    /// <returns>The native HRESULT.</returns>
+    internal unsafe int SetFileTypes(
+        delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int> method,
+        IntPtr dialogHandle) =>
+        SetFileTypes((count, buffer) => method(dialogHandle, count, buffer));
+
+    /// <summary>Calls a managed SetFileTypes shim with the owned native buffer.</summary>
+    /// <param name="method">The deterministic method to invoke.</param>
+    /// <returns>The method result.</returns>
+    internal int SetFileTypes(Func<uint, IntPtr, int> method) =>
+        _handle.UseHandle(buffer => method(checked((uint)Count), buffer));
+
     /// <summary>Owns memory allocated by <see cref="M:System.Runtime.InteropServices.Marshal.AllocHGlobal(System.Int32)" />.</summary>
     private sealed class SafeHGlobalHandle : SafeHandle
     {
-        /// <inheritdoc />
-        public override bool IsInvalid => handle == IntPtr.Zero;
-
         /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.NativeFilterSpecs.SafeHGlobalHandle" /> class.</summary>
         /// <param name="bytes">The number of bytes to allocate.</param>
         internal SafeHGlobalHandle(int bytes)
@@ -34,6 +91,9 @@ internal sealed class NativeFilterSpecs : IDisposable
         {
             SetHandle(nativeHandle);
         }
+
+        /// <inheritdoc />
+        public override bool IsInvalid => handle == IntPtr.Zero;
 
         /// <summary>Creates an owned handle for a UTF-16 string buffer.</summary>
         /// <param name="value">The managed string value.</param>
@@ -96,58 +156,4 @@ internal sealed class NativeFilterSpecs : IDisposable
             return true;
         }
     }
-
-    /// <summary>The number of native pointers in one COMDLG_FILTERSPEC.</summary>
-    private const int PointersPerFilter = 2;
-
-    /// <summary>The owned string pointers.</summary>
-    private readonly SafeHGlobalHandle[] _strings;
-
-    /// <summary>The native filter-spec pointer.</summary>
-    private readonly SafeHGlobalHandle _handle;
-
-    /// <summary>Gets the number of filters.</summary>
-    internal int Count { get; }
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop.NativeFilterSpecs" /> class.</summary>
-    /// <param name="filters">The managed filters.</param>
-    internal NativeFilterSpecs(FilterSpec[] filters)
-    {
-        Count = filters.Length;
-        checked
-        {
-            _strings = new SafeHGlobalHandle[filters.Length * 2];
-            _handle = new(IntPtr.Size * _strings.Length);
-            for (int index = 0; index < filters.Length; index++)
-            {
-                _strings[index * 2] = SafeHGlobalHandle.FromString(filters[index].Name);
-                _strings[(index * 2) + 1] = SafeHGlobalHandle.FromString(filters[index].Spec);
-                _handle.WritePointer(index * 2 * IntPtr.Size, _strings[index * 2]);
-                _handle.WritePointer(((index * 2) + 1) * IntPtr.Size, _strings[(index * 2) + 1]);
-            }
-        }
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        SafeHGlobalHandle[] strings = _strings;
-        for (int i = 0; i < strings.Length; i++)
-        {
-            strings[i].Dispose();
-        }
-
-        _handle.Dispose();
-    }
-
-    /// <summary>Calls IFileDialog.SetFileTypes with the owned native buffer.</summary>
-    /// <param name="method">The native SetFileTypes method.</param>
-    /// <param name="dialogHandle">The dialog interface pointer.</param>
-    /// <returns>The native HRESULT.</returns>
-    internal unsafe int SetFileTypes(delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int> method, IntPtr dialogHandle) => SetFileTypes((count, buffer) => method(dialogHandle, count, buffer));
-
-    /// <summary>Calls a managed SetFileTypes shim with the owned native buffer.</summary>
-    /// <param name="method">The deterministic method to invoke.</param>
-    /// <returns>The method result.</returns>
-    internal int SetFileTypes(Func<uint, IntPtr, int> method) => _handle.UseHandle((buffer) => method(checked((uint)Count), buffer));
 }

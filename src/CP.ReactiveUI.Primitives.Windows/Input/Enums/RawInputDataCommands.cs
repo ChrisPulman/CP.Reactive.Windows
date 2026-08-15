@@ -18,5 +18,5 @@ public enum RawInputDataCommands : uint
     /// <summary>RID_INPUT: Get the raw data from the RAWINPUT structure.</summary>
     Input = 268_435_459U,
     /// <summary>RID_HEADER: Get the header information from the RAWINPUT structure.</summary>
-    Header = 268_435_461U
+    Header = 268_435_461U,
 }

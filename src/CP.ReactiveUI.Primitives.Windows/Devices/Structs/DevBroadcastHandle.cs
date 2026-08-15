@@ -80,40 +80,28 @@ public readonly struct DevBroadcastHandle : IEquatable<DevBroadcastHandle>
     public static DevBroadcastHandle Create() => new(DeviceBroadcastDeviceType.Handle, Marshal.SizeOf<DevBroadcastHandle>());
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is DevBroadcastHandle other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is DevBroadcastHandle other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(DevBroadcastHandle other)
-    {
-        if (_size == other._size && _deviceType == other._deviceType && _reserved == other._reserved && _handle == other._handle && _hdevnotify == other._hdevnotify && _eventguid == other._eventguid && _nameoffset == other._nameoffset)
-        {
-            return GetDataByte() == other.GetDataByte();
-        }
-
-        return false;
-    }
+    public bool Equals(DevBroadcastHandle other) =>
+        _size == other._size
+        && _deviceType == other._deviceType
+        && _reserved == other._reserved
+        && _handle == other._handle
+        && _hdevnotify == other._hdevnotify
+        && _eventguid == other._eventguid
+        && _nameoffset == other._nameoffset
+        && GetDataByte() == other.GetDataByte();
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(_size, _deviceType, _reserved, _handle, _hdevnotify, _eventguid, _nameoffset, GetDataByte());
+    public override int GetHashCode() =>
+        HashCode.Combine(_size, _deviceType, _reserved, _handle, _hdevnotify, _eventguid, _nameoffset, GetDataByte());
 
     /// <summary>Gets the single marshalled data byte.</summary>
     /// <returns>The data byte.</returns>
     private byte GetDataByte()
     {
         byte[] data = _data;
-        if (data is null || data.Length <= 0)
-        {
-            return 0;
-        }
-
-        return _data[0];
+        return data is null || data.Length <= 0 ? (byte)0 : data[0];
     }
 }

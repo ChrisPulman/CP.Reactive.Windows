@@ -13,6 +13,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals;
 /// <summary>Contains native information to handle the clipboard contents.</summary>
 internal sealed class ClipboardNativeInfo : IDisposable
 {
+    /// <summary>The global memory unlock operation used by this type.</summary>
+    private static Func<IntPtr, bool> _globalUnlock = Kernel32Api.GlobalUnlock;
+
     /// <summary>Gets or sets the global clipboard memory handle.</summary>
     internal IntPtr GlobalHandle { get; set; }
 
@@ -35,7 +38,7 @@ internal sealed class ClipboardNativeInfo : IDisposable
         {
             if (MemoryPtr != IntPtr.Zero)
             {
-                _ = Kernel32Api.GlobalUnlock(GlobalHandle);
+                _ = _globalUnlock(GlobalHandle);
                 MemoryPtr = IntPtr.Zero;
             }
 
@@ -45,5 +48,16 @@ internal sealed class ClipboardNativeInfo : IDisposable
                 GlobalHandle = IntPtr.Zero;
             }
         }
+    }
+
+    /// <summary>Overrides global memory unlocking for deterministic tests.</summary>
+    /// <param name="globalUnlock">The replacement global unlock operation.</param>
+    /// <returns>A scope that restores the previous operation.</returns>
+    internal static IDisposable OverrideGlobalUnlockForTesting(Func<IntPtr, bool> globalUnlock)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalUnlock);
+        Func<IntPtr, bool> previous = _globalUnlock;
+        _globalUnlock = globalUnlock;
+        return global::ReactiveUI.Primitives.Disposables.Scope.Create(previous, static previousOperation => _globalUnlock = previousOperation);
     }
 }

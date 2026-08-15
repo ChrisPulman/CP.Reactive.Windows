@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Enums;
 #else
@@ -24,5 +22,5 @@ public enum DwmThumbnailPropertyFlags
     /// <summary>A value for the visible member has been specified.</summary>
     Visible = 8,
     /// <summary>A value for the source-client-area-only member has been specified.</summary>
-    SourceClientAreaOnly = 0x10
+    SourceClientAreaOnly = 0x10,
 }

@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Windows.Media.Imaging;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 

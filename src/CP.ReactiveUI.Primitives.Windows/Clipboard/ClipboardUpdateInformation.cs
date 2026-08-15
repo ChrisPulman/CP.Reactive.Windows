@@ -13,6 +13,22 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 /// <summary>Information about what the clipboard contained at the most recent clipboard update.</summary>
 public class ClipboardUpdateInformation
 {
+    /// <summary>Gets the default clipboard-owner window handle.</summary>
+    private static Func<IntPtr> _getSharedMessageWindowHandle = static () => SharedMessageWindow.NativeHandle;
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.ClipboardUpdateInformation" /> class.</summary>
+    /// <param name="clipboardAccessToken">The clipboard access token.</param>
+    private ClipboardUpdateInformation(IClipboardAccessToken clipboardAccessToken)
+    {
+        List<uint> formatIds = new();
+        foreach (uint formatId in clipboardAccessToken.AvailableFormatIds())
+        {
+            formatIds.Add(formatId);
+        }
+
+        FormatIds = formatIds;
+    }
+
     /// <summary>Gets the clipboard sequence number, which starts at 0 when the Windows session starts.</summary>
     public uint Id { get; } = ClipboardNative.SequenceNumber;
 
@@ -41,22 +57,9 @@ public class ClipboardUpdateInformation
     /// <summary>Gets the formats in this clipboard content as identifiers.</summary>
     public IEnumerable<uint> FormatIds { get; }
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.ClipboardUpdateInformation" /> class.</summary>
-    /// <param name="clipboardAccessToken">The clipboard access token.</param>
-    private ClipboardUpdateInformation(IClipboardAccessToken clipboardAccessToken)
-    {
-        List<uint> formatIds = new();
-        foreach (uint formatId in clipboardAccessToken.AvailableFormatIds())
-        {
-            formatIds.Add(formatId);
-        }
-
-        FormatIds = formatIds;
-    }
-
     /// <summary>Creates clipboard update information.</summary>
     /// <returns>The clipboard update information.</returns>
-    public static ClipboardUpdateInformation Create() => Create(SharedMessageWindow.NativeHandle);
+    public static ClipboardUpdateInformation Create() => Create(_getSharedMessageWindowHandle());
 
     /// <summary>Creates clipboard update information.</summary>
     /// <param name="windowHandle">The window handle for the clipboard lock.</param>
@@ -65,10 +68,21 @@ public class ClipboardUpdateInformation
     {
         if (windowHandle == IntPtr.Zero)
         {
-            windowHandle = SharedMessageWindow.NativeHandle;
+            windowHandle = _getSharedMessageWindowHandle();
         }
 
         using IClipboardAccessToken clipboard = ClipboardNative.Access(windowHandle);
         return new(clipboard);
+    }
+
+    /// <summary>Overrides the default clipboard-owner window lookup for deterministic tests.</summary>
+    /// <param name="getSharedMessageWindowHandle">The replacement shared message-window handle lookup.</param>
+    /// <returns>A scope that restores the previous lookup.</returns>
+    internal static IDisposable OverrideSharedMessageWindowHandleForTesting(Func<IntPtr> getSharedMessageWindowHandle)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getSharedMessageWindowHandle);
+        Func<IntPtr> previous = _getSharedMessageWindowHandle;
+        _getSharedMessageWindowHandle = getSharedMessageWindowHandle;
+        return Scope.Create(previous, static operation => _getSharedMessageWindowHandle = operation);
     }
 }

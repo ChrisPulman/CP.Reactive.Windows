@@ -13,14 +13,14 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>Abstracts a window-message hook source.</summary>
 internal interface IWindowMessageHookSource
 {
+    /// <summary>Occurs when the hook source is disposed.</summary>
+    event EventHandler Disposed;
+
     /// <summary>Gets the hook source handle.</summary>
     long Handle { get; }
 
     /// <summary>Gets a value indicating whether the hook source has been disposed.</summary>
     bool IsDisposed { get; }
-
-    /// <summary>Occurs when the hook source is disposed.</summary>
-    event EventHandler Disposed;
 
     /// <summary>Adds a window-message hook.</summary>
     /// <param name="hook">The hook to add.</param>

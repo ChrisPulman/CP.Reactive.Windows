@@ -9,11 +9,14 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations;
 /// <summary>Extension methods for <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations.WindowsMessages" />.</summary>
 public static class WindowsMessagesExtensions
 {
+    /// <summary>Provides operations for a single Windows message.</summary>
+    /// <param name="message">The message to examine.</param>
     extension(WindowsMessages message)
     {
         /// <summary>Checks whether the message matches any of the specified values.</summary>
         /// <param name="messages">The candidate messages.</param>
         /// <returns><see langword="true" /> when <paramref name="message" /> is in <paramref name="messages" />.</returns>
-        public bool IsIn(params WindowsMessages[] messages) => Array.IndexOf(messages, message) >= 0;
+        public bool IsIn(params WindowsMessages[] messages) =>
+            Array.IndexOf(messages, message) >= 0;
     }
 }

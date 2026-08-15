@@ -18,11 +18,17 @@ internal static class NativeUtf16String
     /// <returns>The decoded string.</returns>
     internal static unsafe string ReadNullTerminated(ReadOnlySpan<byte> value)
     {
+        if (value.IsEmpty)
+        {
+            return string.Empty;
+        }
+
         checked
         {
-            int byteCount;
-            for (byteCount = 0; byteCount + 1 < value.Length && (value[byteCount] != 0 || value[byteCount + 1] != 0); byteCount += 2)
+            int byteCount = 0;
+            while (ShouldContinue(value, byteCount))
             {
+                byteCount += Utf16CodeUnitByteWidth;
             }
 
             fixed (byte* valuePointer = value)
@@ -31,4 +37,11 @@ internal static class NativeUtf16String
             }
         }
     }
+
+    /// <summary>Determines whether the UTF-16 buffer scan should continue.</summary>
+    /// <param name="value">The byte buffer.</param>
+    /// <param name="byteCount">The current byte offset.</param>
+    /// <returns>true when another non-null UTF-16 code unit is available.</returns>
+    private static bool ShouldContinue(ReadOnlySpan<byte> value, int byteCount) =>
+        byteCount + 1 < value.Length && (value[byteCount] != 0 || value[byteCount + 1] != 0);
 }

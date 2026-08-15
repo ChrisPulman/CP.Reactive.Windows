@@ -13,13 +13,16 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel.Structs;
 /// </summary>
 /// <param name="processId">The process identifier.</param>
 /// <param name="processStartTime">The process start time.</param>
-public readonly struct RmUniqueProcess(int processId, System.Runtime.InteropServices.ComTypes.FILETIME processStartTime) : IEquatable<RmUniqueProcess>
+public readonly struct RmUniqueProcess(
+    int processId,
+    System.Runtime.InteropServices.ComTypes.FILETIME processStartTime) : IEquatable<RmUniqueProcess>
 {
     /// <summary>Gets the process identifier.</summary>
     public int ProcessId { get; } = processId;
 
     /// <summary>Gets the process start time.</summary>
-    public System.Runtime.InteropServices.ComTypes.FILETIME ProcessStartTime { get; } = processStartTime;
+    public System.Runtime.InteropServices.ComTypes.FILETIME ProcessStartTime { get; } =
+        processStartTime;
 
     /// <summary>Checks whether two values are equal.</summary>
     /// <param name="left">The first value.</param>
@@ -40,11 +43,18 @@ public readonly struct RmUniqueProcess(int processId, System.Runtime.InteropServ
     }
 
     /// <inheritdoc />
-    public bool Equals(RmUniqueProcess other) => ProcessId == other.ProcessId && ProcessStartTime.dwLowDateTime == other.ProcessStartTime.dwLowDateTime && ProcessStartTime.dwHighDateTime == other.ProcessStartTime.dwHighDateTime;
+    public bool Equals(RmUniqueProcess other) =>
+        ProcessId == other.ProcessId
+        && ProcessStartTime.dwLowDateTime == other.ProcessStartTime.dwLowDateTime
+        && ProcessStartTime.dwHighDateTime == other.ProcessStartTime.dwHighDateTime;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is RmUniqueProcess other && Equals(other);
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(ProcessId, ProcessStartTime.dwLowDateTime, ProcessStartTime.dwHighDateTime);
+    public override int GetHashCode() =>
+        HashCode.Combine(
+            ProcessId,
+            ProcessStartTime.dwLowDateTime,
+            ProcessStartTime.dwHighDateTime);
 }

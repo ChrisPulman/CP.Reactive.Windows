@@ -13,4 +13,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Security;
 /// <param name="tokenInformationLength">Output token information buffer length.</param>
 /// <param name="returnLength">Required or written buffer length.</param>
 /// <returns>True on success; otherwise, false.</returns>
-internal delegate bool GetTokenInformationOperation(nint tokenHandle, TokenInformationClasses tokenInformationClasses, nint tokenInformation, int tokenInformationLength, out int returnLength);
+internal delegate bool GetTokenInformationOperation(
+    nint tokenHandle,
+    TokenInformationClasses tokenInformationClasses,
+    nint tokenInformation,
+    int tokenInformationLength,
+    out int returnLength);

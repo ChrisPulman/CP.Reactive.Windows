@@ -24,7 +24,10 @@ internal sealed class GdiSafeHandleOperations : IGdiSafeHandleApi
     /// <param name="deleteObject">The delete operation.</param>
     /// <param name="selectObject">The select operation.</param>
     /// <param name="restoreObject">The restore operation.</param>
-    internal GdiSafeHandleOperations(Func<IntPtr, bool> deleteObject, Func<SafeHandle, SafeHandle, IntPtr> selectObject, Func<SafeHandle, IntPtr, IntPtr> restoreObject)
+    internal GdiSafeHandleOperations(
+        Func<IntPtr, bool> deleteObject,
+        Func<SafeHandle, SafeHandle, IntPtr> selectObject,
+        Func<SafeHandle, IntPtr, IntPtr> restoreObject)
     {
         Throw.IfNull(deleteObject);
         Throw.IfNull(selectObject);
@@ -38,8 +41,10 @@ internal sealed class GdiSafeHandleOperations : IGdiSafeHandleApi
     public bool DeleteObject(IntPtr objectHandle) => _deleteObject(objectHandle);
 
     /// <inheritdoc />
-    public IntPtr SelectObject(SafeHandle deviceContext, SafeHandle objectHandle) => _selectObject(deviceContext, objectHandle);
+    public IntPtr SelectObject(SafeHandle deviceContext, SafeHandle objectHandle) =>
+        _selectObject(deviceContext, objectHandle);
 
     /// <inheritdoc />
-    public IntPtr RestoreObject(SafeHandle deviceContext, IntPtr objectHandle) => _restoreObject(deviceContext, objectHandle);
+    public IntPtr RestoreObject(SafeHandle deviceContext, IntPtr objectHandle) =>
+        _restoreObject(deviceContext, objectHandle);
 }

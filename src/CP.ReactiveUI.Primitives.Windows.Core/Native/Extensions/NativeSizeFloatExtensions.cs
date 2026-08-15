@@ -10,6 +10,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 /// <summary>Helper method for the NativeSizeFloatExtensions struct.</summary>
 public static class NativeSizeFloatExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="size">The target value.</param>
     extension(NativeSizeFloat size)
     {
         /// <summary>Create a new NativeSizeFloat, from the supplied one, using the specified width.</summary>
@@ -24,6 +26,7 @@ public static class NativeSizeFloatExtensions
 
         /// <summary>Create a NativeSize, using rounded values, from the specified NativeSizeFloat.</summary>
         /// <returns>NativeSize.</returns>
-        public NativeSize Round() => checked(new NativeSize((int)Math.Round(size.Width), (int)Math.Round(size.Height)));
+        public NativeSize Round() =>
+            checked(new NativeSize((int)Math.Round(size.Width), (int)Math.Round(size.Height)));
     }
 }

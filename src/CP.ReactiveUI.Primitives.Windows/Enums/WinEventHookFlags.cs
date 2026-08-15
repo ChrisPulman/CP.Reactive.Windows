@@ -40,5 +40,5 @@ public enum WinEventHookFlags
     ///     or when the generating process is a console application.
     ///     For more information, see In-Context Hook Functions.
     /// </summary>
-    InContext = 4
+    InContext = 4,
 }

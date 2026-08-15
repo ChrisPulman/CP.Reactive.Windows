@@ -18,6 +18,37 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 [StructLayout(LayoutKind.Explicit)]
 public readonly record struct RawInputDeviceInfo
 {
+    /// <summary>Stores the native structure size.</summary>
+    [FieldOffset(0)]
+    private readonly int _size;
+
+    /// <summary>Stores the native raw input device type.</summary>
+    [FieldOffset(4)]
+    private readonly RawInputDeviceTypes _type;
+
+    /// <summary>Stores mouse device information.</summary>
+    [FieldOffset(8)]
+    private readonly RawInputDeviceInfoMouse _mouse;
+
+    /// <summary>Stores keyboard device information.</summary>
+    [FieldOffset(8)]
+    private readonly RawInputDeviceInfoKeyboard _keyboard;
+
+    /// <summary>Stores HID device information.</summary>
+    [FieldOffset(8)]
+    private readonly RawInputDeviceInfoHID _hid;
+
+    /// <summary>Initializes a new instance of the <see cref="RawInputDeviceInfo"/> struct for the supplied device type.</summary>
+    /// <param name="type">The raw-input device type.</param>
+    internal RawInputDeviceInfo(RawInputDeviceTypes type)
+    {
+        _size = Marshal.SizeOf<RawInputDeviceInfo>();
+        _type = type;
+        _mouse = default;
+        _keyboard = default;
+        _hid = default;
+    }
+
     /// <summary>Gets the type RawInput device.</summary>
     public RawInputDeviceTypes Type => _type;
 
@@ -65,35 +96,4 @@ public readonly record struct RawInputDeviceInfo
 
     /// <summary>Gets the native structure size.</summary>
     internal int Size => _size;
-
-    /// <summary>Stores the native structure size.</summary>
-    [FieldOffset(0)]
-    private readonly int _size;
-
-    /// <summary>Stores the native raw input device type.</summary>
-    [FieldOffset(4)]
-    private readonly RawInputDeviceTypes _type;
-
-    /// <summary>Stores mouse device information.</summary>
-    [FieldOffset(8)]
-    private readonly RawInputDeviceInfoMouse _mouse;
-
-    /// <summary>Stores keyboard device information.</summary>
-    [FieldOffset(8)]
-    private readonly RawInputDeviceInfoKeyboard _keyboard;
-
-    /// <summary>Stores HID device information.</summary>
-    [FieldOffset(8)]
-    private readonly RawInputDeviceInfoHID _hid;
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs.RawInputDeviceInfo" /> class for the supplied device type.</summary>
-    /// <param name="type">The raw-input device type.</param>
-    internal RawInputDeviceInfo(RawInputDeviceTypes type)
-    {
-        _size = Marshal.SizeOf<RawInputDeviceInfo>();
-        _type = type;
-        _mouse = default;
-        _keyboard = default;
-        _hid = default;
-    }
 }

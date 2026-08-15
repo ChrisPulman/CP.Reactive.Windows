@@ -2,7 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 using CP.ReactiveUI.Primitives.Windows.Native.Kernel.Enums;
 
@@ -48,6 +47,7 @@ public sealed class StateCoverageAdditionalTests
     {
         var format = $"CP_STATE_STREAM_{Guid.NewGuid():N}";
         var expected = "non-seekable clipboard payload"u8.ToArray();
+        using var clipboard = new DeterministicClipboard();
 
         using var clipboardAccessToken = await ClipboardNative.AccessAsync();
         await Assert.That(clipboardAccessToken.CanAccess).IsTrue();
@@ -217,6 +217,9 @@ public sealed class StateCoverageAdditionalTests
         await Assert.That(timer.IsValid).IsFalse();
 
         timer.Dispose();
+
+        var nullHandleTimer = new WaitableTimer(handle: null);
+        nullHandleTimer.Dispose();
     }
 
     /// <summary>Tests safe power-management constants and non-destructive execution-state helpers.</summary>

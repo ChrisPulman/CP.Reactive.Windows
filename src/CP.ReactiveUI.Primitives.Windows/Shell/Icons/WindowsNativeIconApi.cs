@@ -26,25 +26,54 @@ internal sealed class WindowsNativeIconApi : INativeIconApi
     public IntPtr CreateIconIndirect(ref IconInfo icon) => NativeIconMethods.NativeMethods.CreateIconIndirect(ref icon);
 
     /// <inheritdoc />
-    public bool DrawIconEx(in NativeIconMethods.DrawIconArguments arguments) => NativeIconMethods.NativeMethods.DrawIconEx(arguments.DeviceContext, arguments.Left, arguments.Top, arguments.IconHandle, arguments.Width, arguments.Height, arguments.AnimationStep, arguments.FlickerFreeBrush, arguments.Flags);
-
-    /// <inheritdoc />
     public bool GetIconInfo(SafeIconHandle iconHandle, out IconInfo iconInfo) => NativeIconMethods.NativeMethods.GetIconInfo(iconHandle, out iconInfo);
 
     /// <inheritdoc />
     public bool GetIconInfoEx(IntPtr iconOrCursorHandle, ref IconInfoEx iconInfoEx) => NativeIconMethods.NativeMethods.GetIconInfoEx(iconOrCursorHandle, ref iconInfoEx);
 
     /// <inheritdoc />
-    public int LoadIconMetric(IntPtr instanceHandle, IntPtr iconName, IconMetricSize lims, out IntPtr iconHandle) => NativeIconMethods.NativeMethods.LoadIconMetric(instanceHandle, iconName, lims, out iconHandle);
+    public int LoadIconMetric(
+        IntPtr instanceHandle,
+        IntPtr iconName,
+        IconMetricSize lims,
+        out IntPtr iconHandle) =>
+        NativeIconMethods.NativeMethods.LoadIconMetric(instanceHandle, iconName, lims, out iconHandle);
 
     /// <inheritdoc />
-    public int LoadIconMetric(IntPtr instanceHandle, string iconName, IconMetricSize lims, out IntPtr iconHandle) => NativeIconMethods.NativeMethods.LoadIconMetric(instanceHandle, iconName, lims, out iconHandle);
+    public int LoadIconMetric(
+        IntPtr instanceHandle,
+        string iconName,
+        IconMetricSize lims,
+        out IntPtr iconHandle) =>
+        NativeIconMethods.NativeMethods.LoadIconMetric(instanceHandle, iconName, lims, out iconHandle);
 
     /// <inheritdoc />
-    public int LoadIconWithScaleDown(IntPtr instanceHandle, IntPtr iconName, int cx, int cy, out IntPtr iconHandle) => NativeIconMethods.NativeMethods.LoadIconWithScaleDown(instanceHandle, iconName, cx, cy, out iconHandle);
+    public int LoadIconWithScaleDown(
+        IntPtr instanceHandle,
+        IntPtr iconName,
+        int cx,
+        int cy,
+        out IntPtr iconHandle) =>
+        NativeIconMethods.NativeMethods.LoadIconWithScaleDown(instanceHandle, iconName, cx, cy, out iconHandle);
 
     /// <inheritdoc />
-    public int LoadIconWithScaleDown(IntPtr instanceHandle, string iconName, int cx, int cy, out IntPtr iconHandle) => NativeIconMethods.NativeMethods.LoadIconWithScaleDown(instanceHandle, iconName, cx, cy, out iconHandle);
+    public int LoadIconWithScaleDown(
+        IntPtr instanceHandle,
+        string iconName,
+        int cx,
+        int cy,
+        out IntPtr iconHandle) =>
+        NativeIconMethods.NativeMethods.LoadIconWithScaleDown(instanceHandle, iconName, cx, cy, out iconHandle);
 
-    bool INativeIconApi.DrawIconEx(in NativeIconMethods.DrawIconArguments arguments) => DrawIconEx(in arguments);
+    bool INativeIconApi.DrawIconEx(in NativeIconMethods.DrawIconArguments arguments) =>
+        NativeIconMethods.NativeMethods.DrawIconEx(
+            arguments.DeviceContext,
+            arguments.Left,
+            arguments.Top,
+            arguments.IconHandle,
+            arguments.Width,
+            arguments.Height,
+            arguments.AnimationStep,
+            arguments.FlickerFreeBrush,
+            arguments.Flags);
 }

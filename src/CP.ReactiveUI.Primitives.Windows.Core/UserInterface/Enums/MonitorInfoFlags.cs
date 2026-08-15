@@ -12,6 +12,7 @@ public enum MonitorInfoFlags
 {
     /// <summary>No monitor information flags.</summary>
     None = 0,
+
     /// <summary>This is the primary display monitor.</summary>
-    Primary = 1
+    Primary = 1,
 }

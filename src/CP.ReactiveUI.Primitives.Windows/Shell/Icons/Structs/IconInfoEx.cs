@@ -17,56 +17,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
 {
-    /// <summary>Stores the fixed-size native UTF-16 icon-name buffer.</summary>
-    [StructLayout(LayoutKind.Sequential, Size = 520)]
-    private readonly struct IconNameBuffer
-    {
-        /// <summary>The number of UTF-16 characters reserved for each native name.</summary>
-        private const int IconNameLength = 260;
-
-        /// <summary>Anchors the explicitly sized unmanaged buffer.</summary>
-        private readonly byte _firstByte;
-
-        /// <summary>Reads the null-terminated buffer contents.</summary>
-        /// <returns>The buffer text.</returns>
-        internal unsafe string GetText()
-        {
-            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
-            {
-                char* name = (char*)ptr;
-                int length;
-                for (length = 0; length < 260 && *(ushort*)((byte*)name + checked(unchecked((nint)length) * (nint)2)) != 0; length = checked(length + 1))
-                {
-                }
-
-                return new(name, 0, length);
-            }
-        }
-
-        /// <summary>Clears the first character in the buffer.</summary>
-        internal unsafe void Clear()
-        {
-            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
-            {
-                *(short*)ptr = 0;
-            }
-        }
-
-        /// <summary>Fills the complete buffer with a character.</summary>
-        /// <param name="value">The character value.</param>
-        internal unsafe void Fill(char value)
-        {
-            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
-            {
-                char* characters = (char*)ptr;
-                for (int index = 0; index < 260; index = checked(index + 1))
-                {
-                    *(char*)((byte*)characters + checked(unchecked((nint)index) * (nint)2)) = value;
-                }
-            }
-        }
-    }
-
     /// <summary>Stores the structure size.</summary>
     private readonly uint _structureSize;
 
@@ -158,26 +108,19 @@ public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
     }
 
     /// <inheritdoc />
-    public bool Equals(IconInfoEx other)
-    {
-        if (_structureSize == other._structureSize && _isIcon == other._isIcon && _hotspotX == other._hotspotX && _hotspotY == other._hotspotY && _maskBitmapHandle == other._maskBitmapHandle && _colorBitmapHandle == other._colorBitmapHandle && _resourceId == other._resourceId && ModuleName == other.ModuleName)
-        {
-            return ResourceName == other.ResourceName;
-        }
-
-        return false;
-    }
+    public bool Equals(IconInfoEx other) =>
+        _structureSize == other._structureSize
+        && _isIcon == other._isIcon
+        && _hotspotX == other._hotspotX
+        && _hotspotY == other._hotspotY
+        && _maskBitmapHandle == other._maskBitmapHandle
+        && _colorBitmapHandle == other._colorBitmapHandle
+        && _resourceId == other._resourceId
+        && ModuleName == other.ModuleName
+        && ResourceName == other.ResourceName;
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is IconInfoEx other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is IconInfoEx other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_structureSize, _isIcon, _hotspotX, _hotspotY, _maskBitmapHandle, _colorBitmapHandle, _resourceId);
@@ -200,5 +143,60 @@ public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
         IconInfoEx iconInfo = Create();
         iconInfo._moduleName.Fill(value);
         return iconInfo;
+    }
+
+    /// <summary>Stores the fixed-size native UTF-16 icon-name buffer.</summary>
+    [StructLayout(LayoutKind.Sequential, Size = 520)]
+    private readonly struct IconNameBuffer
+    {
+        /// <summary>The number of UTF-16 characters reserved for each native name.</summary>
+        private const int IconNameLength = 260;
+
+        /// <summary>The size of one UTF-16 character in bytes.</summary>
+        private const nint WideCharacterSize = sizeof(char);
+
+        /// <summary>Anchors the explicitly sized unmanaged buffer.</summary>
+        private readonly byte _firstByte;
+
+        /// <summary>Reads the null-terminated buffer contents.</summary>
+        /// <returns>The buffer text.</returns>
+        internal unsafe string GetText()
+        {
+            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
+            {
+                char* name = (char*)ptr;
+                int length = 0;
+                while (length < IconNameLength
+                    && *(ushort*)((byte*)name + checked(unchecked((nint)length) * WideCharacterSize)) != 0)
+                {
+                    length++;
+                }
+
+                return new(name, 0, length);
+            }
+        }
+
+        /// <summary>Clears the first character in the buffer.</summary>
+        internal unsafe void Clear()
+        {
+            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
+            {
+                *(short*)ptr = 0;
+            }
+        }
+
+        /// <summary>Fills the complete buffer with a character.</summary>
+        /// <param name="value">The character value.</param>
+        internal unsafe void Fill(char value)
+        {
+            fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
+            {
+                char* characters = (char*)ptr;
+                for (int index = 0; index < IconNameLength; index = checked(index + 1))
+                {
+                    *(char*)((byte*)characters + checked(unchecked((nint)index) * WideCharacterSize)) = value;
+                }
+            }
+        }
     }
 }

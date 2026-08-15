@@ -22,5 +22,5 @@ public enum ApplicationRestartFlags : uint
     /// <summary>Do not restart the process if it terminates due to the installation of an update.</summary>
     RestartNoPatch = 4U,
     /// <summary>Do not restart the process if the computer is restarted as the result of an update.</summary>
-    RestartNoReboot = 8U
+    RestartNoReboot = 8U,
 }

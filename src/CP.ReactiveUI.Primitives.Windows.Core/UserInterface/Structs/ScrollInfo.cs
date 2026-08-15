@@ -73,7 +73,8 @@ public struct ScrollInfo : IEquatable<ScrollInfo>
     /// <summary>Create a ScrollInfo struct with the specified mask.</summary>
     /// <param name="mask">ScrollInfoMask.</param>
     /// <returns>The initialized scroll information.</returns>
-    public static ScrollInfo Create(ScrollInfoMask mask) => new(checked((uint)Marshal.SizeOf<ScrollInfo>()), mask);
+    public static ScrollInfo Create(ScrollInfoMask mask) =>
+        new(checked((uint)Marshal.SizeOf<ScrollInfo>()), mask);
 
     /// <summary>Compares two ScrollInfo values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -94,10 +95,19 @@ public struct ScrollInfo : IEquatable<ScrollInfo>
     }
 
     /// <inheritdoc />
-    public override readonly string ToString() => $"{{Minimum = {_nativeMinimum}; Maximum = {_nativeMaximum};PageSize = {_nativePageSize};Position = {_nativePosition};TrackingPosition = {_nativeTrackingPosition};}}";
+    public override readonly string ToString() =>
+        $"{{Minimum = {_nativeMinimum}; Maximum = {_nativeMaximum};PageSize = {_nativePageSize};"
+        + $"Position = {_nativePosition};TrackingPosition = {_nativeTrackingPosition};}}";
 
     /// <inheritdoc />
-    public readonly bool Equals(ScrollInfo other) => _nativeSize == other._nativeSize && _nativeMask == other._nativeMask && _nativeMinimum == other._nativeMinimum && _nativeMaximum == other._nativeMaximum && _nativePageSize == other._nativePageSize && _nativePosition == other._nativePosition && _nativeTrackingPosition == other._nativeTrackingPosition;
+    public readonly bool Equals(ScrollInfo other) =>
+        _nativeSize == other._nativeSize
+        && _nativeMask == other._nativeMask
+        && _nativeMinimum == other._nativeMinimum
+        && _nativeMaximum == other._nativeMaximum
+        && _nativePageSize == other._nativePageSize
+        && _nativePosition == other._nativePosition
+        && _nativeTrackingPosition == other._nativeTrackingPosition;
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is ScrollInfo other && Equals(other);

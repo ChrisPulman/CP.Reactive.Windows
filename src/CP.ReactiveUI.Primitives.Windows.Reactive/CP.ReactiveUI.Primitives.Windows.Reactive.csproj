@@ -6,6 +6,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
     <DefineConstants>$(DefineConstants);REACTIVE_SHIM</DefineConstants>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
@@ -16,8 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="..\CP.ReactiveUI.Primitives.Windows\.codex-diagnostics\**\*.cs" />
+    <Compile Remove="..\CP.ReactiveUI.Primitives.Windows\.codex-recovery\**\*.cs" />
     <Compile Include="..\CP.ReactiveUI.Primitives.Windows\**\*.cs"
-             Exclude="..\CP.ReactiveUI.Primitives.Windows\bin\**;..\CP.ReactiveUI.Primitives.Windows\obj\**"
+             Exclude="..\CP.ReactiveUI.Primitives.Windows\bin\**;..\CP.ReactiveUI.Primitives.Windows\obj\**;..\CP.ReactiveUI.Primitives.Windows\.codex-diagnostics\**;..\CP.ReactiveUI.Primitives.Windows\.codex-recovery\**"
              LinkBase="Shared" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
     <PackageReference Include="log4net" />
@@ -27,8 +30,10 @@
 
   <ItemGroup>
     <Using Include="System" />
+    <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Collections.Generic" />
     <Using Include="System.ComponentModel" />
+    <Using Include="System.Diagnostics" />
     <Using Include="System.Drawing" />
     <Using Include="System.Drawing.Imaging" />
     <Using Include="System.IO" />
@@ -38,6 +43,8 @@
     <Using Include="System.Runtime.InteropServices.Marshalling.GeneratedComInterfaceAttribute" Alias="GeneratedComInterface" Condition="'$(TargetFrameworkIdentifier)' != '.NETFramework'" />
     <Using Include="System.Threading" />
     <Using Include="System.Threading.Tasks" />
+    <Using Include="System.Text" />
+    <Using Include="Microsoft.Win32.SafeHandles" />
     <Using Include="log4net" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Apps" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals" />
@@ -67,8 +74,10 @@
     <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows.Enums" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Enums" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Extensions" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Structs" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" />

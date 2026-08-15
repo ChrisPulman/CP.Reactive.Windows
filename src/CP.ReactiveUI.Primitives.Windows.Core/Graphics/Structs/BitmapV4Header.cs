@@ -18,6 +18,9 @@ public struct BitmapV4Header : IEquatable<BitmapV4Header>
     /// <summary>Number of bytes in each bitfield color mask.</summary>
     private const uint BitfieldColorMaskSize = 4U;
 
+    /// <summary>Number of bytes used by all bitfield color masks.</summary>
+    private const uint BitfieldColorMaskByteCount = BitfieldColorMaskCount * BitfieldColorMaskSize;
+
     /// <summary>Number of bits to shift to convert bits per pixel to bytes per pixel.</summary>
     private const int BitsPerByteShift = 3;
 
@@ -35,6 +38,18 @@ public struct BitmapV4Header : IEquatable<BitmapV4Header>
 
     /// <summary>Alpha channel bit shift.</summary>
     private const int AlphaMaskShift = 24;
+
+    /// <summary>Default red channel mask.</summary>
+    private const uint DefaultRedMask = ColorChannelMask << RedMaskShift;
+
+    /// <summary>Default green channel mask.</summary>
+    private const uint DefaultGreenMask = ColorChannelMask << GreenMaskShift;
+
+    /// <summary>Default blue channel mask.</summary>
+    private const uint DefaultBlueMask = ColorChannelMask;
+
+    /// <summary>Default alpha channel mask.</summary>
+    private const uint DefaultAlphaMask = ColorChannelMask << AlphaMaskShift;
 
     /// <summary>Hash code used for mutable value instances.</summary>
     private const int MutableValueHashCode = 0;
@@ -266,36 +281,41 @@ public struct BitmapV4Header : IEquatable<BitmapV4Header>
     public readonly bool IsDibV5 => _size >= checked((uint)Marshal.SizeOf<BitmapV5Header>());
 
     /// <summary>Gets the offset to the pixels.</summary>
-    public readonly uint OffsetToPixels => _compression != BitmapCompressionMethods.BI_BITFIELDS ? _size : checked(_size + 12);
+    public readonly uint OffsetToPixels =>
+        _compression != BitmapCompressionMethods.BI_BITFIELDS
+            ? _size
+            : checked(_size + BitfieldColorMaskByteCount);
 
     /// <summary>Create a BitmapV4Header with values.</summary>
     /// <param name="width">The width of the bitmap.</param>
     /// <param name="height">The height of the bitmap.</param>
     /// <param name="bpp">The bits per pixel of the bitmap.</param>
     /// <returns>The created bitmap V4 header.</returns>
-    public static BitmapV4Header Create(int width, int height, ushort bpp) => checked(new BitmapV4Header
-        {
-            Size = (uint)Marshal.SizeOf<BitmapV4Header>(),
-            Planes = 1,
-            Compression = BitmapCompressionMethods.BI_RGB,
-            Width = width,
-            Height = height,
-            BitCount = bpp,
-            SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
-            XPelsPerMeter = 0,
-            YPelsPerMeter = 0,
-            ColorsUsed = 0U,
-            ColorsImportant = 0U,
-            RedMask = 16_711_680U,
-            GreenMask = 65_280U,
-            BlueMask = 255U,
-            AlphaMask = 4_278_190_080U,
-            ColorSpace = ColorSpace.LCS_sRGB,
-            Endpoints = new CieXyzTriple { Blue = CieXyz.Create(0U), Green = CieXyz.Create(0U), Red = CieXyz.Create(0U) },
-            GammaRed = 0U,
-            GammaGreen = 0U,
-            GammaBlue = 0U
-        });
+    public static BitmapV4Header Create(int width, int height, ushort bpp) =>
+        checked(
+            new BitmapV4Header
+            {
+                Size = (uint)Marshal.SizeOf<BitmapV4Header>(),
+                Planes = DevicePlaneCount,
+                Compression = BitmapCompressionMethods.BI_RGB,
+                Width = width,
+                Height = height,
+                BitCount = bpp,
+                SizeImage = (uint)(width * Math.Abs(height) * (bpp >> 3)),
+                XPelsPerMeter = 0,
+                YPelsPerMeter = 0,
+                ColorsUsed = 0U,
+                ColorsImportant = 0U,
+                RedMask = DefaultRedMask,
+                GreenMask = DefaultGreenMask,
+                BlueMask = DefaultBlueMask,
+                AlphaMask = DefaultAlphaMask,
+                ColorSpace = ColorSpace.LCS_sRGB,
+                Endpoints = new CieXyzTriple { Blue = CieXyz.Create(0U), Green = CieXyz.Create(0U), Red = CieXyz.Create(0U) },
+                GammaRed = 0U,
+                GammaGreen = 0U,
+                GammaBlue = 0U,
+            });
 
     /// <summary>Determines whether two bitmap V4 headers are equal.</summary>
     /// <param name="left">The left header.</param>
@@ -316,10 +336,51 @@ public struct BitmapV4Header : IEquatable<BitmapV4Header>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(BitmapV4Header other) => (_size, _width, _height, _planes, _bitCount, _compression).Equals((other._size, other._width, other._height, other._planes, other._bitCount, other._compression)) && (_sizeImage, _horizontalPixelsPerMeter, _verticalPixelsPerMeter, _colorsUsed, _colorsImportant, _redMask).Equals((other._sizeImage, other._horizontalPixelsPerMeter, other._verticalPixelsPerMeter, other._colorsUsed, other._colorsImportant, other._redMask)) && (_greenMask, _blueMask, _alphaMask, _colorSpace, _endpoints, _gammaRed, _gammaGreen, _gammaBlue).Equals((other._greenMask, other._blueMask, other._alphaMask, other._colorSpace, other._endpoints, other._gammaRed, other._gammaGreen, other._gammaBlue));
+    public readonly bool Equals(BitmapV4Header other) =>
+        (_size, _width, _height, _planes, _bitCount, _compression).Equals(
+            (
+                other._size,
+                other._width,
+                other._height,
+                other._planes,
+                other._bitCount,
+                other._compression))
+        && (
+            _sizeImage,
+            _horizontalPixelsPerMeter,
+            _verticalPixelsPerMeter,
+            _colorsUsed,
+            _colorsImportant,
+            _redMask).Equals(
+            (
+                other._sizeImage,
+                other._horizontalPixelsPerMeter,
+                other._verticalPixelsPerMeter,
+                other._colorsUsed,
+                other._colorsImportant,
+                other._redMask))
+        && (
+            _greenMask,
+            _blueMask,
+            _alphaMask,
+            _colorSpace,
+            _endpoints,
+            _gammaRed,
+            _gammaGreen,
+            _gammaBlue).Equals(
+            (
+                other._greenMask,
+                other._blueMask,
+                other._alphaMask,
+                other._colorSpace,
+                other._endpoints,
+                other._gammaRed,
+                other._gammaGreen,
+                other._gammaBlue));
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is BitmapV4Header other && Equals(other);
+    public override readonly bool Equals(object obj) =>
+        obj is BitmapV4Header other && Equals(other);
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => 0;

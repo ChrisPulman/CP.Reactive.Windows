@@ -16,37 +16,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi;
 /// <summary>Default native DPI API implementation.</summary>
 internal sealed class WindowsNativeDpiApi : INativeDpiApi
 {
-    /// <summary>Default native DPI operation implementation.</summary>
-    private sealed class NativeDpiOperations : INativeDpiOperations
-    {
-        /// <summary>Gets the singleton native operation implementation.</summary>
-        internal static NativeDpiOperations Shared { get; } = new();
-
-        /// <inheritdoc />
-        public IDisposable DefaultScopedThreadDpiAwarenessContext() => NativeDpiMethods.DefaultScopedThreadDpiAwarenessContextCore();
-
-        /// <inheritdoc />
-        public HResult EnableNonClientDpiScaling(IntPtr windowHandle) => NativeDpiMethods.EnableNonClientDpiScalingCore(windowHandle);
-
-        /// <inheritdoc />
-        public int GetDpi(IntPtr windowHandle) => NativeDpiMethods.GetDpiCore(windowHandle);
-
-        /// <inheritdoc />
-        public int GetDpi(NativePoint location) => NativeDpiMethods.GetDpiCore(location);
-
-        /// <inheritdoc />
-        public uint GetDpiForSystem() => NativeDpiMethods.NativeMethods.GetDpiForSystem();
-
-        /// <inheritdoc />
-        public int GetSystemMetricsForDpi(SystemMetric index, uint dpi) => NativeDpiMethods.NativeMethods.GetSystemMetricsForDpi(index, dpi);
-
-        /// <inheritdoc />
-        public bool AdjustWindowRectExForDpi(ref NativeRect rect, WindowStyleFlags style, bool hasMenu, ExtendedWindowStyleFlags extendedStyle, uint dpi) => NativeDpiMethods.AdjustWindowRectExForDpiCore(ref rect, style, hasMenu, extendedStyle, dpi);
-
-        /// <inheritdoc />
-        public bool SystemParametersInfoForDpi(SystemParametersInfoActions action, uint uiParameter, IntPtr parameter, SystemParametersInfoBehaviors updateProfileFlags, uint dpi) => NativeDpiMethods.NativeMethods.SystemParametersInfoForDpi(action, uiParameter, parameter, updateProfileFlags, dpi);
-    }
-
     /// <summary>The active native operation implementation.</summary>
     private static INativeDpiOperations _operations = NativeDpiOperations.Shared;
 
@@ -72,10 +41,22 @@ internal sealed class WindowsNativeDpiApi : INativeDpiApi
     public int GetSystemMetricsForDpi(SystemMetric index, uint dpi) => _operations.GetSystemMetricsForDpi(index, dpi);
 
     /// <inheritdoc />
-    public bool AdjustWindowRectExForDpi(ref NativeRect rect, WindowStyleFlags style, bool hasMenu, ExtendedWindowStyleFlags extendedStyle, uint dpi) => _operations.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi);
+    public bool AdjustWindowRectExForDpi(
+        ref NativeRect rect,
+        WindowStyleFlags style,
+        bool hasMenu,
+        ExtendedWindowStyleFlags extendedStyle,
+        uint dpi) =>
+        _operations.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi);
 
     /// <inheritdoc />
-    public bool SystemParametersInfoForDpi(SystemParametersInfoActions action, uint uiParameter, IntPtr parameter, SystemParametersInfoBehaviors updateProfileFlags, uint dpi) => _operations.SystemParametersInfoForDpi(action, uiParameter, parameter, updateProfileFlags, dpi);
+    public bool SystemParametersInfoForDpi(
+        SystemParametersInfoActions action,
+        uint uiParameter,
+        IntPtr parameter,
+        SystemParametersInfoBehaviors updateProfileFlags,
+        uint dpi) =>
+        _operations.SystemParametersInfoForDpi(action, uiParameter, parameter, updateProfileFlags, dpi);
 
     /// <summary>Exchanges native operation delegates for deterministic testing.</summary>
     /// <param name="operations">The replacement operations.</param>
@@ -86,5 +67,56 @@ internal sealed class WindowsNativeDpiApi : INativeDpiApi
         INativeDpiOperations operations2 = _operations;
         _operations = operations;
         return operations2;
+    }
+
+    /// <summary>Default native DPI operation implementation.</summary>
+    private sealed class NativeDpiOperations : INativeDpiOperations
+    {
+        /// <summary>Gets the singleton native operation implementation.</summary>
+        internal static NativeDpiOperations Shared { get; } = new();
+
+        /// <inheritdoc />
+        public IDisposable DefaultScopedThreadDpiAwarenessContext() =>
+            NativeDpiMethods.DefaultScopedThreadDpiAwarenessContextCore();
+
+        /// <inheritdoc />
+        public HResult EnableNonClientDpiScaling(IntPtr windowHandle) =>
+            NativeDpiMethods.EnableNonClientDpiScalingCore(windowHandle);
+
+        /// <inheritdoc />
+        public int GetDpi(IntPtr windowHandle) => NativeDpiMethods.GetDpiCore(windowHandle);
+
+        /// <inheritdoc />
+        public int GetDpi(NativePoint location) => NativeDpiMethods.GetDpiCore(location);
+
+        /// <inheritdoc />
+        public uint GetDpiForSystem() => NativeDpiMethods.NativeMethods.GetDpiForSystem();
+
+        /// <inheritdoc />
+        public int GetSystemMetricsForDpi(SystemMetric index, uint dpi) =>
+            NativeDpiMethods.NativeMethods.GetSystemMetricsForDpi(index, dpi);
+
+        /// <inheritdoc />
+        public bool AdjustWindowRectExForDpi(
+            ref NativeRect rect,
+            WindowStyleFlags style,
+            bool hasMenu,
+            ExtendedWindowStyleFlags extendedStyle,
+            uint dpi) =>
+            NativeDpiMethods.AdjustWindowRectExForDpiCore(ref rect, style, hasMenu, extendedStyle, dpi);
+
+        /// <inheritdoc />
+        public bool SystemParametersInfoForDpi(
+            SystemParametersInfoActions action,
+            uint uiParameter,
+            IntPtr parameter,
+            SystemParametersInfoBehaviors updateProfileFlags,
+            uint dpi) =>
+            NativeDpiMethods.NativeMethods.SystemParametersInfoForDpi(
+                action,
+                uiParameter,
+                parameter,
+                updateProfileFlags,
+                dpi);
     }
 }

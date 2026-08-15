@@ -49,26 +49,12 @@ internal readonly struct FilterSpec(string name, string spec) : IEquatable<Filte
     }
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is FilterSpec other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is FilterSpec other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(FilterSpec other)
-    {
-        if (string.Equals(_name, other._name, StringComparison.Ordinal))
-        {
-            return string.Equals(_spec, other._spec, StringComparison.Ordinal);
-        }
-
-        return false;
-    }
+    public bool Equals(FilterSpec other) =>
+        string.Equals(_name, other._name, StringComparison.Ordinal)
+        && string.Equals(_spec, other._spec, StringComparison.Ordinal);
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_name, _spec);

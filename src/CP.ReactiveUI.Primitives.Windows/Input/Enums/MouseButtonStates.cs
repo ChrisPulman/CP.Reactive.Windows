@@ -39,5 +39,5 @@ public enum MouseButtonStates
     /// <summary>XBUTTON2 changed to up.</summary>
     Buttonx2Up = 0x200,
     /// <summary>Raw input comes from a mouse wheel. The wheel delta is stored in usButtonData.</summary>
-    Wheel = 0x400
+    Wheel = 0x400,
 }

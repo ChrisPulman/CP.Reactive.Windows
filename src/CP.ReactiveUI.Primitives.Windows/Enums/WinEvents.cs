@@ -408,5 +408,5 @@ public enum WinEvents : uint
     /// <summary>Represents the EVENT_AIA_END value.</summary>
     EVENT_AIA_END = 45_055U,
     /// <summary>Represents the EVENT_MAX value.</summary>
-    EVENT_MAX = 2_147_483_647U
+    EVENT_MAX = 2_147_483_647U,
 }

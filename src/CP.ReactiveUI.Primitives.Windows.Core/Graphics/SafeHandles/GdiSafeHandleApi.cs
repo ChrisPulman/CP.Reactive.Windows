@@ -11,7 +11,10 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
 internal static class GdiSafeHandleApi
 {
     /// <summary>Stores the active GDI implementation.</summary>
-    private static IGdiSafeHandleApi _current = new GdiSafeHandleOperations(Gdi32Api.DeleteObject, Gdi32Api.SelectObjectHandle, Gdi32Api.RestoreObjectHandle);
+    private static IGdiSafeHandleApi _current = new GdiSafeHandleOperations(
+        Gdi32Api.DeleteObject,
+        Gdi32Api.SelectObjectHandle,
+        Gdi32Api.RestoreObjectHandle);
 
     /// <summary>Gets the active GDI implementation.</summary>
     internal static IGdiSafeHandleApi Current => Volatile.Read(ref _current);

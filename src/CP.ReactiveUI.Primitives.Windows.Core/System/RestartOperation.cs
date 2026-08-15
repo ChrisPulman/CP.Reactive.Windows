@@ -9,4 +9,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="restartFlags">The restart flags.</param>
 /// <param name="statusCallback">The status callback.</param>
 /// <returns>The native result code.</returns>
-internal delegate int RestartOperation(int sessionHandle, int restartFlags, RmStatusCallback statusCallback);
+internal delegate int RestartOperation(
+    int sessionHandle,
+    int restartFlags,
+    RmStatusCallback statusCallback);

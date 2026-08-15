@@ -61,5 +61,5 @@ public enum HidUsagesGeneric
     /// <summary>Select usage.</summary>
     Select = 62,
     /// <summary>Muilt-axis Controller.</summary>
-    SystemControl = 128
+    SystemControl = 128,
 }

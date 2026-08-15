@@ -32,50 +32,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
 /// <summary>Helper methods for using cursor information.</summary>
 public static class CursorHelper
 {
-    /// <summary>Stores a source mask/color pixel.</summary>
-    /// <param name="Mask">The mask value.</param>
-    /// <param name="Red">The red component.</param>
-    /// <param name="Green">The green component.</param>
-    /// <param name="Blue">The blue component.</param>
-    private readonly record struct MaskColor(byte Mask, byte Red, byte Green, byte Blue);
-
-    /// <summary>Stores the selected cursor handle and whether this helper owns it.</summary>
-    private readonly record struct CursorHandleSelection
-    {
-        /// <summary>Gets a value indicating whether this helper owns the handle.</summary>
-        public bool IsFresh { get; }
-
-        /// <summary>The selected cursor handle.</summary>
-        private readonly IntPtr _handle;
-
-        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.CursorHelper.CursorHandleSelection" /> struct.</summary>
-        /// <param name="handle">The selected cursor handle.</param>
-        /// <param name="isFresh">A value indicating whether this helper owns the handle.</param>
-        public CursorHandleSelection(IntPtr handle, bool isFresh)
-        {
-            _handle = handle;
-            IsFresh = isFresh;
-        }
-
-        /// <summary>Gets the native cursor handle.</summary>
-        /// <returns>The native cursor handle.</returns>
-        public IntPtr ToIntPtr() => _handle;
-
-        [CompilerGenerated]
-        public override int GetHashCode() => (EqualityComparer<IntPtr>.Default.GetHashCode(_handle) * -1_521_134_295) + EqualityComparer<bool>.Default.GetHashCode(IsFresh);
-
-        [CompilerGenerated]
-        public bool Equals(CursorHandleSelection other)
-        {
-            if (EqualityComparer<IntPtr>.Default.Equals(_handle, other._handle))
-            {
-                return EqualityComparer<bool>.Default.Equals(IsFresh, other.IsFresh);
-            }
-
-            return false;
-        }
-    }
-
     /// <summary>The byte offset of the alpha channel in BGRA pixels.</summary>
     private const int AlphaByteOffset = 3;
 
@@ -100,6 +56,21 @@ public static class CursorHelper
     /// <summary>Reads the configured cursor base size.</summary>
     private static Func<int?> _cursorBaseSizeProvider = ReadConfiguredCursorBaseSize;
 
+    /// <summary>Retrieves the current cursor information.</summary>
+    private static CursorInfoProvider _cursorInfoProvider = User32Api.GetCursorInfo;
+
+    /// <summary>Retrieves extended cursor icon information.</summary>
+    private static CursorIconInfoProvider _cursorIconInfoProvider = NativeIconMethods.GetIconInfoEx;
+
+    /// <summary>Captures the current cursor layers.</summary>
+    private static CursorCaptureOperation _cursorCaptureOperation = CaptureCurrentCursor;
+
+    /// <summary>Renders native cursor handles into bitmaps.</summary>
+    private static CursorBitmapRenderer _cursorBitmapRenderer = BitmapFromHIcon;
+
+    /// <summary>Creates mask layers for alpha-less cursor color bitmaps.</summary>
+    private static CursorMaskLayerProvider _cursorMaskLayerProvider = CreateCursorMaskLayer;
+
     /// <summary>Gets the base size of the mouse cursor, in pixels, as configured by the user in the system settings.</summary>
     /// <remarks>This method reads the 'CursorBaseSize' value from the Windows Registry under 'Control
     /// Panel\Cursors'. If the value is not found or an error occurs while accessing the registry, a default size of 32
@@ -119,7 +90,7 @@ public static class CursorHelper
         {
         }
 
-        return 32;
+        return DefaultCursorSize;
     }
 
     /// <summary>Attempts to retrieve information about the current cursor and capture its visual and positional properties.</summary>
@@ -139,14 +110,14 @@ public static class CursorHelper
         }
 
         IconInfoEx iconInfo = IconInfoEx.Create();
-        if (!NativeIconMethods.GetIconInfoEx(cursorHandle, ref iconInfo))
+        if (!_cursorIconInfoProvider(cursorHandle, ref iconInfo))
         {
             return false;
         }
 
         try
         {
-            CaptureCurrentCursor(result, cursorHandle, in iconInfo);
+            _cursorCaptureOperation(result, cursorHandle, in iconInfo);
         }
         finally
         {
@@ -165,7 +136,7 @@ public static class CursorHelper
     /// <param name="hasAlpha">When the method returns, contains a value indicating whether the extracted bitmap includes an alpha channel.</param>
     /// <returns>A 32-bit color bitmap representing the extracted image, or null if extraction fails or the parameters are
     /// invalid.</returns>
-    public static unsafe Bitmap ExtractRawColorBitmap(SafeHBitmapHandle colorBitmapHandle, int width, int height, out bool hasAlpha)
+    public static Bitmap ExtractRawColorBitmap(SafeHBitmapHandle colorBitmapHandle, int width, int height, out bool hasAlpha)
     {
         hasAlpha = false;
         if (colorBitmapHandle.IsInvalid || width <= 0 || height <= 0)
@@ -177,37 +148,11 @@ public static class CursorHelper
         BitmapData data = bmp.LockBits(new(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
         checked
         {
-            BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.Create(width, -height, 32);
+            BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.Create(width, -height, ThirtyTwoBitPixel);
             bitmapInfoHeader.SizeImage = 0U;
             using SafeWindowDcHandle deviceContextHandle = SafeWindowDcHandle.FromWindowClientArea(IntPtr.Zero);
-            if (Gdi32Api.GetDIBits(deviceContextHandle, colorBitmapHandle, 0U, (uint)height, data.Scan0, ref bitmapInfoHeader, DibColors.RgbColors) == 0)
-            {
-                bmp.UnlockBits(data);
-                bmp.Dispose();
-                return null;
-            }
-
-            byte* ptr = unchecked((byte*)(void*)data.Scan0);
-            int bytes = width * height * 4;
-            for (int i = 3; i < bytes; i += 4)
-            {
-                if (ptr[i] != 0)
-                {
-                    hasAlpha = true;
-                    break;
-                }
-            }
-
-            if (!hasAlpha)
-            {
-                for (int j = 3; j < bytes; j += 4)
-                {
-                    ptr[j] = byte.MaxValue;
-                }
-            }
-
-            bmp.UnlockBits(data);
-            return bmp;
+            int copiedScanLines = Gdi32Api.GetDIBits(deviceContextHandle, colorBitmapHandle, 0U, (uint)height, data.Scan0, ref bitmapInfoHeader, DibColors.RgbColors);
+            return CreateRawColorBitmap(copiedScanLines, bmp, data, width, height, out hasAlpha);
         }
     }
 
@@ -257,7 +202,14 @@ public static class CursorHelper
             g.Clear(Color.Transparent);
         }
 
-        _ = NativeIconMethods.DrawIconEx(new(g.GetHdc(), (Left: 0, Top: 0), iconHandle, (Width: width, Height: height), 0, IntPtr.Zero, flags));
+        _ = NativeIconMethods.DrawIconEx(new(
+            g.GetHdc(),
+            (Left: 0, Top: 0),
+            iconHandle,
+            (Width: width, Height: height),
+            0,
+            IntPtr.Zero,
+            flags));
         g.ReleaseHdc();
         return bmp;
     }
@@ -275,12 +227,9 @@ public static class CursorHelper
         }
 
         string lower = moduleName.ToLowerInvariant();
-        if (!lower.Contains("user32") && !lower.Contains("\\windows\\cursors\\"))
-        {
-            return lower.Contains("main.cpl");
-        }
-
-        return true;
+        return lower.Contains("user32")
+            || lower.Contains("\\windows\\cursors\\")
+            || lower.Contains("main.cpl");
     }
 
     /// <summary>
@@ -328,42 +277,40 @@ public static class CursorHelper
             targetGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             targetGraphics.CompositingQuality = CompositingQuality.HighQuality;
             targetGraphics.PixelOffsetMode = PixelOffsetMode.Half;
-            using (ImageAttributes wrapMode = new())
-            {
-                wrapMode.SetWrapMode(WrapMode.TileFlipXY);
-                targetGraphics.DrawImage(image: cursor.ColorLayer, destRect: new(x, y, destinationSize.Width, destinationSize.Height), srcX: 0, srcY: 0, srcWidth: sourceWidth, srcHeight: sourceWidth, srcUnit: GraphicsUnit.Pixel, imageAttr: wrapMode);
-            }
+            using ImageAttributes wrapMode = new();
+            wrapMode.SetWrapMode(WrapMode.TileFlipXY);
+            targetGraphics.DrawImage(
+                image: cursor.ColorLayer,
+                destRect: new(x, y, destinationSize.Width, destinationSize.Height),
+                srcX: 0,
+                srcY: 0,
+                srcWidth: sourceWidth,
+                srcHeight: sourceWidth,
+                srcUnit: GraphicsUnit.Pixel,
+                imageAttr: wrapMode);
 
             targetGraphics.Restore(state);
             return;
         }
 
-        Point[] pts = new Point[1]
-        {
-            new Point(position.X, position.Y)
-        };
+        Point[] pts = [new(position.X, position.Y)];
         targetGraphics.TransformPoints(CoordinateSpace.Device, CoordinateSpace.World, pts);
         position = new(pts[0].X, pts[0].Y);
         using SafeGraphicsDcHandle hdcDest = SafeGraphicsDcHandle.FromGraphics(targetGraphics);
         using SafeCompatibleDcHandle hdcSrc = Gdi32Api.CreateCompatibleDC(hdcDest);
         using SafeHBitmapHandle hbmMask = new(cursor.MaskLayer.GetHbitmap());
         SafeNonDisposableObjectHandle hbmOld = Gdi32Api.SelectObject(hdcSrc, hbmMask);
-        if (hbmOld.IsInvalid)
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-        }
+        ThrowIfObjectSelectionFailed(hbmOld.IsInvalid, Marshal.GetLastWin32Error());
 
-        if (!Gdi32Api.StretchBlt(hdcDest, new(x, y, destinationSize.Width, destinationSize.Height), hdcSrc, new(0, 0, sourceWidth, sourceHeight), RasterOperations.SourceAnd))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-        }
+        ThrowIfRasterOperationFailed(
+            Gdi32Api.StretchBlt(hdcDest, new(x, y, destinationSize.Width, destinationSize.Height), hdcSrc, new(0, 0, sourceWidth, sourceHeight), RasterOperations.SourceAnd),
+            Marshal.GetLastWin32Error());
 
         using SafeHBitmapHandle hbmColor = new(cursor.ColorLayer.GetHbitmap());
         _ = Gdi32Api.SelectObject(hdcSrc, hbmColor);
-        if (!Gdi32Api.StretchBlt(hdcDest, new(x, y, destinationSize.Width, destinationSize.Height), hdcSrc, new(0, 0, sourceWidth, sourceHeight), RasterOperations.SourceInvert))
-        {
-            throw new Win32Exception(Marshal.GetLastWin32Error());
-        }
+        ThrowIfRasterOperationFailed(
+            Gdi32Api.StretchBlt(hdcDest, new(x, y, destinationSize.Width, destinationSize.Height), hdcSrc, new(0, 0, sourceWidth, sourceHeight), RasterOperations.SourceInvert),
+            Marshal.GetLastWin32Error());
 
         _ = Gdi32Api.SelectObject(hdcSrc, hbmOld);
     }
@@ -447,6 +394,83 @@ public static class CursorHelper
         return cursorBaseSizeProvider;
     }
 
+    /// <summary>Replaces the cursor information provider for deterministic tests.</summary>
+    /// <param name="provider">The replacement provider.</param>
+    /// <returns>The previous provider.</returns>
+    internal static CursorInfoProvider SetCursorInfoProviderForTesting(CursorInfoProvider provider)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
+        CursorInfoProvider cursorInfoProvider = _cursorInfoProvider;
+        _cursorInfoProvider = provider;
+        return cursorInfoProvider;
+    }
+
+    /// <summary>Replaces the cursor icon information provider for deterministic tests.</summary>
+    /// <param name="provider">The replacement provider.</param>
+    /// <returns>The previous provider.</returns>
+    internal static CursorIconInfoProvider SetCursorIconInfoProviderForTesting(CursorIconInfoProvider provider)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
+        CursorIconInfoProvider cursorIconInfoProvider = _cursorIconInfoProvider;
+        _cursorIconInfoProvider = provider;
+        return cursorIconInfoProvider;
+    }
+
+    /// <summary>Replaces the cursor layer capture operation for deterministic tests.</summary>
+    /// <param name="operation">The replacement operation.</param>
+    /// <returns>The previous operation.</returns>
+    internal static CursorCaptureOperation SetCursorCaptureOperationForTesting(CursorCaptureOperation operation)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(operation);
+        CursorCaptureOperation cursorCaptureOperation = _cursorCaptureOperation;
+        _cursorCaptureOperation = operation;
+        return cursorCaptureOperation;
+    }
+
+    /// <summary>Replaces the cursor bitmap renderer for deterministic tests.</summary>
+    /// <param name="renderer">The replacement renderer.</param>
+    /// <returns>The previous renderer.</returns>
+    internal static CursorBitmapRenderer SetCursorBitmapRendererForTesting(CursorBitmapRenderer renderer)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(renderer);
+        CursorBitmapRenderer cursorBitmapRenderer = _cursorBitmapRenderer;
+        _cursorBitmapRenderer = renderer;
+        return cursorBitmapRenderer;
+    }
+
+    /// <summary>Replaces the cursor mask-layer provider for deterministic tests.</summary>
+    /// <param name="provider">The replacement provider.</param>
+    /// <returns>The previous provider.</returns>
+    internal static CursorMaskLayerProvider SetCursorMaskLayerProviderForTesting(CursorMaskLayerProvider provider)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
+        CursorMaskLayerProvider cursorMaskLayerProvider = _cursorMaskLayerProvider;
+        _cursorMaskLayerProvider = provider;
+        return cursorMaskLayerProvider;
+    }
+
+    /// <summary>Throws when selecting a source bitmap into a graphics context failed.</summary>
+    /// <param name="selectionFailed">A value indicating whether the native selection failed.</param>
+    /// <param name="errorCode">The native error code to include in the exception.</param>
+    internal static void ThrowIfObjectSelectionFailed(bool selectionFailed, int errorCode)
+    {
+        if (selectionFailed)
+        {
+            throw new Win32Exception(errorCode);
+        }
+    }
+
+    /// <summary>Throws when a cursor raster operation failed.</summary>
+    /// <param name="operationSucceeded">A value indicating whether the native raster operation succeeded.</param>
+    /// <param name="errorCode">The native error code to include in the exception.</param>
+    internal static void ThrowIfRasterOperationFailed(bool operationSucceeded, int errorCode)
+    {
+        if (!operationSucceeded)
+        {
+            throw new Win32Exception(errorCode);
+        }
+    }
+
     /// <summary>Captures cursor layers from already-retrieved native cursor information.</summary>
     /// <param name="result">The captured cursor to populate.</param>
     /// <param name="cursorHandle">The cursor handle.</param>
@@ -456,12 +480,19 @@ public static class CursorHelper
         CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(result);
         int baseSize = GetCursorBaseSize();
         uint dpi = NativeDpiMethods.GetDpiForSystem();
-        int targetWidth = checked((int)((float)baseSize * ((float)dpi / 96F)));
+        int targetWidth = checked((int)((float)baseSize * ((float)dpi / DpiScaleBase)));
         int targetHeight = targetWidth;
         CursorHandleSelection bestCursor = GetBestCursorHandle(in iconInfo, cursorHandle, targetWidth, targetHeight);
         NativeSize nativeSize = GetNativeCursorSize(in iconInfo, bestCursor.IsFresh, targetWidth, targetHeight);
-        bool isCustomCursor = nativeSize.Width != 32 || nativeSize.Height != 32;
-        ApplyCursorSize(result, in iconInfo, targetWidth, targetHeight, nativeSize, baseSize > 32, isCustomCursor);
+        bool isCustomCursor = nativeSize.Width != DefaultCursorSize || nativeSize.Height != DefaultCursorSize;
+        ApplyCursorSize(
+            result,
+            in iconInfo,
+            targetWidth,
+            targetHeight,
+            nativeSize,
+            baseSize > DefaultCursorSize,
+            isCustomCursor);
         CaptureCursorLayers(result, in iconInfo, bestCursor.ToIntPtr(), new(targetWidth, targetHeight), nativeSize, isCustomCursor);
         if (bestCursor.IsFresh)
         {
@@ -469,12 +500,79 @@ public static class CursorHelper
         }
     }
 
+    /// <summary>Converts a configured registry value to a cursor base size.</summary>
+    /// <param name="value">The registry value.</param>
+    /// <returns>The configured size, or <see langword="null" /> when the value is not an integer.</returns>
+    internal static int? GetConfiguredCursorBaseSize(object value) => value is int size ? size : null;
+
+    /// <summary>Finalizes a raw cursor bitmap after its native pixels have been copied.</summary>
+    /// <param name="copiedScanLines">The number of scan lines copied by the native operation.</param>
+    /// <param name="bitmap">The locked destination bitmap.</param>
+    /// <param name="bitmapData">The bitmap lock data.</param>
+    /// <param name="width">The bitmap width.</param>
+    /// <param name="height">The bitmap height.</param>
+    /// <param name="hasAlpha">Receives whether any copied pixel has alpha.</param>
+    /// <returns>The finalized bitmap, or <see langword="null" /> when no scan lines were copied.</returns>
+    internal static unsafe Bitmap CreateRawColorBitmap(
+        int copiedScanLines,
+        Bitmap bitmap,
+        BitmapData bitmapData,
+        int width,
+        int height,
+        out bool hasAlpha)
+    {
+        hasAlpha = false;
+        if (copiedScanLines == 0)
+        {
+            bitmap.UnlockBits(bitmapData);
+            bitmap.Dispose();
+            return null;
+        }
+
+        byte* pixel = unchecked((byte*)(void*)bitmapData.Scan0);
+        int byteCount = checked(width * height * PixelByteCount);
+        for (int index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
+        {
+            if (pixel[index] != 0)
+            {
+                hasAlpha = true;
+                break;
+            }
+        }
+
+        if (!hasAlpha)
+        {
+            for (int index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
+            {
+                pixel[index] = byte.MaxValue;
+            }
+        }
+
+        bitmap.UnlockBits(bitmapData);
+        return bitmap;
+    }
+
+    /// <summary>Creates the optional mask layer for a captured cursor.</summary>
+    /// <param name="hasAlpha">A value indicating whether the cursor color layer has alpha.</param>
+    /// <param name="cursorHandle">The native cursor handle.</param>
+    /// <param name="targetSize">The requested mask-layer size.</param>
+    /// <returns>The mask layer, or <see langword="null" /> when alpha makes it unnecessary.</returns>
+    internal static Bitmap CreateMaskLayer(bool hasAlpha, IntPtr cursorHandle, NativeSize targetSize) =>
+        hasAlpha ? null : _cursorMaskLayerProvider(cursorHandle, targetSize.Width, targetSize.Height);
+
+    /// <summary>Gets a cursor bitmap width from a native bitmap-information result.</summary>
+    /// <param name="copiedBytes">The byte count returned by the native operation.</param>
+    /// <param name="bitmapWidth">The width from the native bitmap information.</param>
+    /// <returns>The bitmap width, or the default cursor size when no information was copied.</returns>
+    internal static int GetBitmapWidth(int copiedBytes, int bitmapWidth) =>
+        copiedBytes <= 0 ? DefaultCursorSize : bitmapWidth;
+
     /// <summary>Reads the cursor base size configured by Windows.</summary>
     /// <returns>The configured cursor base size, or <see langword="null" /> when unavailable.</returns>
     private static int? ReadConfiguredCursorBaseSize()
     {
         using RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\Cursors");
-        return (key?.GetValue("CursorBaseSize") is int size) ? new int?(size) : ((int?)null);
+        return GetConfiguredCursorBaseSize(RegistryValueReader.GetValue(key, "CursorBaseSize"));
     }
 
     /// <summary>Draws a scaled alpha cursor on a bitmap.</summary>
@@ -583,7 +681,7 @@ public static class CursorHelper
         else
         {
             result.ColorLayer = GetColorCursorLayer(result, in iconInfo, cursorHandle, targetSize, nativeSize, isCustomCursor, out var hasAlpha);
-            result.MaskLayer = (hasAlpha ? null : BitmapFromHIcon(cursorHandle, targetSize.Width, targetSize.Height, DrawIconExFlags.DI_MASK));
+            result.MaskLayer = CreateMaskLayer(hasAlpha, cursorHandle, targetSize);
         }
     }
 
@@ -596,12 +694,9 @@ public static class CursorHelper
     private static CursorHandleSelection GetBestCursorHandle(in IconInfoEx iconInfo, IntPtr fallbackHandle, int targetWidth, int targetHeight)
     {
         IntPtr cursorHandle = LoadSystemCursor(in iconInfo, targetWidth, targetHeight);
-        if (cursorHandle != IntPtr.Zero)
-        {
-            return new(cursorHandle, isFresh: true);
-        }
-
-        return new(fallbackHandle, isFresh: false);
+        return cursorHandle != IntPtr.Zero
+            ? new(cursorHandle, isFresh: true)
+            : new(fallbackHandle, isFresh: false);
     }
 
     /// <summary>Gets a color cursor layer.</summary>
@@ -626,18 +721,22 @@ public static class CursorHelper
         return ExtractRawColorBitmap(iconInfo.ColorBitmapHandle, nativeSize.Width, nativeSize.Height, out hasAlpha);
     }
 
+    /// <summary>Creates a cursor mask bitmap through the native icon renderer.</summary>
+    /// <param name="cursorHandle">The native cursor handle.</param>
+    /// <param name="width">The requested mask width.</param>
+    /// <param name="height">The requested mask height.</param>
+    /// <returns>The rendered mask bitmap.</returns>
+    private static Bitmap CreateCursorMaskLayer(IntPtr cursorHandle, int width, int height) =>
+        _cursorBitmapRenderer(cursorHandle, width, height, DrawIconExFlags.DI_MASK);
+
     /// <summary>Gets the mask bitmap width.</summary>
     /// <param name="iconInfo">The native icon information.</param>
     /// <returns>The mask width.</returns>
     private static int GetMaskWidth(in IconInfoEx iconInfo)
     {
         GdiBitmap maskInfo = default;
-        if (Gdi32Api.GetObject(iconInfo.BitmaskBitmapHandle, Marshal.SizeOf<GdiBitmap>(), ref maskInfo) <= 0)
-        {
-            return 32;
-        }
-
-        return maskInfo.Width;
+        int copiedBytes = Gdi32Api.GetObject(iconInfo.BitmaskBitmapHandle, Marshal.SizeOf<GdiBitmap>(), ref maskInfo);
+        return GetBitmapWidth(copiedBytes, maskInfo.Width);
     }
 
     /// <summary>Gets the native cursor size.</summary>
@@ -659,7 +758,9 @@ public static class CursorHelper
             return new(targetWidth, targetHeight);
         }
 
-        int height = (iconInfo.ColorBitmapHandle.IsInvalid ? (bitmapInfo.Height / 2) : bitmapInfo.Height);
+        int height = iconInfo.ColorBitmapHandle.IsInvalid
+            ? bitmapInfo.Height / MonochromeMaskHeightDivisor
+            : bitmapInfo.Height;
         return new(bitmapInfo.Width, height);
     }
 
@@ -675,12 +776,21 @@ public static class CursorHelper
             return IntPtr.Zero;
         }
 
-        if (iconInfo.ResourceId == 0)
-        {
-            return NativeCursorMethods.LoadImage(IntPtr.Zero, iconInfo.ModuleName, ImageType.IMAGE_CURSOR, targetWidth, targetHeight, LoadImageFlags.LR_LOADFROMFILE);
-        }
-
-        return NativeCursorMethods.LoadImage(Kernel32Api.GetModuleHandle(iconInfo.ModuleName), (IntPtr)iconInfo.ResourceId, ImageType.IMAGE_CURSOR, targetWidth, targetHeight, LoadImageFlags.None);
+        return iconInfo.ResourceId == 0
+            ? NativeCursorMethods.LoadImage(
+                IntPtr.Zero,
+                iconInfo.ModuleName,
+                ImageType.IMAGE_CURSOR,
+                targetWidth,
+                targetHeight,
+                LoadImageFlags.LR_LOADFROMFILE)
+            : NativeCursorMethods.LoadImage(
+                Kernel32Api.GetModuleHandle(iconInfo.ModuleName),
+                (IntPtr)iconInfo.ResourceId,
+                ImageType.IMAGE_CURSOR,
+                targetWidth,
+                targetHeight,
+                LoadImageFlags.None);
     }
 
     /// <summary>Gets visible cursor information.</summary>
@@ -690,7 +800,7 @@ public static class CursorHelper
     {
         cursorHandle = IntPtr.Zero;
         CursorInfo cursorInfo = CursorInfo.Create();
-        if (!User32Api.GetCursorInfo(ref cursorInfo) || !cursorInfo.IsShowing)
+        if (!_cursorInfoProvider(ref cursorInfo) || !cursorInfo.IsShowing)
         {
             return false;
         }
@@ -702,7 +812,8 @@ public static class CursorHelper
     /// <summary>Gets the raw cursor handle from a non-owned cursor reference.</summary>
     /// <param name="cursorHandle">The cursor reference handle.</param>
     /// <returns>The raw cursor handle.</returns>
-    private static IntPtr GetCursorHandle(SafeCursorReferenceHandle cursorHandle) => cursorHandle.UseNativeHandle((nativeCursorHandle) => nativeCursorHandle);
+    private static IntPtr GetCursorHandle(SafeCursorReferenceHandle cursorHandle) =>
+        cursorHandle.UseNativeHandle(static nativeCursorHandle => nativeCursorHandle);
 
     /// <summary>Gets the bitmap pixel format for an icon draw operation.</summary>
     /// <param name="flags">The draw flags.</param>
@@ -715,26 +826,16 @@ public static class CursorHelper
             return pixelFormat;
         }
 
-        if (flags - 1 > DrawIconExFlags.DI_MASK)
-        {
-            return PixelFormat.Format32bppArgb;
-        }
-
-        return PixelFormat.Format24bppRgb;
+        return flags - 1 > DrawIconExFlags.DI_MASK
+            ? PixelFormat.Format32bppArgb
+            : PixelFormat.Format24bppRgb;
     }
 
     /// <summary>Gets a value indicating whether the pixel format is 32-bit.</summary>
     /// <param name="format">The pixel format.</param>
     /// <returns><see langword="true" /> when the format is 32-bit.</returns>
-    private static bool Is32BitFormat(PixelFormat format)
-    {
-        if ((format is not PixelFormat.Format32bppRgb and not PixelFormat.Format32bppArgb) || 1 == 0)
-        {
-            return format == PixelFormat.Format32bppPArgb;
-        }
-
-        return true;
-    }
+    private static bool Is32BitFormat(PixelFormat format) =>
+        format is PixelFormat.Format32bppRgb or PixelFormat.Format32bppArgb or PixelFormat.Format32bppPArgb;
 
     /// <summary>Draws a modern alpha-blended cursor onto a bitmap.</summary>
     /// <param name="targetBitmap">The target bitmap.</param>
@@ -870,12 +971,10 @@ public static class CursorHelper
         using BitmapAccessor<TTarget> targetAccessor = new(targetBitmap, readOnly: false);
         if (Is32BitFormat(colorBitmap.PixelFormat))
         {
-            using (BitmapAccessor<Bgra32> colorAccessor = new(colorBitmap, readOnly: true))
-            {
-                using BitmapAccessor<Bgra32> maskAccessor = new(maskBitmap, readOnly: true);
-                ApplyMask(targetAccessor, colorAccessor, maskAccessor, x, y);
-                return;
-            }
+            using BitmapAccessor<Bgra32> colorAccessor = new(colorBitmap, readOnly: true);
+            using BitmapAccessor<Bgra32> maskAccessor = new(maskBitmap, readOnly: true);
+            ApplyMask(targetAccessor, colorAccessor, maskAccessor, x, y);
+            return;
         }
 
         using BitmapAccessor<Bgr24> colorAccessor2 = new(colorBitmap, readOnly: true);
@@ -934,12 +1033,18 @@ public static class CursorHelper
             if (typeof(TTarget) == typeof(Bgra32))
             {
                 ref Bgra32 target = ref Unsafe.As<TTarget, Bgra32>(ref targetRow[targetIndex]);
-                target = new((byte)((target.R & sourcePixel.Mask) ^ sourcePixel.Red), (byte)((target.G & sourcePixel.Mask) ^ sourcePixel.Green), (byte)((target.B & sourcePixel.Mask) ^ sourcePixel.Blue));
+                target = new(
+                    (byte)((target.R & sourcePixel.Mask) ^ sourcePixel.Red),
+                    (byte)((target.G & sourcePixel.Mask) ^ sourcePixel.Green),
+                    (byte)((target.B & sourcePixel.Mask) ^ sourcePixel.Blue));
             }
             else
             {
                 ref Bgr24 bgrTarget = ref Unsafe.As<TTarget, Bgr24>(ref targetRow[targetIndex]);
-                bgrTarget = new((byte)((bgrTarget.R & sourcePixel.Mask) ^ sourcePixel.Red), (byte)((bgrTarget.G & sourcePixel.Mask) ^ sourcePixel.Green), (byte)((bgrTarget.B & sourcePixel.Mask) ^ sourcePixel.Blue));
+                bgrTarget = new(
+                    (byte)((bgrTarget.R & sourcePixel.Mask) ^ sourcePixel.Red),
+                    (byte)((bgrTarget.G & sourcePixel.Mask) ^ sourcePixel.Green),
+                    (byte)((bgrTarget.B & sourcePixel.Mask) ^ sourcePixel.Blue));
             }
         }
     }
@@ -963,5 +1068,35 @@ public static class CursorHelper
         ref Bgr24 reference2 = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in maskRow[sourceIndex]));
         ref Bgr24 bgrColor = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in colorRow[sourceIndex]));
         return new(reference2.B, bgrColor.R, bgrColor.G, bgrColor.B);
+    }
+
+    /// <summary>Stores a source mask/color pixel.</summary>
+    /// <param name="Mask">The mask value.</param>
+    /// <param name="Red">The red component.</param>
+    /// <param name="Green">The green component.</param>
+    /// <param name="Blue">The blue component.</param>
+    private readonly record struct MaskColor(byte Mask, byte Red, byte Green, byte Blue);
+
+    /// <summary>Stores the selected cursor handle and whether this helper owns it.</summary>
+    private readonly record struct CursorHandleSelection
+    {
+        /// <summary>The selected cursor handle.</summary>
+        private readonly IntPtr _handle;
+
+        /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.CursorHelper.CursorHandleSelection" /> struct.</summary>
+        /// <param name="handle">The selected cursor handle.</param>
+        /// <param name="isFresh">A value indicating whether this helper owns the handle.</param>
+        public CursorHandleSelection(IntPtr handle, bool isFresh)
+        {
+            _handle = handle;
+            IsFresh = isFresh;
+        }
+
+        /// <summary>Gets a value indicating whether this helper owns the handle.</summary>
+        public bool IsFresh { get; }
+
+        /// <summary>Gets the native cursor handle.</summary>
+        /// <returns>The native cursor handle.</returns>
+        public IntPtr ToIntPtr() => _handle;
     }
 }

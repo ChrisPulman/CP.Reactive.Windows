@@ -57,6 +57,23 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
         _height = nativeSizeFloat.Height;
     }
 
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRectFloat" /> struct.</summary>
+    /// <param name="topLeft">The upper-left corner.</param>
+    /// <param name="bottomRight">The lower-right corner.</param>
+    public NativeRectFloat(NativePointFloat topLeft, NativePointFloat bottomRight)
+        : this(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y) { }
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRectFloat" /> struct.</summary>
+    /// <param name="location">The floating-point location.</param>
+    /// <param name="nativeSizeFloat">The floating-point size.</param>
+    public NativeRectFloat(NativePointFloat location, NativeSizeFloat nativeSizeFloat)
+    {
+        _x = location.X;
+        _y = location.Y;
+        _width = nativeSizeFloat.Width;
+        _height = nativeSizeFloat.Height;
+    }
+
     /// <summary>Gets the empty floating-point native rectangle.</summary>
     public static NativeRectFloat Empty { get; }
 
@@ -105,25 +122,6 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
     /// <summary>Gets a value indicating whether this floating-point rectangle has zero area.</summary>
     public bool IsEmpty => Math.Abs(_width * _height) < float.Epsilon;
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRectFloat" /> struct.</summary>
-    /// <param name="topLeft">The upper-left corner.</param>
-    /// <param name="bottomRight">The lower-right corner.</param>
-    public NativeRectFloat(NativePointFloat topLeft, NativePointFloat bottomRight)
-        : this(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y)
-    {
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRectFloat" /> struct.</summary>
-    /// <param name="location">The floating-point location.</param>
-    /// <param name="nativeSizeFloat">The floating-point size.</param>
-    public NativeRectFloat(NativePointFloat location, NativeSizeFloat nativeSizeFloat)
-    {
-        _x = location.X;
-        _y = location.Y;
-        _width = nativeSizeFloat.Width;
-        _height = nativeSizeFloat.Height;
-    }
-
     /// <summary>Cast NativeRect to NativeRectFloat</summary>
     /// <param name="rectangle">NativeRect</param>
     /// <returns>NativeRectFloat</returns>
@@ -137,7 +135,11 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
     /// <returns>NativeRectFloat</returns>
     public static implicit operator NativeRectFloat(Rect rectangle)
     {
-        return new((float)rectangle.Left, (float)rectangle.Top, (float)rectangle.Width, (float)rectangle.Height);
+        return new(
+            (float)rectangle.Left,
+            (float)rectangle.Top,
+            (float)rectangle.Width,
+            (float)rectangle.Height);
     }
 
     /// <summary>Cast Int32Rect to NativeRectFloat</summary>
@@ -223,26 +225,28 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{{Left: {_x}; Top: {_y}; Width: {_width}; Height: {_height};}}";
+    public override string ToString() =>
+        $"{{Left: {_x}; Top: {_y}; Width: {_width}; Height: {_height};}}";
 
     /// <inheritdoc />
     public override bool Equals(object obj)
     {
         if (!(obj is NativeRectFloat f))
         {
-            if (!(obj is Rect rect1))
-            {
-                return obj is RectangleF rectangleF && Equals(rectangleF);
-            }
-
-            return Equals(rect1);
+            return !(obj is Rect rect1)
+                ? obj is RectangleF rectangleF && Equals(rectangleF)
+                : Equals(rect1);
         }
 
         return Equals(f);
     }
 
     /// <inheritdoc />
-    public bool Equals(NativeRectFloat other) => Math.Abs(other._x - _x) < float.Epsilon && Math.Abs(other._y - _y) < float.Epsilon && Math.Abs(other._width - _width) < float.Epsilon && Math.Abs(other._height - _height) < float.Epsilon;
+    public bool Equals(NativeRectFloat other) =>
+        Math.Abs(other._x - _x) < float.Epsilon
+        && Math.Abs(other._y - _y) < float.Epsilon
+        && Math.Abs(other._width - _width) < float.Epsilon
+        && Math.Abs(other._height - _height) < float.Epsilon;
 
     /// <inheritdoc />
     public override int GetHashCode() => System.HashCode.Combine(_x, _x, _y, _width, _height);
@@ -250,7 +254,11 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
     /// <summary>Test if this NativeRectFloat contains the specified NativePoint.</summary>
     /// <param name="point">NativePoint</param>
     /// <returns>true if it contains.</returns>
-    public bool Contains(NativePoint point) => (float)point.X >= Left && (float)point.X <= Right && (float)point.Y >= Top && (float)point.Y <= Bottom;
+    public bool Contains(NativePoint point) =>
+        (float)point.X >= Left
+        && (float)point.X <= Right
+        && (float)point.Y >= Top
+        && (float)point.Y <= Bottom;
 
     /// <summary>Deconstructs this floating-point native rectangle into location and size values.</summary>
     /// <param name="location">NativePointFloat</param>
@@ -267,21 +275,26 @@ public readonly struct NativeRectFloat : IEquatable<NativeRectFloat>
 
     /// <summary>Converts this value to an integer native rectangle.</summary>
     /// <returns>An integer native rectangle with truncated bounds.</returns>
-    public NativeRect ToNativeRect() => NativeRectangleConversions.ToNativeRect(NativeRectangleConversions.ToBounds(this));
+    public NativeRect ToNativeRect() =>
+        NativeRectangleConversions.ToNativeRect(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a drawing rectangle with floating-point dimensions.</summary>
     /// <returns>A drawing rectangle with the same bounds.</returns>
-    public RectangleF ToRectangleF() => NativeRectangleGeometry<float>.ToRectangleF(NativeRectangleConversions.ToBounds(this));
+    public RectangleF ToRectangleF() =>
+        NativeRectangleGeometry<float>.ToRectangleF(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a drawing rectangle.</summary>
     /// <returns>A drawing rectangle with truncated bounds.</returns>
-    public Rectangle ToRectangle() => NativeRectangleGeometry<float>.ToRectangle(NativeRectangleConversions.ToBounds(this));
+    public Rectangle ToRectangle() =>
+        NativeRectangleGeometry<float>.ToRectangle(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a Windows rectangle.</summary>
     /// <returns>A Windows rectangle with the same bounds.</returns>
-    public Rect ToRect() => NativeRectangleGeometry<float>.ToRect(NativeRectangleConversions.ToBounds(this));
+    public Rect ToRect() =>
+        NativeRectangleGeometry<float>.ToRect(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a Windows integer rectangle.</summary>
     /// <returns>A Windows integer rectangle with truncated bounds.</returns>
-    public Int32Rect ToInt32Rect() => NativeRectangleGeometry<float>.ToInt32Rect(NativeRectangleConversions.ToBounds(this));
+    public Int32Rect ToInt32Rect() =>
+        NativeRectangleGeometry<float>.ToInt32Rect(NativeRectangleConversions.ToBounds(this));
 }

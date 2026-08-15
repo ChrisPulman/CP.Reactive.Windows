@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.CompilerServices;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Structs;
 #else
@@ -17,78 +13,73 @@ public struct DwmThumbnailProperties : IEquatable<DwmThumbnailProperties>
     /// <summary>A bitwise combination of DWM thumbnail values indicating which members are set.</summary>
     private DwmThumbnailPropertyFlags _flags;
 
-    [CompilerGenerated]
-    private NativeRect _003CDestination_003Ek__BackingField;
+    /// <summary>The configured destination rectangle.</summary>
+    private NativeRect _destination;
 
-    [CompilerGenerated]
-    private NativeRect _003CSource_003Ek__BackingField;
+    /// <summary>The configured source rectangle.</summary>
+    private NativeRect _source;
 
-    [CompilerGenerated]
-    private byte _003COpacity_003Ek__BackingField;
+    /// <summary>The configured opacity.</summary>
+    private byte _opacity;
 
-    [CompilerGenerated]
-    private bool _003CVisible_003Ek__BackingField;
+    /// <summary>The configured visibility state.</summary>
+    private bool _visible;
 
-    [CompilerGenerated]
-    private bool _003CSourceClientAreaOnly_003Ek__BackingField;
+    /// <summary>The configured source client-area-only state.</summary>
+    private bool _sourceClientAreaOnly;
 
     /// <summary>Gets or sets the destination rectangle and marks the corresponding flag.</summary>
     public NativeRect Destination
     {
-        [CompilerGenerated]
-        readonly get => _003CDestination_003Ek__BackingField;
+        readonly get => _destination;
         set
         {
             _flags |= DwmThumbnailPropertyFlags.Destination;
-            _003CDestination_003Ek__BackingField = value;
+            _destination = value;
         }
     }
 
     /// <summary>Gets or sets the source rectangle and marks the corresponding flag.</summary>
     public NativeRect Source
     {
-        [CompilerGenerated]
-        readonly get => _003CSource_003Ek__BackingField;
+        readonly get => _source;
         set
         {
             _flags |= DwmThumbnailPropertyFlags.Source;
-            _003CSource_003Ek__BackingField = value;
+            _source = value;
         }
     }
 
     /// <summary>Gets or sets the opacity and marks the corresponding flag.</summary>
     public byte Opacity
     {
-        [CompilerGenerated]
-        readonly get => _003COpacity_003Ek__BackingField;
+        readonly get => _opacity;
         set
         {
             _flags |= DwmThumbnailPropertyFlags.Opacity;
-            _003COpacity_003Ek__BackingField = value;
+            _opacity = value;
         }
     }
 
     /// <summary>Gets or sets a value indicating whether the thumbnail is visible and marks the corresponding flag.</summary>
     public bool Visible
     {
-        [CompilerGenerated]
-        readonly get => _003CVisible_003Ek__BackingField;
+        readonly get => _visible;
         set
         {
             _flags |= DwmThumbnailPropertyFlags.Visible;
-            _003CVisible_003Ek__BackingField = value;
+            _visible = value;
         }
     }
 
     /// <summary>Gets or sets a value indicating whether only the source client area is used and marks the corresponding flag.</summary>
     public bool SourceClientAreaOnly
     {
-        [CompilerGenerated]
-        readonly get => _003CSourceClientAreaOnly_003Ek__BackingField;
+        readonly get => _sourceClientAreaOnly;
         set
         {
             _flags |= DwmThumbnailPropertyFlags.SourceClientAreaOnly;
-            _003CSourceClientAreaOnly_003Ek__BackingField = value;
+            _sourceClientAreaOnly = value;
         }
     }
 
@@ -96,41 +87,25 @@ public struct DwmThumbnailProperties : IEquatable<DwmThumbnailProperties>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when both values are equal.</returns>
-    public static bool operator ==(DwmThumbnailProperties left, DwmThumbnailProperties right)
-    {
-        return left.Equals(right);
-    }
+    public static bool operator ==(DwmThumbnailProperties left, DwmThumbnailProperties right) => left.Equals(right);
 
     /// <summary>Determines whether two values are not equal.</summary>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when the values are not equal.</returns>
-    public static bool operator !=(DwmThumbnailProperties left, DwmThumbnailProperties right)
-    {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(DwmThumbnailProperties left, DwmThumbnailProperties right) => !left.Equals(right);
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj)
-    {
-        if (obj is DwmThumbnailProperties other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override readonly bool Equals(object obj) => obj is DwmThumbnailProperties other && Equals(other);
 
     /// <inheritdoc />
-    public readonly bool Equals(DwmThumbnailProperties other)
-    {
-        if (_flags == other._flags && Destination == other.Destination && Source == other.Source && Opacity == other.Opacity && Visible == other.Visible)
-        {
-            return SourceClientAreaOnly == other.SourceClientAreaOnly;
-        }
-
-        return false;
-    }
+    public readonly bool Equals(DwmThumbnailProperties other) =>
+        _flags == other._flags
+        && _destination == other._destination
+        && _source == other._source
+        && _opacity == other._opacity
+        && _visible == other._visible
+        && _sourceClientAreaOnly == other._sourceClientAreaOnly;
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => typeof(DwmThumbnailProperties).GetHashCode();

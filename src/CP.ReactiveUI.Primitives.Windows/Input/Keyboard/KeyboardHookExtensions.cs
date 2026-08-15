@@ -12,6 +12,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard;
 /// <summary>Extensions to assist with the Keyboard Hooks.</summary>
 public static class KeyboardHookExtensions
 {
+    /// <summary>Provides query-style extensions over keyboard hook event streams.</summary>
+    /// <param name="keyboardEvents">The keyboard hook event stream.</param>
     extension(IObservable<KeyboardHookEventArgs> keyboardEvents)
     {
         /// <summary>Filter the KeyboardHookEventArgs with a IKeyboardHookEventHandler.</summary>

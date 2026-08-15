@@ -19,5 +19,5 @@ public enum DeviceBroadcastDeviceType : uint
     /// <summary>DBT_DEVTYP_DEVICEINTERFACE: Class of devices. This structure is a DEV_BROADCAST_DEVICEINTERFACE structure.</summary>
     DeviceInterface = 5U,
     /// <summary>DBT_DEVTYP_HANDLE: File system handle. This structure is a DEV_BROADCAST_HANDLE structure.</summary>
-    Handle = 6U
+    Handle = 6U,
 }

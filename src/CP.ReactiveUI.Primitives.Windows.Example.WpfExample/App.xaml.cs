@@ -9,7 +9,7 @@ using log4net.Config;
 namespace CP.ReactiveUI.Primitives.Windows.Example.WpfExample;
 
 /// <summary>Interaction logic for App.xaml.</summary>
-public partial class App
+public partial class App : Application
 {
     /// <inheritdoc/>
     protected override void OnStartup(StartupEventArgs e)

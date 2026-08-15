@@ -11,9 +11,7 @@ public class SafeDibSectionHandle : SafeObjectHandle
 {
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeDibSectionHandle" /> class.</summary>
     public SafeDibSectionHandle()
-        : base(ownsHandle: true)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeDibSectionHandle" /> class from an existing handle.</summary>
     /// <param name="preexistingHandle">The existing DIB section handle.</param>

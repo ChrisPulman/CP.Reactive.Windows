@@ -55,14 +55,13 @@ public readonly struct DevBroadcastVolume : IEquatable<DevBroadcastVolume>
     {
         get
         {
-            MarkFieldsAsRead();
             StringBuilder drives = new();
-            for (int letter = 0; letter < 26; letter = checked(letter + 1))
+            for (int letter = 0; letter < DriveLetterCount; letter = checked(letter + 1))
             {
                 uint bit = (uint)(1 << letter);
                 if ((_unitMask & bit) != 0)
                 {
-                    _ = drives.Append((char)checked((ushort)(65 + letter)));
+                    _ = drives.Append((char)checked((ushort)(FirstDriveLetter + letter)));
                 }
             }
 
@@ -71,10 +70,10 @@ public readonly struct DevBroadcastVolume : IEquatable<DevBroadcastVolume>
     }
 
     /// <summary>Gets a value indicating whether the change affects media in drive.</summary>
-    public bool IsMediaChange => (_flags & 1) != 0;
+    public bool IsMediaChange => (_flags & MediaChangeFlag) != 0;
 
     /// <summary>Gets a value indicating whether the indicated logical volume is a network volume.</summary>
-    public bool IsNetworkVolume => (_flags & 2) != 0;
+    public bool IsNetworkVolume => (_flags & NetworkVolumeFlag) != 0;
 
     /// <summary>Compares two values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -95,32 +94,16 @@ public readonly struct DevBroadcastVolume : IEquatable<DevBroadcastVolume>
     }
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is DevBroadcastVolume other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is DevBroadcastVolume other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(DevBroadcastVolume other)
-    {
-        if (_size == other._size && _deviceType == other._deviceType && _reserved == other._reserved && _unitMask == other._unitMask)
-        {
-            return _flags == other._flags;
-        }
-
-        return false;
-    }
+    public bool Equals(DevBroadcastVolume other) =>
+        _size == other._size
+        && _deviceType == other._deviceType
+        && _reserved == other._reserved
+        && _unitMask == other._unitMask
+        && _flags == other._flags;
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_size, _deviceType, _reserved, _unitMask, _flags);
-
-    /// <summary>Reads marshal-only fields so analyzers do not treat them as unused.</summary>
-    private void MarkFieldsAsRead()
-    {
-    }
 }

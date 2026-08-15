@@ -13,5 +13,5 @@ public enum IconSize
     /// <summary>Specify large icon, 32 pixels by 32 pixels.</summary>
     Large,
     /// <summary>Specify small icon, 16 pixels by 16 pixels.</summary>
-    Small
+    Small,
 }

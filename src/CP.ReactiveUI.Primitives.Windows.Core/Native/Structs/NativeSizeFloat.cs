@@ -23,9 +23,7 @@ public readonly struct NativeSizeFloat : IEquatable<NativeSizeFloat>, IComparabl
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSizeFloat" /> struct.</summary>
     /// <param name="size">The drawing size to copy.</param>
     public NativeSizeFloat(Size size)
-        : this(size.Width, size.Height)
-    {
-    }
+        : this(size.Width, size.Height) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSizeFloat" /> struct.</summary>
     /// <param name="width">The width.</param>
@@ -35,19 +33,6 @@ public readonly struct NativeSizeFloat : IEquatable<NativeSizeFloat>, IComparabl
         _width = width;
         _height = height;
     }
-
-    /// <summary>Gets the zero-width and zero-height floating-point native size.</summary>
-    public static NativeSizeFloat Empty { get; } = new(0F, 0F);
-
-    /// <summary>Gets the Width of the size struct.</summary>
-    public float Width => _width;
-
-    /// <summary>Gets the Height of the size struct.</summary>
-    public float Height => _height;
-
-    /// <summary>Gets a value indicating whether the area is zero.</summary>
-    /// <returns>true if the size is empty.</returns>
-    public bool IsEmpty => Math.Abs(_width * _height) < float.Epsilon;
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSizeFloat" /> struct.</summary>
     /// <param name="width">The double-precision width.</param>
@@ -61,9 +46,20 @@ public readonly struct NativeSizeFloat : IEquatable<NativeSizeFloat>, IComparabl
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeSizeFloat" /> struct.</summary>
     /// <param name="size">The Windows size to copy.</param>
     public NativeSizeFloat(System.Windows.Size size)
-        : this((float)size.Width, (float)size.Height)
-    {
-    }
+        : this((float)size.Width, (float)size.Height) { }
+
+    /// <summary>Gets the zero-width and zero-height floating-point native size.</summary>
+    public static NativeSizeFloat Empty { get; } = new(0F, 0F);
+
+    /// <summary>Gets the Width of the size struct.</summary>
+    public float Width => _width;
+
+    /// <summary>Gets the Height of the size struct.</summary>
+    public float Height => _height;
+
+    /// <summary>Gets a value indicating whether the area is zero.</summary>
+    /// <returns>true if the size is empty.</returns>
+    public bool IsEmpty => Math.Abs(_width * _height) < float.Epsilon;
 
     /// <summary>Implicit cast from NativeSizeFloat to System.Windows.Size</summary>
     /// <param name="size">NativeSize</param>
@@ -216,22 +212,22 @@ public readonly struct NativeSizeFloat : IEquatable<NativeSizeFloat>, IComparabl
     {
         if (!(obj is NativeSizeFloat f))
         {
-            if (!(obj is System.Windows.Size size))
-            {
-                return obj is Size drawingSize && Equals(drawingSize);
-            }
-
-            return Equals(size);
+            return !(obj is System.Windows.Size size)
+                ? obj is Size drawingSize && Equals(drawingSize)
+                : Equals(size);
         }
 
         return Equals(f);
     }
 
     /// <inheritdoc />
-    public bool Equals(NativeSizeFloat other) => Math.Abs(_width - other._width) < float.Epsilon && Math.Abs(_height - other._height) < float.Epsilon;
+    public bool Equals(NativeSizeFloat other) =>
+        Math.Abs(_width - other._width) < float.Epsilon
+        && Math.Abs(_height - other._height) < float.Epsilon;
 
     /// <inheritdoc />
-    public int CompareTo(NativeSizeFloat other) => (other.Width * other.Height).CompareTo(Width * Height);
+    public int CompareTo(NativeSizeFloat other) =>
+        (other.Width * other.Height).CompareTo(Width * Height);
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_width, _height);

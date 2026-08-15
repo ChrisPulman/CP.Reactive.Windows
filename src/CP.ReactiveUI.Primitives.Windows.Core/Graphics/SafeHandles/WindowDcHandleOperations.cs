@@ -27,7 +27,11 @@ internal sealed class WindowDcHandleOperations : IWindowDcHandleApi
     /// <param name="getDc">The client-area device-context operation.</param>
     /// <param name="getDesktopWindow">The desktop-window operation.</param>
     /// <param name="releaseDc">The device-context release operation.</param>
-    internal WindowDcHandleOperations(Func<IntPtr, IntPtr> getWindowDc, Func<IntPtr, IntPtr> getDc, Func<IntPtr> getDesktopWindow, Func<IntPtr, IntPtr, bool> releaseDc)
+    internal WindowDcHandleOperations(
+        Func<IntPtr, IntPtr> getWindowDc,
+        Func<IntPtr, IntPtr> getDc,
+        Func<IntPtr> getDesktopWindow,
+        Func<IntPtr, IntPtr, bool> releaseDc)
     {
         Throw.IfNull(getWindowDc);
         Throw.IfNull(getDc);
@@ -49,5 +53,6 @@ internal sealed class WindowDcHandleOperations : IWindowDcHandleApi
     public IntPtr GetDesktopWindow() => _getDesktopWindow();
 
     /// <inheritdoc />
-    public bool ReleaseDc(IntPtr windowHandle, IntPtr deviceContextHandle) => _releaseDc(windowHandle, deviceContextHandle);
+    public bool ReleaseDc(IntPtr windowHandle, IntPtr deviceContextHandle) =>
+        _releaseDc(windowHandle, deviceContextHandle);
 }

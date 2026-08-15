@@ -46,12 +46,26 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs;
 /// </remarks>
 public sealed class FileDialogResult
 {
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult" /> class.</summary>
+    /// <param name="wasCancelled">A value indicating whether the user cancelled the dialog.</param>
+    /// <param name="selectedPath">The selected path.</param>
+    /// <param name="selectedPaths">The selected paths.</param>
+    private FileDialogResult(bool wasCancelled, string selectedPath, IReadOnlyList<string> selectedPaths)
+    {
+        WasCancelled = wasCancelled;
+        SelectedPath = selectedPath;
+        SelectedPaths = selectedPaths;
+    }
+
     /// <summary>
     /// Gets a value indicating whether the user dismissed the dialog without making a selection
     /// (by pressing Cancel, Escape, or the × button).
     /// </summary>
     /// <remarks>
-    /// When <see langword="true" />, both <see cref="P:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult.SelectedPath" /> and <see cref="P:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult.SelectedPaths" />
+    /// When <see langword="true" />, both
+    /// <see cref="P:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult.SelectedPath" />
+    /// and
+    /// <see cref="P:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult.SelectedPaths" />
     /// will be <see langword="null" />. No exception is thrown for cancellations.
     /// </remarks>
     public bool WasCancelled { get; }
@@ -69,17 +83,6 @@ public sealed class FileDialogResult
     /// </summary>
     public IReadOnlyList<string> SelectedPaths { get; }
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialogResult" /> class.</summary>
-    /// <param name="wasCancelled">A value indicating whether the user cancelled the dialog.</param>
-    /// <param name="selectedPath">The selected path.</param>
-    /// <param name="selectedPaths">The selected paths.</param>
-    private FileDialogResult(bool wasCancelled, string selectedPath, IReadOnlyList<string> selectedPaths)
-    {
-        WasCancelled = wasCancelled;
-        SelectedPath = selectedPath;
-        SelectedPaths = selectedPaths;
-    }
-
     /// <summary>Creates a cancelled dialog result.</summary>
     /// <returns>The cancelled dialog result.</returns>
     internal static FileDialogResult Cancelled() => new(wasCancelled: true, null, null);
@@ -92,5 +95,6 @@ public sealed class FileDialogResult
     /// <summary>Creates a dialog result for multiple paths.</summary>
     /// <param name="paths">The selected paths.</param>
     /// <returns>The dialog result.</returns>
-    internal static FileDialogResult FromPaths(IReadOnlyList<string> paths) => new(wasCancelled: false, (paths.Count > 0) ? paths[0] : null, paths);
+    internal static FileDialogResult FromPaths(IReadOnlyList<string> paths) =>
+        new(wasCancelled: false, paths.Count > 0 ? paths[0] : null, paths);
 }

@@ -52,37 +52,59 @@ internal class FileDialogComObject : ComObject
     /// <summary>Shows the dialog.</summary>
     /// <param name="ownerHandle">The owner window handle.</param>
     /// <returns>The HRESULT returned by the dialog.</returns>
-    internal virtual unsafe int Show(IntPtr ownerHandle) => ((delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int>)(void*)GetMethod(3))(base.Handle, ownerHandle);
+    internal virtual unsafe int Show(IntPtr ownerHandle)
+    {
+        delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int>)(void*)GetMethod(ShowSlot);
+        return method(Handle, ownerHandle);
+    }
 
     /// <summary>Sets the file filters.</summary>
     /// <param name="filterSpecs">The filter specifications.</param>
     internal virtual unsafe void SetFileTypes(FilterSpec[] filterSpecs)
     {
         using NativeFilterSpecs nativeFilters = new(filterSpecs);
-        delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int> method = (delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int>)(void*)GetMethod(4);
-        ComObject.ThrowIfFailed(nativeFilters.SetFileTypes(method, base.Handle));
+        delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int>)(void*)GetMethod(SetFileTypesSlot);
+        ComObject.ThrowIfFailed(nativeFilters.SetFileTypes(method, Handle));
     }
 
     /// <summary>Sets the selected file type index.</summary>
     /// <param name="fileTypeIndex">The one-based file type index.</param>
-    internal virtual unsafe void SetFileTypeIndex(uint fileTypeIndex) => ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, uint, int>)(void*)GetMethod(5))(base.Handle, fileTypeIndex));
+    internal virtual unsafe void SetFileTypeIndex(uint fileTypeIndex)
+    {
+        delegate* unmanaged[Stdcall]<IntPtr, uint, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, uint, int>)(void*)GetMethod(SetFileTypeIndexSlot);
+        ComObject.ThrowIfFailed(method(Handle, fileTypeIndex));
+    }
 
     /// <summary>Sets the dialog options.</summary>
     /// <param name="options">The options.</param>
-    internal virtual unsafe void SetOptions(FileOpenOptions options) => ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, FileOpenOptions, int>)(void*)GetMethod(9))(base.Handle, options));
+    internal virtual unsafe void SetOptions(FileOpenOptions options)
+    {
+        delegate* unmanaged[Stdcall]<IntPtr, FileOpenOptions, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, FileOpenOptions, int>)(void*)GetMethod(SetOptionsSlot);
+        ComObject.ThrowIfFailed(method(Handle, options));
+    }
 
     /// <summary>Sets the initial folder.</summary>
     /// <param name="shellItem">The shell item.</param>
-    internal virtual unsafe void SetFolder(IShellItem shellItem) => ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int>)(void*)GetMethod(12))(base.Handle, shellItem.Handle));
+    internal virtual unsafe void SetFolder(IShellItem shellItem)
+    {
+        delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int>)(void*)GetMethod(SetFolderSlot);
+        ComObject.ThrowIfFailed(method(Handle, shellItem.Handle));
+    }
 
     /// <summary>Sets the file name.</summary>
     /// <param name="name">The file name.</param>
     internal virtual unsafe void SetFileName(string name)
     {
-        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method = (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(15);
+        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetFileNameSlot);
         fixed (char* namePointer = name)
         {
-            ComObject.ThrowIfFailed(method(base.Handle, namePointer));
+            ComObject.ThrowIfFailed(method(Handle, namePointer));
         }
     }
 
@@ -90,10 +112,11 @@ internal class FileDialogComObject : ComObject
     /// <param name="title">The title.</param>
     internal virtual unsafe void SetTitle(string title)
     {
-        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method = (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(17);
+        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetTitleSlot);
         fixed (char* titlePointer = title)
         {
-            ComObject.ThrowIfFailed(method(base.Handle, titlePointer));
+            ComObject.ThrowIfFailed(method(Handle, titlePointer));
         }
     }
 
@@ -102,23 +125,32 @@ internal class FileDialogComObject : ComObject
     internal virtual unsafe IShellItem GetResult()
     {
         IntPtr item = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(20))(base.Handle, out item));
+        delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(GetResultSlot);
+        ComObject.ThrowIfFailed(method(Handle, out item));
         return new(item);
     }
 
     /// <summary>Adds a place to the dialog navigation list.</summary>
     /// <param name="shellItem">The shell item.</param>
     /// <param name="addPlaceFlags">The add-place flags.</param>
-    internal virtual unsafe void AddPlace(IShellItem shellItem, FileDialogAddPlaceFlags addPlaceFlags) => ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, IntPtr, FileDialogAddPlaceFlags, int>)(void*)GetMethod(21))(base.Handle, shellItem.Handle, addPlaceFlags));
+    internal virtual unsafe void AddPlace(IShellItem shellItem, FileDialogAddPlaceFlags addPlaceFlags)
+    {
+        delegate* unmanaged[Stdcall]<IntPtr, IntPtr, FileDialogAddPlaceFlags, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, IntPtr, FileDialogAddPlaceFlags, int>)
+                (void*)GetMethod(AddPlaceSlot);
+        ComObject.ThrowIfFailed(method(Handle, shellItem.Handle, addPlaceFlags));
+    }
 
     /// <summary>Sets the default extension.</summary>
     /// <param name="defaultExtension">The default extension.</param>
     internal virtual unsafe void SetDefaultExtension(string defaultExtension)
     {
-        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method = (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(22);
+        delegate* unmanaged[Stdcall]<IntPtr, char*, int> method =
+            (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetDefaultExtensionSlot);
         fixed (char* extensionPointer = defaultExtension)
         {
-            ComObject.ThrowIfFailed(method(base.Handle, extensionPointer));
+            ComObject.ThrowIfFailed(method(Handle, extensionPointer));
         }
     }
 }

@@ -16,4 +16,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 /// <param name="imageAttributes">The image attributes handle.</param>
 /// <param name="sourceUnit">The source unit.</param>
 /// <returns>The GDI+ status.</returns>
-internal delegate GdiPlusStatus GdiPlusDrawImageFxOperation(nint graphics, nint bitmap, ref NativeRectFloat source, nint matrix, nint effect, nint imageAttributes, GpUnit sourceUnit);
+internal delegate GdiPlusStatus GdiPlusDrawImageFxOperation(
+    nint graphics,
+    nint bitmap,
+    ref NativeRectFloat source,
+    nint matrix,
+    nint effect,
+    nint imageAttributes,
+    GpUnit sourceUnit);

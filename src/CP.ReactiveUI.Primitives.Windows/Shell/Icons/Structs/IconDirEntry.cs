@@ -13,8 +13,14 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly record struct IconDirEntry
 {
+    /// <summary>Defines the maximum encoded icon dimension.</summary>
+    private const int MaximumEncodedDimension = 256;
+
+    /// <summary>Defines the native structure size.</summary>
+    private const int StructureSize = 16;
+
     /// <summary>Gets the size of the ICONDIRENTRY structure in bytes.</summary>
-    public static int Size => 16;
+    public static int Size => StructureSize;
 
     /// <summary>Gets or sets the image width in pixels.</summary>
     public byte Width { get; init; }
@@ -40,12 +46,6 @@ public readonly record struct IconDirEntry
     /// <summary>Gets or sets the image data offset from the beginning of the file.</summary>
     public uint ImageOffset { get; init; }
 
-    /// <summary>Defines the maximum encoded icon dimension.</summary>
-    private const int MaximumEncodedDimension = 256;
-
-    /// <summary>Defines the native structure size.</summary>
-    private const int StructureSize = 16;
-
     /// <summary>Creates a new ICONDIRENTRY for an icon.</summary>
     /// <param name="width">Width in pixels.</param>
     /// <param name="height">Height in pixels.</param>
@@ -54,13 +54,13 @@ public readonly record struct IconDirEntry
     /// <param name="imageOffset">Offset to the image data.</param>
     /// <returns>The initialized ICONDIRENTRY structure.</returns>
     public static IconDirEntry CreateForIcon(int width, int height, ushort bitCount, uint imageSize, uint imageOffset) => new IconDirEntry
-        {
-            Width = EncodeDimension(width),
-            Height = EncodeDimension(height),
-            BitCount = bitCount,
-            BytesInRes = imageSize,
-            ImageOffset = imageOffset
-        };
+    {
+        Width = EncodeDimension(width),
+        Height = EncodeDimension(height),
+        BitCount = bitCount,
+        BytesInRes = imageSize,
+        ImageOffset = imageOffset,
+    };
 
     /// <summary>Creates a new ICONDIRENTRY for a cursor.</summary>
     /// <param name="width">Width in pixels.</param>
@@ -74,25 +74,18 @@ public readonly record struct IconDirEntry
     /// For cursors, the Planes and BitCount fields store the horizontal and vertical hotspot coordinates.
     /// </remarks>
     public static IconDirEntry CreateForCursor(int width, int height, ushort hotspotX, ushort hotspotY, uint imageSize, uint imageOffset) => new IconDirEntry
-        {
-            Width = EncodeDimension(width),
-            Height = EncodeDimension(height),
-            Planes = hotspotX,
-            BitCount = hotspotY,
-            BytesInRes = imageSize,
-            ImageOffset = imageOffset
-        };
+    {
+        Width = EncodeDimension(width),
+        Height = EncodeDimension(height),
+        Planes = hotspotX,
+        BitCount = hotspotY,
+        BytesInRes = imageSize,
+        ImageOffset = imageOffset,
+    };
 
     /// <summary>Encodes an icon dimension for an ICO directory entry.</summary>
     /// <param name="dimension">The source dimension.</param>
     /// <returns>The encoded dimension byte.</returns>
-    private static byte EncodeDimension(int dimension)
-    {
-        if (dimension != 256)
-        {
-            return checked((byte)dimension);
-        }
-
-        return 0;
-    }
+    private static byte EncodeDimension(int dimension) =>
+        dimension != MaximumEncodedDimension ? checked((byte)dimension) : (byte)0;
 }

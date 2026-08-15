@@ -10,11 +10,13 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 /// <summary>Extensions to handle the HResult.</summary>
 public static class HResultExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="result">The target value.</param>
     extension(HResult result)
     {
         /// <summary>Test if the HResult represents a fail.</summary>
         /// <returns>bool.</returns>
-        public bool Failed() => (int)result < 0;
+        public bool Failed() => unchecked((int)result) < 0;
 
         /// <summary>Test if the HResult represents a success.</summary>
         /// <returns>bool.</returns>
@@ -25,7 +27,7 @@ public static class HResultExtensions
         {
             if (result.Failed())
             {
-                throw Marshal.GetExceptionForHR(checked((int)result));
+                throw Marshal.GetExceptionForHR(unchecked((int)result));
             }
         }
     }

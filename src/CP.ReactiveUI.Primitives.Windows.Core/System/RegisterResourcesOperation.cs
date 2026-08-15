@@ -15,4 +15,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="serviceCount">The service count.</param>
 /// <param name="serviceNames">The service names.</param>
 /// <returns>The native result code.</returns>
-internal delegate int RegisterResourcesOperation(int sessionHandle, uint fileCount, string[] filenames, uint applicationCount, RmUniqueProcess[] applications, uint serviceCount, string[] serviceNames);
+internal delegate int RegisterResourcesOperation(
+    int sessionHandle,
+    uint fileCount,
+    string[] filenames,
+    uint applicationCount,
+    RmUniqueProcess[] applications,
+    uint serviceCount,
+    string[] serviceNames);

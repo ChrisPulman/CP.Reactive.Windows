@@ -13,8 +13,18 @@ namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
 namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input;
 #endif
 /// <summary>Production Win32 input API implementation.</summary>
+#if NETFRAMEWORK
 internal sealed class WindowsNativeInputApi : INativeInputApi
+#else
+internal sealed partial class WindowsNativeInputApi : INativeInputApi
+#endif
 {
+    /// <summary>The singleton instance.</summary>
+    internal static readonly WindowsNativeInputApi Instance = new();
+
+    /// <summary>The active native operations.</summary>
+    private static NativeInputOperations _operations = new(NativeMethods.GetLastInputInfo, NativeMethods.SendInput);
+
     /// <summary>Defines a last-input native operation.</summary>
     /// <param name="lastInputInfo">The last-input info to fill.</param>
     /// <returns><see langword="true" /> when the operation succeeds.</returns>
@@ -27,25 +37,64 @@ internal sealed class WindowsNativeInputApi : INativeInputApi
     /// <returns>The number of input records sent.</returns>
     internal delegate uint SendInputOperation(uint numberOfInputs, DesktopInput[] inputs, int inputSize);
 
+    /// <inheritdoc />
+    public bool GetLastInputInfo(ref LastInputInfo lastInputInfo) => _operations.GetLastInputInfo(ref lastInputInfo);
+
+    /// <inheritdoc />
+    public uint SendInput(DesktopInput[] inputs) => _operations.SendInput(checked((uint)inputs.Length), inputs, DesktopInput.Size);
+
+    /// <summary>Overrides the native input operations for deterministic tests.</summary>
+    /// <param name="getLastInputInfo">The replacement last-input operation.</param>
+    /// <param name="sendInput">The replacement send-input operation.</param>
+    /// <returns>A scope that restores the previous operations.</returns>
+    internal static IDisposable OverrideOperationsForTesting(GetLastInputInfoOperation getLastInputInfo, SendInputOperation sendInput)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getLastInputInfo);
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(sendInput);
+        NativeInputOperations operations = _operations;
+        _operations = new(getLastInputInfo, sendInput);
+        return Scope.Create(operations, static operations2 =>
+        {
+            _operations = operations2;
+        });
+    }
+
     /// <summary>Contains native input entry points.</summary>
+#if NETFRAMEWORK
     private static class NativeMethods
+#else
+    private static partial class NativeMethods
+#endif
     {
         /// <summary>Gets the last input information.</summary>
         /// <param name="lastInputInfo">Last input information.</param>
         /// <returns><see langword="true" /> when the native call succeeds.</returns>
+#if NETFRAMEWORK
         [DllImport("User32")]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static extern bool GetLastInputInfo(ref LastInputInfo lastInputInfo);
+#else
+        [LibraryImport("User32")]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static partial bool GetLastInputInfo(ref LastInputInfo lastInputInfo);
+#endif
 
         /// <summary>Synthesizes keyboard and mouse input events.</summary>
         /// <param name="numberOfInputs">The number of input records.</param>
         /// <param name="inputs">The input records.</param>
         /// <param name="inputSize">The native input record size.</param>
         /// <returns>The number of input records successfully inserted into the input stream.</returns>
+#if NETFRAMEWORK
         [DllImport("user32", SetLastError = true)]
         [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
         internal static extern uint SendInput(uint numberOfInputs, [In][MarshalAs(UnmanagedType.LPArray)] DesktopInput[] inputs, int inputSize);
+#else
+        [LibraryImport("user32", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial uint SendInput(uint numberOfInputs, [In][MarshalAs(UnmanagedType.LPArray)] DesktopInput[] inputs, int inputSize);
+#endif
     }
 
     /// <summary>Stores native input operations.</summary>
@@ -64,33 +113,5 @@ internal sealed class WindowsNativeInputApi : INativeInputApi
         /// <param name="inputSize">The native input record size.</param>
         /// <returns>The number of input records successfully inserted into the input stream.</returns>
         public uint SendInput(uint numberOfInputs, DesktopInput[] inputs, int inputSize) => sendInput(numberOfInputs, inputs, inputSize);
-    }
-
-    /// <summary>The singleton instance.</summary>
-    internal static readonly WindowsNativeInputApi Instance = new();
-
-    /// <summary>The active native operations.</summary>
-    private static NativeInputOperations _operations = new(NativeMethods.GetLastInputInfo, NativeMethods.SendInput);
-
-    /// <inheritdoc />
-    public bool GetLastInputInfo(ref LastInputInfo lastInputInfo) => _operations.GetLastInputInfo(ref lastInputInfo);
-
-    /// <inheritdoc />
-    public uint SendInput(DesktopInput[] inputs) => _operations.SendInput(checked((uint)inputs.Length), inputs, DesktopInput.Size);
-
-    /// <summary>Overrides the native input operations for deterministic tests.</summary>
-    /// <param name="getLastInputInfo">The replacement last-input operation.</param>
-    /// <param name="sendInput">The replacement send-input operation.</param>
-    /// <returns>A scope that restores the previous operations.</returns>
-    internal static IDisposable OverrideOperationsForTesting(GetLastInputInfoOperation getLastInputInfo, SendInputOperation sendInput)
-    {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getLastInputInfo);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(sendInput);
-        NativeInputOperations operations = _operations;
-        _operations = new(getLastInputInfo, sendInput);
-        return Scope.Create(operations, delegate(NativeInputOperations operations2)
-        {
-            _operations = operations2;
-        });
     }
 }

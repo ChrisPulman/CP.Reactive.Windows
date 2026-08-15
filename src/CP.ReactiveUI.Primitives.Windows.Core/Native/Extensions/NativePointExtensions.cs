@@ -9,6 +9,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 /// <summary>Helper method for the NativePoint struct.</summary>
 public static class NativePointExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="point">The target value.</param>
     extension(NativePoint point)
     {
         /// <summary>Create a new NativePoint, from the supplied one, using the specified X coordinate.</summary>
@@ -24,7 +26,8 @@ public static class NativePointExtensions
         /// <summary>Create a new NativePoint by applying another point as an offset.</summary>
         /// <param name="offset">NativePoint offset</param>
         /// <returns>The offset native point.</returns>
-        public NativePoint Offset(NativePoint offset) => checked(new NativePoint(point.X + offset.X, point.Y + offset.Y));
+        public NativePoint Offset(NativePoint offset) =>
+            checked(new NativePoint(point.X + offset.X, point.Y + offset.Y));
 
         /// <summary>Create a new NativePoint using no nullable offset values.</summary>
         /// <returns>A native point at the previous default offset result.</returns>
@@ -39,6 +42,10 @@ public static class NativePointExtensions
         /// <param name="offsetX">The nullable horizontal offset.</param>
         /// <param name="offsetY">The nullable vertical offset.</param>
         /// <returns>A native point offset by the supplied nullable coordinates.</returns>
-        public NativePoint Offset(int? offsetX, int? offsetY) => checked(new NativePoint((point.X + offsetX).GetValueOrDefault(), (point.Y + offsetY).GetValueOrDefault()));
+        public NativePoint Offset(int? offsetX, int? offsetY) =>
+            checked(
+                new NativePoint(
+                    (point.X + offsetX).GetValueOrDefault(),
+                    (point.Y + offsetY).GetValueOrDefault()));
     }
 }

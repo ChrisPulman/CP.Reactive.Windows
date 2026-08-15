@@ -11,8 +11,12 @@ using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles;
 namespace CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
 
 /// <summary>See <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/ms648381(v=vs.85).aspx"></a>.</summary>
-public struct CursorInfo : IEquatable<CursorInfo>
+[StructLayout(LayoutKind.Sequential)]
+public readonly struct CursorInfo : IEquatable<CursorInfo>
 {
+    /// <summary>Size of the struct.</summary>
+    private readonly int _nativeSize;
+
     /// <summary>Native _nativeFlags field.</summary>
     private readonly CursorInfoFlags _nativeFlags;
 
@@ -22,24 +26,32 @@ public struct CursorInfo : IEquatable<CursorInfo>
     /// <summary>Native _nativeScreenPosition field.</summary>
     private readonly NativePoint _nativeScreenPosition;
 
-    /// <summary>Size of the struct.</summary>
-    private int _nativeSize;
+    /// <summary>Initializes a new instance of the <see cref="CursorInfo"/> struct.</summary>
+    /// <param name="nativeSize">The native structure size.</param>
+    private CursorInfo(int nativeSize)
+    {
+        _nativeSize = nativeSize;
+        _nativeFlags = default;
+        _nativeCursorHandle = IntPtr.Zero;
+        _nativeScreenPosition = default;
+    }
 
     /// <summary>Gets the cursor state, as CursorInfoFlags.</summary>
-    public readonly CursorInfoFlags Flags => _nativeFlags;
+    public CursorInfoFlags Flags => _nativeFlags;
 
     /// <summary>Gets a non-owning handle to the cursor.</summary>
-    public readonly SafeCursorReferenceHandle CursorHandle => new(_nativeCursorHandle);
+    public SafeCursorReferenceHandle CursorHandle => new(_nativeCursorHandle);
 
     /// <summary>Gets the screen coordinates of the cursor.</summary>
-    public readonly NativePoint Location => _nativeScreenPosition;
+    public NativePoint Location => _nativeScreenPosition;
 
     /// <summary>Gets a value indicating whether the cursor is currently visible.</summary>
-    public readonly bool IsShowing => _nativeCursorHandle != IntPtr.Zero && _nativeFlags == CursorInfoFlags.Showing;
+    public bool IsShowing =>
+        _nativeCursorHandle != IntPtr.Zero && _nativeFlags == CursorInfoFlags.Showing;
 
     /// <summary>Factory for the structure.</summary>
     /// <returns>The initialized cursor information.</returns>
-    public static CursorInfo Create() => new CursorInfo { _nativeSize = Marshal.SizeOf<CursorInfo>() };
+    public static CursorInfo Create() => new(Marshal.SizeOf<CursorInfo>());
 
     /// <summary>Compares two CursorInfo values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -60,11 +72,15 @@ public struct CursorInfo : IEquatable<CursorInfo>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(CursorInfo other) => _nativeSize == other._nativeSize && _nativeFlags == other._nativeFlags && _nativeCursorHandle == other._nativeCursorHandle && _nativeScreenPosition.Equals(other._nativeScreenPosition);
+    public bool Equals(CursorInfo other) =>
+        _nativeSize == other._nativeSize
+        && _nativeFlags == other._nativeFlags
+        && _nativeCursorHandle == other._nativeCursorHandle
+        && _nativeScreenPosition.Equals(other._nativeScreenPosition);
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj) => obj is CursorInfo other && Equals(other);
+    public override bool Equals(object obj) => obj is CursorInfo other && Equals(other);
 
     /// <inheritdoc />
-    public override readonly int GetHashCode() => 0;
+    public override int GetHashCode() => 0;
 }

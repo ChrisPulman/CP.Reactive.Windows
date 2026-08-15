@@ -12,12 +12,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>Provides event arguments for session change events.</summary>
 public class SessionChangeEventArgs : EventArgs
 {
-    /// <summary>Gets the type of session change that occurred.</summary>
-    public WtsSessionChangeEvents EventType { get; }
-
-    /// <summary>Gets the session ID that was affected.</summary>
-    public int SessionId { get; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.SessionChangeEventArgs" /> class.</summary>
     /// <param name="eventType">The type of session change.</param>
     /// <param name="sessionId">The session ID.</param>
@@ -26,4 +20,10 @@ public class SessionChangeEventArgs : EventArgs
         EventType = eventType;
         SessionId = sessionId;
     }
+
+    /// <summary>Gets the type of session change that occurred.</summary>
+    public WtsSessionChangeEvents EventType { get; }
+
+    /// <summary>Gets the session ID that was affected.</summary>
+    public int SessionId { get; }
 }

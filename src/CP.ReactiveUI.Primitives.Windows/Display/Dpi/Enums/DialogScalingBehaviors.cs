@@ -18,5 +18,5 @@ public enum DialogScalingBehaviors
     /// <summary>Prevents the dialog manager from sending an updated font to the child window via WM_SETFONT in response to a DPI change.</summary>
     DisableFontUpdate = 1,
     /// <summary>Prevents the dialog manager from resizing and repositioning the child window in response to a DPI change.</summary>
-    DisableRelayout = 2
+    DisableRelayout = 2,
 }

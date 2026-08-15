@@ -25,5 +25,5 @@ public enum RawInputDevices
     /// <summary>Pointer UsagePage: 0x01 Usage: 0x80 Hardware ID: HID_DEVICE_SYSTEM_CONTROL.</summary>
     SystemControl,
     /// <summary>Pointer UsagePage: 0x0C Usage: 0x01 Hardware ID: HID_DEVICE_SYSTEM_CONSUMER.</summary>
-    ConsumerAudioControl
+    ConsumerAudioControl,
 }

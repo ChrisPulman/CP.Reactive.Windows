@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Final deterministic coverage for clipboard primitives.</summary>
@@ -37,8 +34,14 @@ public sealed class CoverageFinalClipboardTests
     /// <summary>A missing clipboard format identifier.</summary>
     private const uint MissingFormatId = 0xC104;
 
-    /// <summary>The deterministic cloud clipboard format identifier.</summary>
-    private const uint CloudFormatId = 0xC105;
+    /// <summary>The deterministic cloud history format identifier.</summary>
+    private const uint CloudHistoryFormatId = 0xC105;
+
+    /// <summary>The deterministic cloud upload format identifier.</summary>
+    private const uint CloudUploadFormatId = 0xC106;
+
+    /// <summary>The deterministic cloud monitor exclusion format identifier.</summary>
+    private const uint CloudMonitorExclusionFormatId = 0xC107;
 
     /// <summary>A fake native global-memory handle.</summary>
     private const int GlobalHandleValue = 0x1001;
@@ -393,11 +396,13 @@ public sealed class CoverageFinalClipboardTests
         var memoryPointer = new IntPtr(MemoryPointerValue);
         var allocatedHandle = globalHandle;
         var lockedPointer = memoryPointer;
+        using var unlockScope = ClipboardNativeInfo.OverrideGlobalUnlockForTesting(static _ => true);
         using var scope = ClipboardInfoExtensions.OverrideOperationsForTesting(
             formatId => formatId == RegisteredFormatId ? globalHandle : IntPtr.Zero,
             static formatId => formatId == RegisteredFormatId,
             (_, _) => allocatedHandle,
-            _ => lockedPointer);
+            _ => lockedPointer,
+            static _ => IntPtr.Zero);
         var token = new ClipboardAccessToken();
 
         var readSucceeded = token.TryReadInfo(RegisteredFormatId, out var readInfo);
@@ -437,7 +442,8 @@ public sealed class CoverageFinalClipboardTests
             static _ => IntPtr.Zero,
             static _ => true,
             static (_, _) => new(GlobalHandleValue),
-            static _ => new(MemoryPointerValue));
+            static _ => new(MemoryPointerValue),
+            static _ => IntPtr.Zero);
         await Assert.That(() => token.ReadInfo(MissingFormatId)).Throws<Win32Exception>();
     }
 
@@ -465,14 +471,16 @@ public sealed class CoverageFinalClipboardTests
         {
             using var formatScope = ClipboardFormatExtensions.OverrideOperationsForTesting(
                 static _ => 0,
-                static format => format == WrapperFormatName ? RegisteredFormatId : CloudFormatId,
+                MapWrapperFormat,
                 static _ => null,
                 static () => SuccessError);
             using var infoScope = ClipboardInfoExtensions.OverrideOperationsForTesting(
                 static _ => new(GlobalHandleValue),
                 static _ => true,
                 static (_, _) => new(GlobalHandleValue),
-                _ => memory);
+                _ => memory,
+                static _ => IntPtr.Zero);
+            using var unlockScope = ClipboardNativeInfo.OverrideGlobalUnlockForTesting(static _ => true);
             using var setDataScope = NativeMethods.OverrideSetClipboardDataForTesting((format, clipboardMemory) =>
             {
                 setDataCalls++;
@@ -480,6 +488,7 @@ public sealed class CoverageFinalClipboardTests
                 lastSetMemory = clipboardMemory;
                 return clipboardMemory;
             });
+            using var dragQueryScope = NativeMethods.OverrideDragQueryFileForTesting(static (_, _) => 0);
             using var token = new ClipboardAccessToken();
 
             token.SetAsBytes([FirstByte, SecondByte], StandardClipboardFormats.UnicodeText);
@@ -609,7 +618,9 @@ public sealed class CoverageFinalClipboardTests
                 static _ => new(GlobalHandleValue),
                 static _ => true,
                 static (_, _) => new(GlobalHandleValue),
-                _ => memory);
+                _ => memory,
+                static _ => IntPtr.Zero);
+            using var unlockScope = ClipboardNativeInfo.OverrideGlobalUnlockForTesting(static _ => true);
             using var streamScope = ClipboardStreamExtensions.OverrideOperationsForTesting(
                 static (_, _, _, _) => { },
                 _ => bytes.Length);
@@ -713,6 +724,18 @@ public sealed class CoverageFinalClipboardTests
         var method = typeof(ClipboardNative).GetMethod(methodName, parameterTypes) ?? throw new MissingMethodException(nameof(ClipboardNative), methodName);
         return method.Invoke(null, arguments) as IClipboardAccessToken ?? throw new InvalidOperationException(methodName);
     }
+
+    /// <summary>Maps wrapper test format names to deterministic identifiers.</summary>
+    /// <param name="format">The format name.</param>
+    /// <returns>The deterministic format identifier.</returns>
+    private static uint MapWrapperFormat(string format) =>
+        format switch
+        {
+            WrapperFormatName => RegisteredFormatId,
+            "CanIncludeInClipboardHistory" => CloudHistoryFormatId,
+            "CanUploadToCloudClipboard" => CloudUploadFormatId,
+            _ => CloudMonitorExclusionFormatId,
+        };
 
     /// <summary>Materializes unsigned integer values as a list.</summary>
     /// <param name="values">The values to materialize.</param>

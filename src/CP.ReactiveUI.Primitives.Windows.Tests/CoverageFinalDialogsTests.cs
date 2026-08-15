@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using DialogFileDialog = CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialog;
-
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Tests dialog APIs without displaying native user interface.</summary>

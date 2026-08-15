@@ -102,12 +102,9 @@ public readonly struct NativePointFloat(float x, float y) : IEquatable<NativePoi
         {
             if (!(obj is Point drawingPoint))
             {
-                if (!(obj is NativePoint nativePoint))
-                {
-                    return obj is System.Windows.Point point && Equals(point);
-                }
-
-                return Equals(nativePoint);
+                return !(obj is NativePoint nativePoint)
+                    ? obj is System.Windows.Point point && Equals(point)
+                    : Equals(nativePoint);
             }
 
             return Equals(drawingPoint);
@@ -117,7 +114,8 @@ public readonly struct NativePointFloat(float x, float y) : IEquatable<NativePoi
     }
 
     /// <inheritdoc />
-    public bool Equals(NativePointFloat other) => Math.Abs(X - other.X) < float.Epsilon && Math.Abs(Y - other.Y) < float.Epsilon;
+    public bool Equals(NativePointFloat other) =>
+        Math.Abs(X - other.X) < float.Epsilon && Math.Abs(Y - other.Y) < float.Epsilon;
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(X, Y);

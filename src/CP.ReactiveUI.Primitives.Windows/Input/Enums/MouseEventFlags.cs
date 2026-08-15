@@ -66,5 +66,5 @@ public enum MouseEventFlags : uint
     ///     to the system.
     ///     For further information about relative mouse motion, see the following Remarks section.
     /// </summary>
-    Absolute = 0x8000U
+    Absolute = 0x8000U,
 }

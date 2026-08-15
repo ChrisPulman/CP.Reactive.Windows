@@ -23,5 +23,5 @@ public enum MouseStates
     /// <summary>Mouse coordinates are mapped to the virtual desktop (for a multiple monitor system).</summary>
     VirtualDesktop = 2,
     /// <summary>The left button was released.</summary>
-    AttributesChanged = 4
+    AttributesChanged = 4,
 }

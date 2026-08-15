@@ -12,6 +12,11 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard;
 /// <summary>Extensions for Windows Cloud Clipboard and Clipboard History support.</summary>
 public static class ClipboardCloudExtensions
 {
+    /// <summary>The byte count of a Windows DWORD value.</summary>
+    private const long DWordByteCount = sizeof(uint);
+
+    /// <summary>Provides extension members for the target instance.</summary>
+    /// <param name="clipboardAccessToken">The extended instance.</param>
     extension(IClipboardAccessToken clipboardAccessToken)
     {
         /// <summary>
@@ -95,7 +100,7 @@ public static class ClipboardCloudExtensions
     {
         clipboardAccessToken.ThrowWhenNoAccess();
         uint formatId = ClipboardFormatExtensions.MapFormatToId(format);
-        using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, 4L);
+        using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, DWordByteCount);
         Marshal.WriteInt32(writeInfo.MemoryPtr, checked((int)value));
     }
 }

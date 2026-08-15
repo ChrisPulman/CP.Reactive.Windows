@@ -34,5 +34,5 @@ public enum DpiAwareness
     ///     This process checks for the DPI when it is created and adjusts the scale factor whenever the DPI changes.
     ///     These processes are not automatically scaled by the system.
     /// </summary>
-    PerMonitorAware
+    PerMonitorAware,
 }

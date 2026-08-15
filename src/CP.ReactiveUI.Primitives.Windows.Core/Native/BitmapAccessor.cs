@@ -5,7 +5,6 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
 using CP.ReactiveUI.Primitives.Windows.Native.Structs.PixelFormats;
 using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
@@ -26,101 +25,6 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     /// <summary>The bitmap that owns the locked data.</summary>
     private readonly Bitmap _bitmap;
 
-    /// <summary>Delegate for processing a single row of pixel data.</summary>
-    /// <typeparam name="TRowPixel">The pixel type.</typeparam>
-    /// <param name="rowIndex">The zero-based row index.</param>
-    /// <param name="rowSpan">A span of pixels representing the row.</param>
-    public delegate void ProcessRowDelegate<TRowPixel>(int rowIndex, Span<TRowPixel> rowSpan)
-        where TRowPixel : struct;
-
-    /// <summary>Validates pixel format compatibility for the requested typed pixel.</summary>
-    private static class PixelFormatValidator
-    {
-        /// <summary>The byte size of a BGRA pixel.</summary>
-        private const int Bgra32ByteSize = 4;
-
-        /// <summary>The byte size of a BGR pixel.</summary>
-        private const int Bgr24ByteSize = 3;
-
-        /// <summary>The byte size of an indexed pixel.</summary>
-        private const int Indexed8ByteSize = 1;
-
-        /// <summary>Validates that the bitmap pixel format matches the requested typed pixel.</summary>
-        /// <param name="pixelFormat">The bitmap pixel format.</param>
-        public static void Validate(PixelFormat pixelFormat)
-        {
-            Type pixelType = typeof(TPixel);
-            if (pixelType == typeof(Bgra32))
-            {
-                ValidateBgra32(pixelFormat);
-                return;
-            }
-
-            if (pixelType == typeof(Bgr24))
-            {
-                ValidateBgr24(pixelFormat);
-                return;
-            }
-
-            if (pixelType == typeof(Indexed8))
-            {
-                ValidateIndexed8(pixelFormat);
-                return;
-            }
-
-            throw new NotSupportedException($"Pixel type {pixelType.Name} is not supported. Use Bgra32, Bgr24, or Indexed8.");
-        }
-
-        /// <summary>Validates a BGRA pixel format.</summary>
-        /// <param name="pixelFormat">The bitmap pixel format.</param>
-        private static void ValidateBgra32(PixelFormat pixelFormat)
-        {
-            if (pixelFormat is not PixelFormat.Format32bppArgb and not PixelFormat.Format32bppRgb && pixelFormat != PixelFormat.Format32bppPArgb)
-            {
-                throw new NotSupportedException($"Pixel format {pixelFormat} is not compatible with Bgra32. Use Format32bppArgb, Format32bppRgb, or Format32bppPArgb.");
-            }
-
-            ValidatePixelSize<Bgra32>(4);
-        }
-
-        /// <summary>Validates a BGR pixel format.</summary>
-        /// <param name="pixelFormat">The bitmap pixel format.</param>
-        private static void ValidateBgr24(PixelFormat pixelFormat)
-        {
-            if (pixelFormat != PixelFormat.Format24bppRgb)
-            {
-                throw new NotSupportedException($"Pixel format {pixelFormat} is not compatible with Bgr24. Use Format24bppRgb.");
-            }
-
-            ValidatePixelSize<Bgr24>(3);
-        }
-
-        /// <summary>Validates an indexed pixel format.</summary>
-        /// <param name="pixelFormat">The bitmap pixel format.</param>
-        private static void ValidateIndexed8(PixelFormat pixelFormat)
-        {
-            if (pixelFormat != PixelFormat.Format8bppIndexed)
-            {
-                throw new NotSupportedException($"Pixel format {pixelFormat} is not compatible with Indexed8. Use Format8bppIndexed.");
-            }
-
-            ValidatePixelSize<Indexed8>(1);
-        }
-
-        /// <summary>Validates that the actual pixel size matches the expected size.</summary>
-        /// <typeparam name="TValidatedPixel">The pixel type to validate.</typeparam>
-        /// <param name="expectedSize">The expected byte size.</param>
-        private static void ValidatePixelSize<TValidatedPixel>(int expectedSize)
-            where TValidatedPixel : struct
-        {
-            int pixelSize = Unsafe.SizeOf<TValidatedPixel>();
-            if (pixelSize != expectedSize)
-            {
-                throw new NotSupportedException($"{typeof(TValidatedPixel).Name} must be {expectedSize} bytes, but is {pixelSize} bytes.");
-            }
-        }
-    }
-
     /// <summary>The locked bitmap data.</summary>
     private readonly BitmapData _bitmapData;
 
@@ -128,7 +32,40 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     private readonly bool _readOnly;
 
     /// <summary>The cached indexed palette.</summary>
-    private Bgra32[] _paletteCache;
+    private Bgra32[] _paletteCache = [];
+
+    /// <summary>Initializes a new instance of the BitmapAccessor class.</summary>
+    /// <param name="bitmap">The bitmap to access.</param>
+    /// <exception cref="T:System.ArgumentNullException">Thrown when bitmap is null.</exception>
+    /// <exception cref="T:System.NotSupportedException">Thrown when the bitmap's pixel format doesn't match TPixel.</exception>
+    public BitmapAccessor(Bitmap bitmap)
+        : this(bitmap, false) { }
+
+    /// <summary>Initializes a new instance of the BitmapAccessor class.</summary>
+    /// <param name="bitmap">The bitmap to access.</param>
+    /// <param name="readOnly">If true, the bitmap is locked for read-only access; otherwise, it's locked for read-write access.</param>
+    /// <exception cref="T:System.ArgumentNullException">Thrown when bitmap is null.</exception>
+    /// <exception cref="T:System.NotSupportedException">Thrown when the bitmap's pixel format doesn't match TPixel.</exception>
+    public BitmapAccessor(Bitmap bitmap, bool readOnly)
+    {
+        _bitmap = bitmap ?? throw new ArgumentNullException(nameof(bitmap));
+        _readOnly = readOnly;
+        PixelFormatValidator.Validate(bitmap.PixelFormat);
+        ImageLockMode flags = (readOnly ? ImageLockMode.ReadOnly : ImageLockMode.ReadWrite);
+        Rectangle rect = new(ZeroCoordinate, ZeroCoordinate, bitmap.Width, bitmap.Height);
+        _bitmapData = bitmap.LockBits(rect, flags, bitmap.PixelFormat);
+        if (typeof(TPixel) == typeof(Indexed8))
+        {
+            CachePalette();
+        }
+    }
+
+    /// <summary>Delegate for processing a single row of pixel data.</summary>
+    /// <typeparam name="TRowPixel">The pixel type.</typeparam>
+    /// <param name="rowIndex">The zero-based row index.</param>
+    /// <param name="rowSpan">A span of pixels representing the row.</param>
+    public delegate void ProcessRowDelegate<TRowPixel>(int rowIndex, Span<TRowPixel> rowSpan)
+        where TRowPixel : struct;
 
     /// <summary>Gets the width of the bitmap in pixels.</summary>
     public int Width => _bitmapData.Width;
@@ -146,34 +83,6 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     /// <exception cref="T:System.NotSupportedException">Thrown when the pixel format is not indexed.</exception>
     public Span<Bgra32> PaletteSpan => CreatePaletteSpan();
 
-    /// <summary>Initializes a new instance of the BitmapAccessor class.</summary>
-    /// <param name="bitmap">The bitmap to access.</param>
-    /// <exception cref="T:System.ArgumentNullException">Thrown when bitmap is null.</exception>
-    /// <exception cref="T:System.NotSupportedException">Thrown when the bitmap's pixel format doesn't match TPixel.</exception>
-    public BitmapAccessor(Bitmap bitmap)
-        : this(bitmap, false)
-    {
-    }
-
-    /// <summary>Initializes a new instance of the BitmapAccessor class.</summary>
-    /// <param name="bitmap">The bitmap to access.</param>
-    /// <param name="readOnly">If true, the bitmap is locked for read-only access; otherwise, it's locked for read-write access.</param>
-    /// <exception cref="T:System.ArgumentNullException">Thrown when bitmap is null.</exception>
-    /// <exception cref="T:System.NotSupportedException">Thrown when the bitmap's pixel format doesn't match TPixel.</exception>
-    public BitmapAccessor(Bitmap bitmap, bool readOnly)
-    {
-        _bitmap = bitmap ?? throw new ArgumentNullException(nameof(bitmap));
-        _readOnly = readOnly;
-        PixelFormatValidator.Validate(bitmap.PixelFormat);
-        ImageLockMode flags = (readOnly ? ImageLockMode.ReadOnly : ImageLockMode.ReadWrite);
-        Rectangle rect = new(0, 0, bitmap.Width, bitmap.Height);
-        _bitmapData = bitmap.LockBits(rect, flags, bitmap.PixelFormat);
-        if (typeof(TPixel) == typeof(Indexed8))
-        {
-            CachePalette();
-        }
-    }
-
     /// <summary>Gets a span representing a single row of typed pixel data.</summary>
     /// <param name="y">The zero-based row index.</param>
     /// <returns>A span of pixels representing the specified row.</returns>
@@ -186,10 +95,17 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     {
         if (y < 0 || y >= Height)
         {
-            throw new ArgumentOutOfRangeException(nameof(y), $"Row index {y} is out of range [0, {Height}).");
+            throw new ArgumentOutOfRangeException(
+                nameof(y),
+                $"Row index {y} is out of range [0, {Height}).");
         }
 
-        return new((void*)checked(unchecked((nuint)(void*)_bitmapData.Scan0) + unchecked((nuint)checked(y * _bitmapData.Stride))), Width);
+        return new(
+            (void*)
+                checked(
+                    unchecked((nuint)(void*)_bitmapData.Scan0)
+                    + unchecked((nuint)checked(y * _bitmapData.Stride))),
+            Width);
     }
 
     /// <summary>Processes all rows of the bitmap using the provided action.</summary>
@@ -227,10 +143,13 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     /// <summary>Applies cached palette changes back to the bitmap.</summary>
     private void ApplyPalette()
     {
-        if (_paletteCache is not null && !_readOnly)
+        if (typeof(TPixel) == typeof(Indexed8) && !_readOnly)
         {
             ColorPalette palette = _bitmap.Palette;
-            for (int i = 0; i < _paletteCache.Length && i < palette.Entries.Length; i = checked(i + 1))
+            for (
+                int i = 0;
+                i < _paletteCache.Length && i < palette.Entries.Length;
+                i = checked(i + 1))
             {
                 Bgra32 bgra = _paletteCache[i];
                 palette.Entries[i] = Color.FromArgb(bgra.A, bgra.R, bgra.G, bgra.B);
@@ -246,14 +165,76 @@ public sealed class BitmapAccessor<TPixel> : IDisposable
     {
         if (typeof(TPixel) != typeof(Indexed8))
         {
-            throw new NotSupportedException("PaletteSpan is only supported for Indexed8 pixel format.");
-        }
-
-        if (_paletteCache is null)
-        {
-            throw new InvalidOperationException("Palette cache is not initialized.");
+            throw new NotSupportedException(
+                "PaletteSpan is only supported for Indexed8 pixel format.");
         }
 
         return new(_paletteCache);
+    }
+
+    /// <summary>Validates pixel format compatibility for the requested typed pixel.</summary>
+    private static class PixelFormatValidator
+    {
+        /// <summary>Validates that the bitmap pixel format matches the requested typed pixel.</summary>
+        /// <param name="pixelFormat">The bitmap pixel format.</param>
+        public static void Validate(PixelFormat pixelFormat)
+        {
+            Type pixelType = typeof(TPixel);
+            if (pixelType == typeof(Bgra32))
+            {
+                ValidateBgra32(pixelFormat);
+                return;
+            }
+
+            if (pixelType == typeof(Bgr24))
+            {
+                ValidateBgr24(pixelFormat);
+                return;
+            }
+
+            if (pixelType == typeof(Indexed8))
+            {
+                ValidateIndexed8(pixelFormat);
+                return;
+            }
+
+            throw new NotSupportedException(
+                $"Pixel type {pixelType.Name} is not supported. Use Bgra32, Bgr24, or Indexed8.");
+        }
+
+        /// <summary>Validates a BGRA pixel format.</summary>
+        /// <param name="pixelFormat">The bitmap pixel format.</param>
+        private static void ValidateBgra32(PixelFormat pixelFormat)
+        {
+            if (
+                pixelFormat is not PixelFormat.Format32bppArgb and not PixelFormat.Format32bppRgb
+                && pixelFormat != PixelFormat.Format32bppPArgb)
+            {
+                throw new NotSupportedException(
+                    $"Pixel format {pixelFormat} is not compatible with Bgra32. Use Format32bppArgb, Format32bppRgb, or Format32bppPArgb.");
+            }
+        }
+
+        /// <summary>Validates a BGR pixel format.</summary>
+        /// <param name="pixelFormat">The bitmap pixel format.</param>
+        private static void ValidateBgr24(PixelFormat pixelFormat)
+        {
+            if (pixelFormat != PixelFormat.Format24bppRgb)
+            {
+                throw new NotSupportedException(
+                    $"Pixel format {pixelFormat} is not compatible with Bgr24. Use Format24bppRgb.");
+            }
+        }
+
+        /// <summary>Validates an indexed pixel format.</summary>
+        /// <param name="pixelFormat">The bitmap pixel format.</param>
+        private static void ValidateIndexed8(PixelFormat pixelFormat)
+        {
+            if (pixelFormat != PixelFormat.Format8bppIndexed)
+            {
+                throw new NotSupportedException(
+                    $"Pixel format {pixelFormat} is not compatible with Indexed8. Use Format8bppIndexed.");
+            }
+        }
     }
 }

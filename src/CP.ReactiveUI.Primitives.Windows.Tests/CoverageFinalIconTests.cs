@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Windows.Media.Imaging;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums;
 
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
@@ -185,12 +183,12 @@ public sealed class CoverageFinalIconTests
         {
             await Assert.That(static () => Icons.NativeIconMethods.SetApiForTesting(null)).Throws<ArgumentNullException>();
 
-            using var sourceHandle = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(IntPtr.Zero);
+            using var sourceHandle = new SafeIconHandle(IntPtr.Zero);
             using var copiedSafeHandle = Icons.NativeIconMethods.CopyIcon(sourceHandle);
             using var copiedRawHandle = Icons.NativeIconMethods.CopyIcon(new IntPtr(Four));
-            var iconInfo = default(CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfo);
+            var iconInfo = default(IconInfo);
             var iconInfoResult = Icons.NativeIconMethods.GetIconInfo(sourceHandle, out iconInfo);
-            var iconInfoEx = default(CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfoEx);
+            var iconInfoEx = default(IconInfoEx);
             var iconInfoExResult = Icons.NativeIconMethods.GetIconInfoEx(new(Five), ref iconInfoEx);
             var createdHandle = Icons.NativeIconMethods.CreateIconIndirect(ref iconInfo);
             var drawArguments = new Icons.NativeIconMethods.DrawIconArguments(
@@ -229,19 +227,19 @@ public sealed class CoverageFinalIconTests
     public async Task IconHelper_ConvertsHandlesWritesIconAndValidatesMetricSizeAsync()
     {
         await Assert.That(Icons.IconHelper.IconHandleTo(IntPtr.Zero, default(Icon))).IsNull();
-        await Assert.That(Icons.IconHelper.IconHandleTo(default(CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle), default(Icon))).IsNull();
+        await Assert.That(Icons.IconHelper.IconHandleTo(default(SafeIconHandle), default(Icon))).IsNull();
         await Assert.That(static () => Icons.IconHelper.GetSystemIconSize((IconMetricSize)(-One))).Throws<ArgumentOutOfRangeException>();
 
         var iconHandle = CreateNativeIconHandle(Color.Yellow);
         var bitmapHandle = CreateNativeIconHandle(Color.Orange);
         var unsupportedHandle = CreateNativeIconHandle(Color.Black);
-        using var iconHandleCleanup = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(iconHandle);
-        using var bitmapHandleCleanup = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(bitmapHandle);
-        using var unsupportedHandleCleanup = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(unsupportedHandle);
+        using var iconHandleCleanup = new SafeIconHandle(iconHandle);
+        using var bitmapHandleCleanup = new SafeIconHandle(bitmapHandle);
+        using var unsupportedHandleCleanup = new SafeIconHandle(unsupportedHandle);
         using var icon = Icons.IconHelper.IconHandleTo(iconHandle, default(Icon));
         using var bitmap = Icons.IconHelper.IconHandleTo(bitmapHandle, default(Bitmap));
         var unsupported = Icons.IconHelper.IconHandleTo(unsupportedHandle, string.Empty);
-        using var safeIconHandle = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(CreateNativeIconHandle(Color.Purple));
+        using var safeIconHandle = new SafeIconHandle(CreateNativeIconHandle(Color.Purple));
         using var safeIcon = Icons.IconHelper.IconHandleTo(safeIconHandle, default(Icon));
 #if NETFRAMEWORK
         using var stream = new MemoryStream();
@@ -376,26 +374,26 @@ public sealed class CoverageFinalIconTests
 #endif
         using var extracted = throwingStream.ExtractVistaIcon();
 
-        var iconInfo = default(Icons.Structs.IconInfo);
+        var iconInfo = default(IconInfo);
         iconInfo.IsIcon = true;
         iconInfo.Hotspot = new(Three, Four);
         using var bitmaskBitmapHandle = iconInfo.BitmaskBitmapHandle;
         using var colorBitmapHandle = iconInfo.ColorBitmapHandle;
-        var iconInfoEx = Icons.Structs.IconInfoEx.Create();
+        var iconInfoEx = IconInfoEx.Create();
         iconInfoEx.IsIcon = true;
         iconInfoEx.Hotspot = new(Five, Six);
-        var unterminatedIconInfoEx = Icons.Structs.IconInfoEx.CreateWithUnterminatedModuleNameForTesting('x');
+        var unterminatedIconInfoEx = IconInfoEx.CreateWithUnterminatedModuleNameForTesting('x');
 
         var nativeApi = Icons.WindowsNativeIconApi.Instance;
         using var copiedIcon = nativeApi.CopyIcon(IntPtr.Zero);
-        var indirectInfo = default(Icons.Structs.IconInfo);
+        var indirectInfo = default(IconInfo);
         var indirectHandle = nativeApi.CreateIconIndirect(ref indirectInfo);
-        var extendedInfo = Icons.Structs.IconInfoEx.Create();
+        var extendedInfo = IconInfoEx.Create();
         var extendedResult = nativeApi.GetIconInfoEx(IntPtr.Zero, ref extendedInfo);
         var metricLoaderIsAvailable = TryLoadMissingMetricIcon(nativeApi, out var metricResult, out var metricHandle);
-        using var metricSafeHandle = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(metricHandle);
+        using var metricSafeHandle = new SafeIconHandle(metricHandle);
         var scaleDownLoaderIsAvailable = TryLoadMissingScaleDownIcon(nativeApi, out var scaledResult, out var scaledHandle);
-        using var scaledSafeHandle = new CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle(scaledHandle);
+        using var scaledSafeHandle = new SafeIconHandle(scaledHandle);
         var nativeOperations = Icons.IconWindowOperations.CreateNative();
         var nativeProcessId = nativeOperations.GetProcessId(new InteropWindow(IntPtr.Zero) { ProcessId = GetCurrentProcessId() });
 
@@ -657,15 +655,15 @@ public sealed class CoverageFinalIconTests
         public Icons.NativeIconMethods.DrawIconArguments LastDrawArguments { get; private set; }
 
         /// <inheritdoc />
-        public CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle CopyIcon(CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle iconHandle) =>
+        public SafeIconHandle CopyIcon(SafeIconHandle iconHandle) =>
             CopyIconCore();
 
         /// <inheritdoc />
-        public CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle CopyIcon(IntPtr iconHandle) =>
+        public SafeIconHandle CopyIcon(IntPtr iconHandle) =>
             CopyIconRawCore();
 
         /// <inheritdoc />
-        public IntPtr CreateIconIndirect(ref CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfo icon)
+        public IntPtr CreateIconIndirect(ref IconInfo icon)
         {
             _ = icon;
             CreateIconIndirectCalls++;
@@ -682,8 +680,8 @@ public sealed class CoverageFinalIconTests
 
         /// <inheritdoc />
         public bool GetIconInfo(
-            CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle iconHandle,
-            out CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfo iconInfo)
+            SafeIconHandle iconHandle,
+            out IconInfo iconInfo)
         {
             _ = iconHandle;
             iconInfo = default;
@@ -692,7 +690,7 @@ public sealed class CoverageFinalIconTests
         }
 
         /// <inheritdoc />
-        public bool GetIconInfoEx(IntPtr iconOrCursorHandle, ref CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfoEx iconInfoEx)
+        public bool GetIconInfoEx(IntPtr iconOrCursorHandle, ref IconInfoEx iconInfoEx)
         {
             _ = iconOrCursorHandle;
             _ = iconInfoEx;
@@ -761,7 +759,7 @@ public sealed class CoverageFinalIconTests
 
         /// <summary>Records and returns a safe-copy result.</summary>
         /// <returns>The fake copied icon handle.</returns>
-        private CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle CopyIconCore()
+        private SafeIconHandle CopyIconCore()
         {
             CopySafeCalls++;
             return new(IntPtr.Zero);
@@ -769,7 +767,7 @@ public sealed class CoverageFinalIconTests
 
         /// <summary>Records and returns a raw-copy result.</summary>
         /// <returns>The fake copied icon handle.</returns>
-        private CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle CopyIconRawCore()
+        private SafeIconHandle CopyIconRawCore()
         {
             CopyRawCalls++;
             return new(IntPtr.Zero);

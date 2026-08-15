@@ -13,5 +13,5 @@ public enum FolderIconType
     /// <summary>Specify open folder.</summary>
     Open,
     /// <summary>Specify closed folder.</summary>
-    Closed
+    Closed,
 }

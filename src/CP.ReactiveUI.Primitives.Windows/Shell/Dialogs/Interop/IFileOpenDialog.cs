@@ -30,7 +30,7 @@ internal class IFileOpenDialog : FileDialogComObject
     internal virtual unsafe IShellItemArray GetResults()
     {
         IntPtr items = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(27))(base.Handle, out items));
+        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(GetResultsSlot))(Handle, out items));
         return new(items);
     }
 }

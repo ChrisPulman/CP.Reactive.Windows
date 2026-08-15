@@ -30,7 +30,8 @@ public struct BlurParams : IEquatable<BlurParams>
     ///     If FALSE, the bitmap remains the same size and the soft edges are clipped.
     /// </param>
     /// <returns>The blur parameters.</returns>
-    public static BlurParams Create(float radius, bool expandEdges) => new BlurParams { _radius = radius, _expandEdges = expandEdges };
+    public static BlurParams Create(float radius, bool expandEdges) =>
+        new BlurParams { _radius = radius, _expandEdges = expandEdges };
 
     /// <summary>Determines whether two blur parameters are equal.</summary>
     /// <param name="left">The first blur parameters.</param>
@@ -51,7 +52,8 @@ public struct BlurParams : IEquatable<BlurParams>
     }
 
     /// <inheritdoc />
-    public readonly bool Equals(BlurParams other) => _radius.Equals(other._radius) && _expandEdges == other._expandEdges;
+    public readonly bool Equals(BlurParams other) =>
+        _radius.Equals(other._radius) && _expandEdges == other._expandEdges;
 
     /// <inheritdoc />
     public override readonly bool Equals(object obj) => obj is BlurParams other && Equals(other);

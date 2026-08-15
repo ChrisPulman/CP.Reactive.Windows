@@ -35,5 +35,12 @@ internal static class SpanText
     /// <param name="value">The source text.</param>
     /// <param name="startIndex">The zero-based start index.</param>
     /// <returns>The requested trailing text.</returns>
-    internal static string Slice(string value, int startIndex) => Create(value.AsSpan(startIndex));
+    internal static string Slice(string value, int startIndex)
+    {
+#if NETFRAMEWORK
+        return value.Remove(0, startIndex);
+#else
+        return Create(value.AsSpan(startIndex));
+#endif
+    }
 }

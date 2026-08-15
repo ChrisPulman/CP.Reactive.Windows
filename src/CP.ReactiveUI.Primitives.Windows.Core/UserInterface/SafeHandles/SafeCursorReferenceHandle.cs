@@ -13,14 +13,12 @@ public sealed class SafeCursorReferenceHandle : SafeHandleZeroOrMinusOneIsInvali
 {
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles.SafeCursorReferenceHandle" /> class.</summary>
     public SafeCursorReferenceHandle()
-        : base(ownsHandle: false)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles.SafeCursorReferenceHandle" /> class.</summary>
     /// <param name="preexistingHandle">The native cursor handle.</param>
     public SafeCursorReferenceHandle(IntPtr preexistingHandle)
-        : base(ownsHandle: false)
+        : base(ownsHandle: true)
     {
         SetHandle(preexistingHandle);
     }

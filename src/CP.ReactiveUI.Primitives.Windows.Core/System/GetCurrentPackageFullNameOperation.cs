@@ -8,4 +8,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="packageFullNameLength">Package name buffer length.</param>
 /// <param name="packageFullName">Package name buffer.</param>
 /// <returns>Win32 result code.</returns>
-internal unsafe delegate int GetCurrentPackageFullNameOperation(ref int packageFullNameLength, char* packageFullName);
+internal unsafe delegate int GetCurrentPackageFullNameOperation(
+    ref int packageFullNameLength,
+    char* packageFullName);

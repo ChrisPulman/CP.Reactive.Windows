@@ -20,5 +20,5 @@ public enum RawInputDeviceInfoCommands : uint
     /// <summary>The data pointer points to an RID_DEVICE_INFO structure.</summary>
     DeviceInfo = 536_870_923U,
     /// <summary>The data pointer points to the previously parsed data.</summary>
-    PreparsedData = 536_870_917U
+    PreparsedData = 536_870_917U,
 }

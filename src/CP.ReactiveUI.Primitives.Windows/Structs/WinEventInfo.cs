@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -70,13 +67,13 @@ public class WinEventInfo
     /// <param name="eventTime">Specifies the time, in milliseconds, that the event was generated.</param>
     /// <returns>The created event information.</returns>
     public static WinEventInfo Create(IntPtr winEventHook, WinEvents winEvent, IntPtr windowHandle, ObjectIdentifiers idObject, long idChild, ulong eventThread, ulong eventTime) => new WinEventInfo
-        {
-            EventHook = SafeWinEventHookHandle.FromUnowned(winEventHook),
-            WinEvent = winEvent,
-            Window = InteropWindowFactory.CreateFor(windowHandle),
-            ObjectIdentifier = idObject,
-            IdChild = idChild,
-            EventThread = eventThread,
-            EventTime = eventTime
-        };
+    {
+        EventHook = SafeWinEventHookHandle.FromUnowned(winEventHook),
+        WinEvent = winEvent,
+        Window = InteropWindowFactory.CreateFor(windowHandle),
+        ObjectIdentifier = idObject,
+        IdChild = idChild,
+        EventThread = eventThread,
+        EventTime = eventTime,
+    };
 }

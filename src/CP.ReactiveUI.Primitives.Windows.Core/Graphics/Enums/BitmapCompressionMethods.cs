@@ -9,14 +9,19 @@ public enum BitmapCompressionMethods : uint
 {
     /// <summary>Specifies no compression.</summary>
     BI_RGB,
+
     /// <summary>Specifies run-length encoding for 8-bit-per-pixel bitmaps.</summary>
     BI_RLE8,
+
     /// <summary>Specifies run-length encoding for 4-bit-per-pixel bitmaps.</summary>
     BI_RLE4,
+
     /// <summary>Specifies uncompressed pixels with three DWORD color masks.</summary>
     BI_BITFIELDS,
+
     /// <summary>Specifies a JPEG image.</summary>
     BI_JPEG,
+
     /// <summary>Specifies a PNG image.</summary>
-    BI_PNG
+    BI_PNG,
 }

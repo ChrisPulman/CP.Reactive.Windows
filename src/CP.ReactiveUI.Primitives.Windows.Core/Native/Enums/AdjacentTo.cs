@@ -9,12 +9,16 @@ public enum AdjacentTo
 {
     /// <summary>The rectangles are not adjacent.</summary>
     None,
+
     /// <summary>The rectangle is adjacent on the left side.</summary>
     Left,
+
     /// <summary>The rectangle is adjacent on the right side.</summary>
     Right,
+
     /// <summary>The rectangle is adjacent on the top side.</summary>
     Top,
+
     /// <summary>The rectangle is adjacent on the bottom side.</summary>
-    Bottom
+    Bottom,
 }

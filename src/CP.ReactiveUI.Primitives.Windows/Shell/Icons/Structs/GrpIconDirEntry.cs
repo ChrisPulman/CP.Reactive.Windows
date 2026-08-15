@@ -13,8 +13,14 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly record struct GrpIconDirEntry
 {
+    /// <summary>Defines the maximum encoded icon dimension.</summary>
+    private const int MaximumEncodedDimension = 256;
+
+    /// <summary>Defines the native structure size.</summary>
+    private const int StructureSize = 14;
+
     /// <summary>Gets the size of the GRPICONDIRENTRY structure in bytes.</summary>
-    public static int Size => 14;
+    public static int Size => StructureSize;
 
     /// <summary>Gets or sets the image width in pixels.</summary>
     public byte Width { get; init; }
@@ -40,12 +46,6 @@ public readonly record struct GrpIconDirEntry
     /// <summary>Gets or sets the icon image resource identifier.</summary>
     public ushort Id { get; init; }
 
-    /// <summary>Defines the maximum encoded icon dimension.</summary>
-    private const int MaximumEncodedDimension = 256;
-
-    /// <summary>Defines the native structure size.</summary>
-    private const int StructureSize = 14;
-
     /// <summary>Creates a new GRPICONDIRENTRY for an icon resource.</summary>
     /// <param name="width">Width in pixels.</param>
     /// <param name="height">Height in pixels.</param>
@@ -54,13 +54,13 @@ public readonly record struct GrpIconDirEntry
     /// <param name="resourceId">Resource identifier of the icon image.</param>
     /// <returns>The initialized GRPICONDIRENTRY structure.</returns>
     public static GrpIconDirEntry CreateForIcon(int width, int height, ushort bitCount, uint imageSize, ushort resourceId) => new GrpIconDirEntry
-        {
-            Width = EncodeDimension(width),
-            Height = EncodeDimension(height),
-            BitCount = bitCount,
-            BytesInRes = imageSize,
-            Id = resourceId
-        };
+    {
+        Width = EncodeDimension(width),
+        Height = EncodeDimension(height),
+        BitCount = bitCount,
+        BytesInRes = imageSize,
+        Id = resourceId,
+    };
 
     /// <summary>Creates a new GRPICONDIRENTRY for a cursor resource.</summary>
     /// <param name="width">Width in pixels.</param>
@@ -74,25 +74,18 @@ public readonly record struct GrpIconDirEntry
     /// For cursors, the Planes and BitCount fields store the horizontal and vertical hotspot coordinates.
     /// </remarks>
     public static GrpIconDirEntry CreateForCursor(int width, int height, ushort hotspotX, ushort hotspotY, uint imageSize, ushort resourceId) => new GrpIconDirEntry
-        {
-            Width = EncodeDimension(width),
-            Height = EncodeDimension(height),
-            Planes = hotspotX,
-            BitCount = hotspotY,
-            BytesInRes = imageSize,
-            Id = resourceId
-        };
+    {
+        Width = EncodeDimension(width),
+        Height = EncodeDimension(height),
+        Planes = hotspotX,
+        BitCount = hotspotY,
+        BytesInRes = imageSize,
+        Id = resourceId,
+    };
 
     /// <summary>Encodes an icon dimension for a group icon directory entry.</summary>
     /// <param name="dimension">The source dimension.</param>
     /// <returns>The encoded dimension byte.</returns>
-    private static byte EncodeDimension(int dimension)
-    {
-        if (dimension != 256)
-        {
-            return checked((byte)dimension);
-        }
-
-        return 0;
-    }
+    private static byte EncodeDimension(int dimension) =>
+        dimension != MaximumEncodedDimension ? checked((byte)dimension) : (byte)0;
 }

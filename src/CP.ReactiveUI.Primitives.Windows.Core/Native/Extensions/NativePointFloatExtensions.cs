@@ -10,6 +10,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Extensions;
 /// <summary>Helper method for the NativePointFloat struct.</summary>
 public static class NativePointFloatExtensions
 {
+    /// <summary>Provides extension members for the target value.</summary>
+    /// <param name="point">The target value.</param>
     extension(NativePointFloat point)
     {
         /// <summary>Create a new NativePointFloat, from the supplied one, using the specified X coordinate.</summary>
@@ -35,15 +37,18 @@ public static class NativePointFloatExtensions
         /// <param name="offsetX">The nullable X offset.</param>
         /// <param name="offsetY">The nullable Y offset.</param>
         /// <returns>The offset native point.</returns>
-        public NativePointFloat Offset(float? offsetX, float? offsetY) => new((point.X + offsetX).GetValueOrDefault(), (point.Y + offsetY).GetValueOrDefault());
+        public NativePointFloat Offset(float? offsetX, float? offsetY) =>
+            new((point.X + offsetX).GetValueOrDefault(), (point.Y + offsetY).GetValueOrDefault());
 
         /// <summary>Create a new NativePointFloat by applying another point as an offset.</summary>
         /// <param name="offset">NativePointFloat</param>
         /// <returns>NativePointFloat.</returns>
-        public NativePointFloat Offset(NativePointFloat offset) => new(point.X + offset.X, point.Y + offset.Y);
+        public NativePointFloat Offset(NativePointFloat offset) =>
+            new(point.X + offset.X, point.Y + offset.Y);
 
         /// <summary>Create a NativePoint, using rounded values, from the specified NativePointFloat.</summary>
         /// <returns>NativePoint.</returns>
-        public NativePoint Round() => checked(new NativePoint((int)Math.Round(point.X), (int)Math.Round(point.Y)));
+        public NativePoint Round() =>
+            checked(new NativePoint((int)Math.Round(point.X), (int)Math.Round(point.Y)));
     }
 }

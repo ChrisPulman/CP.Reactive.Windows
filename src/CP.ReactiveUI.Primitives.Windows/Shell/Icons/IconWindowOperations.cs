@@ -47,15 +47,15 @@ internal sealed class IconWindowOperations
     /// <summary>Creates the native operations implementation.</summary>
     /// <returns>The native operations implementation.</returns>
     internal static IconWindowOperations CreateNative() => new IconWindowOperations
-        {
-            CreateWindow = InteropWindowFactory.CreateFor,
-            GetClassLong = User32Api.GetClassLongWrapper,
-            GetProcessById = Process.GetProcessById,
-            GetProcessId = (window) => window.GetProcessId(),
-            GetProcessPath = Kernel32Api.GetProcessPath,
-            GetProcessesByName = Process.GetProcessesByName,
-            GetTopWindows = InteropWindowQueryExtensions.GetTopWindows,
-            IsApp = (window) => window.IsApp(),
-            TrySendMessage = User32Api.TrySendMessage
-        };
+    {
+        CreateWindow = InteropWindowFactory.CreateFor,
+        GetClassLong = User32Api.GetClassLongWrapper,
+        GetProcessById = Process.GetProcessById,
+        GetProcessId = static (window) => window.GetProcessId(),
+        GetProcessPath = Kernel32Api.GetProcessPath,
+        GetProcessesByName = Process.GetProcessesByName,
+        GetTopWindows = InteropWindowQueryExtensions.GetTopWindows,
+        IsApp = static (window) => window.IsApp(),
+        TrySendMessage = User32Api.TrySendMessage,
+    };
 }

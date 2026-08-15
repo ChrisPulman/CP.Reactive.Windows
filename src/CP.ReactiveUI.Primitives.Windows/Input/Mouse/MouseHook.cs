@@ -15,7 +15,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Mouse;
 public sealed class MouseHook
 {
     /// <summary>Shared mouse hook singleton.</summary>
-    private static readonly Lazy<MouseHook> Singleton = new(() => new MouseHook());
+    private static readonly Lazy<MouseHook> Singleton = new(static () => new MouseHook());
 
     /// <summary>Stores the shared mouse event stream.</summary>
     private readonly IObservable<MouseHookEventArgs> _mouseObservable;
@@ -23,37 +23,15 @@ public sealed class MouseHook
     /// <summary>Stores the native hook callback so it cannot be garbage collected while hooked.</summary>
     private LowLevelHookProc _callback;
 
-    /// <summary>Gets the global mouse hook event stream.</summary>
-    public static IObservable<MouseHookEventArgs> MouseHookEvents => Singleton.Value._mouseObservable;
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Mouse.MouseHook" /> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="MouseHook" /> class.</summary>
     private MouseHook()
     {
-        _mouseObservable = ReactiveSignal.CreateSafe(delegate(IObserver<MouseHookEventArgs> observer)
-        {
-            IntPtr hookId = IntPtr.Zero;
-            _callback = delegate(int code, IntPtr parameter, IntPtr data)
-            {
-                if (code >= 0)
-                {
-                    MouseHookEventArgs e = CreateMouseEventArgs(parameter, data);
-                    observer.OnNext(e);
-                    if (e.Handled)
-                    {
-                        return (IntPtr)1;
-                    }
-                }
-
-                return NativeHookMethods.CallNextHookEx(hookId, code, parameter, data);
-            };
-            hookId = NativeHookMethods.SetWindowsHookEx(HookTypes.WH_MOUSE_LL, _callback, IntPtr.Zero, 0U);
-            return new ActionDisposable(delegate
-            {
-                _ = NativeHookMethods.UnhookWindowsHookEx(hookId);
-                _callback = null;
-            });
-        }).Publish().RefCount();
+        Func<IObserver<MouseHookEventArgs>, IDisposable> subscriptionFactory = CreateSubscription;
+        _mouseObservable = ReactiveSignal.CreateSafe(subscriptionFactory).Publish().RefCount();
     }
+
+    /// <summary>Gets the global mouse hook event stream.</summary>
+    public static IObservable<MouseHookEventArgs> MouseHookEvents => Singleton.Value._mouseObservable;
 
     /// <summary>Creates mouse event arguments from native hook parameters.</summary>
     /// <param name="parameter">The hook message parameter.</param>
@@ -63,5 +41,33 @@ public sealed class MouseHook
     {
         MouseLowLevelHookStruct mouseLowLevelHookStruct = Marshal.PtrToStructure<MouseLowLevelHookStruct>(data);
         return new MouseHookEventArgs { WindowsMessage = (WindowsMessages)checked((uint)parameter.ToInt32()), Point = mouseLowLevelHookStruct.Pt };
+    }
+
+    /// <summary>Creates a subscription that owns a low-level mouse hook.</summary>
+    /// <param name="observer">The observer that receives hook events.</param>
+    /// <returns>The hook lifetime.</returns>
+    private ActionDisposable CreateSubscription(IObserver<MouseHookEventArgs> observer)
+    {
+        IntPtr hookId = IntPtr.Zero;
+        _callback = (code, parameter, data) =>
+        {
+            if (code >= 0)
+            {
+                MouseHookEventArgs e = CreateMouseEventArgs(parameter, data);
+                observer.OnNext(e);
+                if (e.Handled)
+                {
+                    return (IntPtr)1;
+                }
+            }
+
+            return NativeHookMethods.CallNextHookEx(hookId, code, parameter, data);
+        };
+        hookId = NativeHookMethods.SetWindowsHookEx(HookTypes.WH_MOUSE_LL, _callback, IntPtr.Zero, 0U);
+        return new(() =>
+        {
+            _ = NativeHookMethods.UnhookWindowsHookEx(hookId);
+            _callback = null;
+        });
     }
 }

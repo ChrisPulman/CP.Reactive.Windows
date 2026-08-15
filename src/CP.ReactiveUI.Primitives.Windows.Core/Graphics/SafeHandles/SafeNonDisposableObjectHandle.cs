@@ -11,9 +11,7 @@ public class SafeNonDisposableObjectHandle : SafeObjectHandle
 {
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeNonDisposableObjectHandle" /> class.</summary>
     public SafeNonDisposableObjectHandle()
-        : base(ownsHandle: false)
-    {
-    }
+        : base(ownsHandle: false) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeNonDisposableObjectHandle" /> class from an existing handle.</summary>
     /// <param name="preexistingHandle">The existing GDI object handle.</param>

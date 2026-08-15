@@ -12,14 +12,19 @@ public enum RegistryNotifyFilter
 {
     /// <summary>Notify the caller if a subkey is added or deleted.</summary>
     None = 0,
+
     /// <summary>Notify the caller if a subkey is added or deleted.</summary>
     ChangeName = 1,
+
     /// <summary>Notify the caller of changes to the attributes of the key.</summary>
     ChangeAttributes = 2,
+
     /// <summary>Notify the caller of changes to a value of the key.</summary>
     ChangeLastSet = 4,
+
     /// <summary>Notify the caller of changes to the security descriptor of the key.</summary>
     ChangeSecurity = 8,
+
     /// <summary>Indicates that the registration lifetime must not be tied to the issuing thread lifetime.</summary>
-    ThreadAgnostic = 0x10000000
+    ThreadAgnostic = 0x10000000,
 }

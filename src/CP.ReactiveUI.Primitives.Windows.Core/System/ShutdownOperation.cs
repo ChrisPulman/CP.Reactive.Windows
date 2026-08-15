@@ -11,4 +11,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="shutdownType">The shutdown type.</param>
 /// <param name="statusCallback">The status callback.</param>
 /// <returns>The native result code.</returns>
-internal delegate int ShutdownOperation(int sessionHandle, RmShutdownType shutdownType, RmStatusCallback statusCallback);
+internal delegate int ShutdownOperation(
+    int sessionHandle,
+    RmShutdownType shutdownType,
+    RmStatusCallback statusCallback);

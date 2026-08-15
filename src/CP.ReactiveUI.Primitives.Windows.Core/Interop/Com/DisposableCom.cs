@@ -13,5 +13,8 @@ public static class DisposableCom
     /// <typeparam name="T">Type for the COM object.</typeparam>
     /// <param name="comObject">The COM object itself.</param>
     /// <returns>The disposable COM wrapper.</returns>
-    public static IDisposableCom<T> Create<T>(T comObject) => !EqualityComparer<T>.Default.Equals(comObject, default(T)) ? new DisposableComImplementation<T>(comObject) : null;
+    public static IDisposableCom<T> Create<T>(T comObject) =>
+        !EqualityComparer<T>.Default.Equals(comObject, default(T))
+            ? new DisposableComImplementation<T>(comObject)
+            : null;
 }

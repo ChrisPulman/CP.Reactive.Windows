@@ -42,7 +42,8 @@ public struct CieXyz : IEquatable<CieXyz>
     /// <summary>Creates a CIE XYZ value from an FXPT2DOT30 fixed-point value.</summary>
     /// <param name="fixedPoint2Dot30">The fixed-point value with a 2-bit integer part and a 30-bit fractional part.</param>
     /// <returns>The CIE XYZ value.</returns>
-    public static CieXyz Create(uint fixedPoint2Dot30) => new CieXyz { _x = fixedPoint2Dot30, _y = fixedPoint2Dot30, _z = fixedPoint2Dot30 };
+    public static CieXyz Create(uint fixedPoint2Dot30) =>
+        new CieXyz { _x = fixedPoint2Dot30, _y = fixedPoint2Dot30, _z = fixedPoint2Dot30 };
 
     /// <summary>Determines whether two CIE XYZ values are equal.</summary>
     /// <param name="left">The first CIE XYZ value.</param>

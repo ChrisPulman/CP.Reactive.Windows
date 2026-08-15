@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -56,8 +53,8 @@ public class EnvironmentChangedEventArgs : EventArgs
     /// <param name="area">Area containing the changed system parameter.</param>
     /// <returns>The created event arguments.</returns>
     public static EnvironmentChangedEventArgs Create(SystemParametersInfoActions systemParametersInfoAction, string area) => new EnvironmentChangedEventArgs
-        {
-            SystemParametersInfoAction = systemParametersInfoAction,
-            Area = area
-        };
+    {
+        SystemParametersInfoAction = systemParametersInfoAction,
+        Area = area,
+    };
 }

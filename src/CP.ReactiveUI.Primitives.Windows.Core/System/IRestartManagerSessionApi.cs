@@ -32,7 +32,14 @@ internal interface IRestartManagerSessionApi
     /// <param name="serviceCount">Number of service names.</param>
     /// <param name="serviceNames">Service names.</param>
     /// <returns>Win32 result code.</returns>
-    int RegisterResources(int sessionHandle, uint fileCount, string[] filenames, uint applicationCount, RmUniqueProcess[] applications, uint serviceCount, string[] serviceNames);
+    int RegisterResources(
+        int sessionHandle,
+        uint fileCount,
+        string[] filenames,
+        uint applicationCount,
+        RmUniqueProcess[] applications,
+        uint serviceCount,
+        string[] serviceNames);
 
     /// <summary>Gets affected applications for a Restart Manager session.</summary>
     /// <param name="sessionHandle">Restart Manager session handle.</param>
@@ -41,7 +48,12 @@ internal interface IRestartManagerSessionApi
     /// <param name="affectedApplications">Affected applications buffer.</param>
     /// <param name="rebootReasons">Reboot reason flags.</param>
     /// <returns>Win32 result code.</returns>
-    int GetList(int sessionHandle, out uint processInfoNeeded, ref uint processInfoCount, RmProcessInfo[] affectedApplications, out RmRebootReason rebootReasons);
+    int GetList(
+        int sessionHandle,
+        out uint processInfoNeeded,
+        ref uint processInfoCount,
+        RmProcessInfo[] affectedApplications,
+        out RmRebootReason rebootReasons);
 
     /// <summary>Shuts down affected applications.</summary>
     /// <param name="sessionHandle">Restart Manager session handle.</param>

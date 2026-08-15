@@ -30,16 +30,6 @@ public readonly struct DevBroadcastPort : IEquatable<DevBroadcastPort>
     /// <summary>The reserved value.</summary>
     private readonly int _reserved;
 
-    /// <summary>Gets the name of the device.</summary>
-    public string Name
-    {
-        get
-        {
-            MarkFieldsAsRead();
-            return _name;
-        }
-    }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Structs.DevBroadcastPort" /> struct.</summary>
     /// <param name="deviceType">The device type.</param>
     /// <param name="size">The structure size.</param>
@@ -50,6 +40,9 @@ public readonly struct DevBroadcastPort : IEquatable<DevBroadcastPort>
         _name = null;
         _reserved = 0;
     }
+
+    /// <summary>Gets the name of the device.</summary>
+    public string Name => _name;
 
     /// <summary>Compares two values for equality.</summary>
     /// <param name="left">The left value.</param>
@@ -74,32 +67,15 @@ public readonly struct DevBroadcastPort : IEquatable<DevBroadcastPort>
     public static DevBroadcastPort Create() => new(DeviceBroadcastDeviceType.Port, Marshal.SizeOf<DevBroadcastPort>());
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is DevBroadcastPort other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is DevBroadcastPort other && Equals(other);
 
     /// <inheritdoc />
-    public bool Equals(DevBroadcastPort other)
-    {
-        if (_size == other._size && _deviceType == other._deviceType && _reserved == other._reserved)
-        {
-            return _name == other._name;
-        }
-
-        return false;
-    }
+    public bool Equals(DevBroadcastPort other) =>
+        _size == other._size
+        && _deviceType == other._deviceType
+        && _reserved == other._reserved
+        && _name == other._name;
 
     /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_size, _deviceType, _reserved, _name);
-
-    /// <summary>Reads marshal-only fields so analyzers do not treat them as unused.</summary>
-    private void MarkFieldsAsRead()
-    {
-    }
 }

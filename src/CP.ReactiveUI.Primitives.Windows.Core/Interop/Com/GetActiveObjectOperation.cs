@@ -12,4 +12,7 @@ namespace CP.ReactiveUI.Primitives.Windows.Interop.Com;
 /// <param name="reserved">Reserved for future use. Must be null.</param>
 /// <param name="activeObject">The requested active object.</param>
 /// <returns>The operation result.</returns>
-internal delegate HResult GetActiveObjectOperation(ref Guid classId, nint reserved, out nint activeObject);
+internal delegate HResult GetActiveObjectOperation(
+    ref Guid classId,
+    nint reserved,
+    out nint activeObject);

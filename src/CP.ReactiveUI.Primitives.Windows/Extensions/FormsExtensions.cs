@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Windows.Forms;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
@@ -13,6 +12,8 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
 /// <summary>Extensions for Forms.</summary>
 public static class FormsExtensions
 {
+    /// <summary>Provides Windows Forms extension methods.</summary>
+    /// <param name="form">The form to adapt.</param>
     extension(Form form)
     {
         /// <summary>Factory method to create a InteropWindow for the supplied WindowForm.</summary>

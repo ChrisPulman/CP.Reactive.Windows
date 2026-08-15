@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Enums;
 #else
@@ -20,5 +18,5 @@ public enum DwmBlurBehindFlags
     /// <summary>The blur region is enabled.</summary>
     BlurRegion = 2,
     /// <summary>The maximized transition is enabled.</summary>
-    TransitionMaximized = 4
+    TransitionMaximized = 4,
 }

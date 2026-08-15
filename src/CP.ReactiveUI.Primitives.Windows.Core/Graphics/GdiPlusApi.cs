@@ -17,69 +17,17 @@ using log4net;
 namespace CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 
 /// <summary>Provides GDI+ blur-effect helpers.</summary>
+#if NETFRAMEWORK
 public static class GdiPlusApi
+#else
+public static partial class GdiPlusApi
+#endif
 {
     /// <summary>Specifies the earliest Windows version with GDI+ blur.</summary>
     private const int MinimumBlurWindowsMajorVersion = 6;
 
     /// <summary>Specifies the Windows minor version for the blur workaround.</summary>
     private const int MinimumBlurWindowsMinorVersion = 2;
-
-    /// <summary>Contains native GDI+ entry points.</summary>
-    internal static class NativeMethods
-    {
-        /// <summary>Specifies the GDI+ library.</summary>
-        private const string GdiPlusDll = "gdiplus.dll";
-
-        /// <summary>Invokes the native <c>GdipBitmapApplyEffect</c> entry point.</summary>
-        /// <param name="bitmap">The native <paramref name="bitmap" /> value.</param>
-        /// <param name="effect">The native <paramref name="effect" /> value.</param>
-        /// <param name="rectOfInterest">The native <paramref name="rectOfInterest" /> value.</param>
-        /// <param name="useAuxData">The native <paramref name="useAuxData" /> value.</param>
-        /// <param name="auxData">The native <paramref name="auxData" /> value.</param>
-        /// <param name="auxDataSize">The native <paramref name="auxDataSize" /> value.</param>
-        /// <returns>The native result.</returns>
-        [DllImport("gdiplus.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern GdiPlusStatus GdipBitmapApplyEffect(IntPtr bitmap, IntPtr effect, ref NativeRect rectOfInterest, [MarshalAs(UnmanagedType.Bool)] bool useAuxData, IntPtr auxData, int auxDataSize);
-
-        /// <summary>Invokes the native <c>GdipCreateEffect</c> entry point.</summary>
-        /// <param name="guid">The native <paramref name="guid" /> value.</param>
-        /// <param name="effect">The native <paramref name="effect" /> value.</param>
-        /// <returns>The native result.</returns>
-        [DllImport("gdiplus.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern GdiPlusStatus GdipCreateEffect(ref Guid guid, out IntPtr effect);
-
-        /// <summary>Invokes the native <c>GdipDeleteEffect</c> entry point.</summary>
-        /// <param name="effect">The native <paramref name="effect" /> value.</param>
-        /// <returns>The native result.</returns>
-        [DllImport("gdiplus.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern GdiPlusStatus GdipDeleteEffect(IntPtr effect);
-
-        /// <summary>Invokes the native <c>GdipDrawImageFX</c> entry point.</summary>
-        /// <param name="graphics">The native <paramref name="graphics" /> value.</param>
-        /// <param name="bitmap">The native <paramref name="bitmap" /> value.</param>
-        /// <param name="source">The native <paramref name="source" /> value.</param>
-        /// <param name="matrix">The native <paramref name="matrix" /> value.</param>
-        /// <param name="effect">The native <paramref name="effect" /> value.</param>
-        /// <param name="imageAttributes">The native <paramref name="imageAttributes" /> value.</param>
-        /// <param name="srcUnit">The native <paramref name="srcUnit" /> value.</param>
-        /// <returns>The native result.</returns>
-        [DllImport("gdiplus.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern GdiPlusStatus GdipDrawImageFX(IntPtr graphics, IntPtr bitmap, ref NativeRectFloat source, IntPtr matrix, IntPtr effect, IntPtr imageAttributes, GpUnit srcUnit);
-
-        /// <summary>Invokes the native <c>GdipSetEffectParameters</c> entry point.</summary>
-        /// <param name="effect">The native <paramref name="effect" /> value.</param>
-        /// <param name="parameters">The native <paramref name="parameters" /> value.</param>
-        /// <param name="size">The native <paramref name="size" /> value.</param>
-        /// <returns>The native result.</returns>
-        [DllImport("gdiplus.dll", SetLastError = true)]
-        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-        internal static extern GdiPlusStatus GdipSetEffectParameters(IntPtr effect, IntPtr parameters, uint size);
-    }
 
     /// <summary>Specifies the smallest blur radius outside the workaround.</summary>
     private const int MinimumBlurRadius = 20;
@@ -94,7 +42,7 @@ public static class GdiPlusApi
     private static GdiPlusBlurOperations _operations = GdiPlusBlurOperations.CreateNative();
 
     /// <summary>Indicates whether GDI+ blur remains available.</summary>
-    private static bool _isBlurEnabled = _operations.GetOperatingSystemVersion().Major >= 6;
+    private static bool _isBlurEnabled = _operations.GetOperatingSystemVersion().Major >= MinimumBlurWindowsMajorVersion;
 
     /// <summary>Applies a GDI+ blur effect to a bitmap.</summary>
     /// <param name="destinationBitmap">The bitmap to modify.</param>
@@ -144,7 +92,16 @@ public static class GdiPlusApi
         try
         {
             NativeRectFloat sourceRectangle = source;
-            return LogResult(_operations.DrawImageFx(GetNativeGraphics(graphics), GetNativeImage(image), ref sourceRectangle, GetNativeMatrix(transform), effect, GetNativeImageAttributes(imageAttributes), GpUnit.UnitPixel), "Couldn't draw image: ");
+            return LogResult(
+                _operations.DrawImageFx(
+                    GetNativeGraphics(graphics),
+                    GetNativeImage(image),
+                    ref sourceRectangle,
+                    GetNativeMatrix(transform),
+                    effect,
+                    GetNativeImageAttributes(imageAttributes),
+                    GpUnit.UnitPixel),
+                "Couldn't draw image: ");
         }
         catch (Exception exception)
         {
@@ -170,17 +127,10 @@ public static class GdiPlusApi
     internal static bool IsBlurPossible(bool isBlurEnabled, Version operatingSystemVersion, int radius)
     {
         Throw.IfNull(operatingSystemVersion);
-        if (isBlurEnabled)
-        {
-            if (operatingSystemVersion.Major != 6)
-            {
-                return operatingSystemVersion.Major > 6 && radius >= 20;
-            }
-
-            return operatingSystemVersion.Minor < 2;
-        }
-
-        return false;
+        return isBlurEnabled
+            && (operatingSystemVersion.Major == MinimumBlurWindowsMajorVersion
+                ? operatingSystemVersion.Minor < MinimumBlurWindowsMinorVersion
+                : operatingSystemVersion.Major > MinimumBlurWindowsMajorVersion && radius >= MinimumBlurRadius);
     }
 
     /// <summary>Replaces the current blur state for deterministic tests.</summary>
@@ -343,13 +293,132 @@ public static class GdiPlusApi
             if (string.Equals(field.Name, fieldName, StringComparison.Ordinal))
             {
                 object value = field.GetValue(instance);
-                if (value is IntPtr)
+                if (value is IntPtr pointer)
                 {
-                    return (IntPtr)value;
+                    return pointer;
                 }
             }
         }
 
         return IntPtr.Zero;
+    }
+
+    /// <summary>Contains native GDI+ entry points.</summary>
+#if NETFRAMEWORK
+    internal static class NativeMethods
+#else
+    internal static partial class NativeMethods
+#endif
+    {
+        /// <summary>Invokes the native <c>GdipBitmapApplyEffect</c> entry point.</summary>
+        /// <param name="bitmap">The native bitmap handle.</param>
+        /// <param name="effect">The native effect handle.</param>
+        /// <param name="rectOfInterest">The affected rectangle.</param>
+        /// <param name="useAuxData">Whether auxiliary data is supplied.</param>
+        /// <param name="auxData">The auxiliary data.</param>
+        /// <param name="auxDataSize">The auxiliary data size.</param>
+        /// <returns>The native result.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern GdiPlusStatus GdipBitmapApplyEffect(
+            IntPtr bitmap,
+            IntPtr effect,
+            ref NativeRect rectOfInterest,
+            [MarshalAs(UnmanagedType.Bool)] bool useAuxData,
+            IntPtr auxData,
+            int auxDataSize);
+#else
+        [LibraryImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial GdiPlusStatus GdipBitmapApplyEffect(
+            IntPtr bitmap,
+            IntPtr effect,
+            ref NativeRect rectOfInterest,
+            [MarshalAs(UnmanagedType.Bool)] bool useAuxData,
+            IntPtr auxData,
+            int auxDataSize);
+#endif
+
+        /// <summary>Invokes the native <c>GdipCreateEffect</c> entry point.</summary>
+        /// <param name="guid">The effect identifier.</param>
+        /// <param name="effect">Receives the created effect.</param>
+        /// <returns>The native result.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern GdiPlusStatus GdipCreateEffect(ref Guid guid, out IntPtr effect);
+#else
+        [LibraryImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial GdiPlusStatus GdipCreateEffect(ref Guid guid, out IntPtr effect);
+#endif
+
+        /// <summary>Invokes the native <c>GdipDeleteEffect</c> entry point.</summary>
+        /// <param name="effect">The native effect handle.</param>
+        /// <returns>The native result.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern GdiPlusStatus GdipDeleteEffect(IntPtr effect);
+#else
+        [LibraryImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial GdiPlusStatus GdipDeleteEffect(IntPtr effect);
+#endif
+
+        /// <summary>Invokes the native <c>GdipDrawImageFX</c> entry point.</summary>
+        /// <param name="graphics">The native graphics handle.</param>
+        /// <param name="bitmap">The native bitmap handle.</param>
+        /// <param name="source">The source rectangle.</param>
+        /// <param name="matrix">The native matrix handle.</param>
+        /// <param name="effect">The native effect handle.</param>
+        /// <param name="imageAttributes">The native image-attributes handle.</param>
+        /// <param name="srcUnit">The source unit.</param>
+        /// <returns>The native result.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern GdiPlusStatus GdipDrawImageFX(
+            IntPtr graphics,
+            IntPtr bitmap,
+            ref NativeRectFloat source,
+            IntPtr matrix,
+            IntPtr effect,
+            IntPtr imageAttributes,
+            GpUnit srcUnit);
+#else
+        [LibraryImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial GdiPlusStatus GdipDrawImageFX(
+            IntPtr graphics,
+            IntPtr bitmap,
+            ref NativeRectFloat source,
+            IntPtr matrix,
+            IntPtr effect,
+            IntPtr imageAttributes,
+            GpUnit srcUnit);
+#endif
+
+        /// <summary>Invokes the native <c>GdipSetEffectParameters</c> entry point.</summary>
+        /// <param name="effect">The native effect handle.</param>
+        /// <param name="parameters">The parameter buffer.</param>
+        /// <param name="size">The parameter buffer size.</param>
+        /// <returns>The native result.</returns>
+#if NETFRAMEWORK
+        [DllImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static extern GdiPlusStatus GdipSetEffectParameters(
+            IntPtr effect,
+            IntPtr parameters,
+            uint size);
+#else
+        [LibraryImport("gdiplus.dll", SetLastError = true)]
+        [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        internal static partial GdiPlusStatus GdipSetEffectParameters(
+            IntPtr effect,
+            IntPtr parameters,
+            uint size);
+#endif
     }
 }

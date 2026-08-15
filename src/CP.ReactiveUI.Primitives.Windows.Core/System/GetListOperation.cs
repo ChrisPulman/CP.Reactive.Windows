@@ -14,4 +14,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 /// <param name="affectedApplications">Receives affected applications.</param>
 /// <param name="rebootReasons">Receives reboot reasons.</param>
 /// <returns>The native result code.</returns>
-internal delegate int GetListOperation(int sessionHandle, out uint processInfoNeeded, ref uint processInfoCount, RmProcessInfo[] affectedApplications, out RmRebootReason rebootReasons);
+internal delegate int GetListOperation(
+    int sessionHandle,
+    out uint processInfoNeeded,
+    ref uint processInfoCount,
+    RmProcessInfo[] affectedApplications,
+    out RmRebootReason rebootReasons);

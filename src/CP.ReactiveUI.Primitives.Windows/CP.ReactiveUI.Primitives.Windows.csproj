@@ -13,6 +13,7 @@
     <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Remove=".codex-diagnostics\**\*.cs;.codex-recovery\**\*.cs" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
     <PackageReference Include="log4net" />
     <PackageReference Include="ReactiveUI.Primitives" />
@@ -21,7 +22,9 @@
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Collections.Generic" />
+    <Using Include="System.Collections.Concurrent" />
     <Using Include="System.ComponentModel" />
+    <Using Include="System.Diagnostics" />
     <Using Include="System.Drawing" />
     <Using Include="System.Drawing.Imaging" />
     <Using Include="System.IO" />
@@ -29,8 +32,10 @@
     <Using Include="System.Runtime.CompilerServices" />
     <Using Include="System.Runtime.InteropServices" />
     <Using Include="System.Runtime.InteropServices.Marshalling.GeneratedComInterfaceAttribute" Alias="GeneratedComInterface" Condition="'$(TargetFrameworkIdentifier)' != '.NETFramework'" />
+    <Using Include="System.Text" />
     <Using Include="System.Threading" />
     <Using Include="System.Threading.Tasks" />
+    <Using Include="Microsoft.Win32.SafeHandles" />
     <Using Include="log4net" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Apps" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals" />
@@ -60,13 +65,16 @@
     <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows.Enums" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Enums" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Extensions" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Structs" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums" />
     <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.PolyFills" />
     <Using Include="ReactiveUI.Primitives" />
     <Using Include="ReactiveUI.Primitives.Disposables" />
     <Using Include="ReactiveUI.Primitives.Signals" />

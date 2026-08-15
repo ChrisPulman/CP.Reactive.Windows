@@ -64,10 +64,16 @@ public readonly struct Bgr24(byte r, byte g, byte b) : IEquatable<Bgr24>
                 }
 
                 byte alpha = source.A;
-                int inverseAlpha = 255 - alpha;
-                byte blue = (byte)unchecked(checked((source.B * alpha) + (target.B * inverseAlpha)) / 255);
-                byte green = (byte)unchecked(checked((source.G * alpha) + (target.G * inverseAlpha)) / 255);
-                byte red = (byte)unchecked(checked((source.R * alpha) + (target.R * inverseAlpha)) / 255);
+                int inverseAlpha = MaxChannelValue - alpha;
+                byte blue = (byte)
+                    unchecked(
+                        checked((source.B * alpha) + (target.B * inverseAlpha)) / MaxChannelValue);
+                byte green = (byte)
+                    unchecked(
+                        checked((source.G * alpha) + (target.G * inverseAlpha)) / MaxChannelValue);
+                byte red = (byte)
+                    unchecked(
+                        checked((source.R * alpha) + (target.R * inverseAlpha)) / MaxChannelValue);
                 target = new(red, green, blue);
             }
         }

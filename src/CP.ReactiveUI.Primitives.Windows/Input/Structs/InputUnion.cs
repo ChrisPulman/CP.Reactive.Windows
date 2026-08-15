@@ -13,6 +13,18 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 [StructLayout(LayoutKind.Explicit)]
 public readonly record struct InputUnion
 {
+    /// <summary>Stores the mouse input value.</summary>
+    [FieldOffset(0)]
+    private readonly MouseInput _mouseInput;
+
+    /// <summary>Stores the keyboard input value.</summary>
+    [FieldOffset(0)]
+    private readonly KeyboardInput _keyboardInput;
+
+    /// <summary>Stores the hardware input value.</summary>
+    [FieldOffset(0)]
+    private readonly HardwareInput _hardwareInput;
+
     /// <summary>Gets or initializes the mouse input value.</summary>
     public MouseInput MouseInput
     {
@@ -33,16 +45,4 @@ public readonly record struct InputUnion
         get => _hardwareInput;
         init => _hardwareInput = value;
     }
-
-    /// <summary>Stores the mouse input value.</summary>
-    [FieldOffset(0)]
-    private readonly MouseInput _mouseInput;
-
-    /// <summary>Stores the keyboard input value.</summary>
-    [FieldOffset(0)]
-    private readonly KeyboardInput _keyboardInput;
-
-    /// <summary>Stores the hardware input value.</summary>
-    [FieldOffset(0)]
-    private readonly HardwareInput _hardwareInput;
 }

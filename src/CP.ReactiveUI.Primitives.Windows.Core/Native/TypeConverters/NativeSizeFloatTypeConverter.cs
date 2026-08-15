@@ -13,18 +13,34 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.TypeConverters;
 public class NativeSizeFloatTypeConverter : TypeConverter
 {
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string sizeStringValue)
         {
             string[] hw = sizeStringValue.Split(',');
-            if (hw.Length == 2 && float.TryParse(hw[0], NumberStyles.Number, CultureInfo.InvariantCulture, out var h) && float.TryParse(hw[1], NumberStyles.Number, CultureInfo.InvariantCulture, out var w))
+            if (
+                hw.Length == 2
+                && float.TryParse(
+                    hw[0],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var h)
+                && float.TryParse(
+                    hw[1],
+                    NumberStyles.Number,
+                    CultureInfo.InvariantCulture,
+                    out var w))
             {
                 return new NativeSizeFloat(h, w);
             }
@@ -34,5 +50,15 @@ public class NativeSizeFloatTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType) => destinationType != typeof(string) || !(value is NativeSizeFloat nativeSizeFloat) ? base.ConvertTo(context, culture, value, destinationType) : string.Join(",", nativeSizeFloat.Width.ToString(CultureInfo.InvariantCulture), nativeSizeFloat.Height.ToString(CultureInfo.InvariantCulture));
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType) =>
+        destinationType != typeof(string) || !(value is NativeSizeFloat nativeSizeFloat)
+            ? base.ConvertTo(context, culture, value, destinationType)
+            : string.Join(
+                ",",
+                nativeSizeFloat.Width.ToString(CultureInfo.InvariantCulture),
+                nativeSizeFloat.Height.ToString(CultureInfo.InvariantCulture));
 }

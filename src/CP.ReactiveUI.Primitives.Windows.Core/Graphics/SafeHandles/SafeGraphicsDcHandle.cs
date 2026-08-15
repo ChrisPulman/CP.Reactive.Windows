@@ -23,16 +23,18 @@ public class SafeGraphicsDcHandle : SafeDcHandle
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeGraphicsDcHandle" /> class.</summary>
     public SafeGraphicsDcHandle()
-        : base(ownsHandle: true)
-    {
-    }
+        : base(ownsHandle: true) { }
 
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles.SafeGraphicsDcHandle" /> class from composed release actions.</summary>
     /// <param name="preexistingHandle">The synthetic or existing device-context handle.</param>
     /// <param name="disposeGraphics">Indicates whether the composed dispose action is invoked.</param>
     /// <param name="releaseDeviceContext">The action that releases the device context.</param>
     /// <param name="disposeGraphicsAction">The action that disposes the graphics owner.</param>
-    internal SafeGraphicsDcHandle(IntPtr preexistingHandle, bool disposeGraphics, Action<IntPtr> releaseDeviceContext, Action disposeGraphicsAction)
+    internal SafeGraphicsDcHandle(
+        IntPtr preexistingHandle,
+        bool disposeGraphics,
+        Action<IntPtr> releaseDeviceContext,
+        Action disposeGraphicsAction)
         : base(ownsHandle: true)
     {
         Throw.IfNull(releaseDeviceContext);
@@ -59,7 +61,8 @@ public class SafeGraphicsDcHandle : SafeDcHandle
     /// <summary>Creates a safe device-context handle that does not dispose the graphics instance.</summary>
     /// <param name="graphics">The graphics instance from which to obtain the device context.</param>
     /// <returns>A safe handle for the graphics device context.</returns>
-    public static SafeGraphicsDcHandle FromGraphics(Graphics graphics) => FromGraphics(graphics, disposeGraphics: false);
+    public static SafeGraphicsDcHandle FromGraphics(Graphics graphics) =>
+        FromGraphics(graphics, disposeGraphics: false);
 
     /// <summary>Creates a safe device-context handle for a graphics instance.</summary>
     /// <param name="graphics">The graphics instance from which to obtain the device context.</param>

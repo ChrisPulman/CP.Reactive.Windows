@@ -38,5 +38,5 @@ internal enum MapVkType : uint
     ///     extended scan code, the high byte of the uCode value can contain either 0xe0 or 0xe1 to specify the extended scan
     ///     code. If there is no translation, the function returns 0.
     /// </summary>
-    VkToVscEx
+    VkToVscEx,
 }

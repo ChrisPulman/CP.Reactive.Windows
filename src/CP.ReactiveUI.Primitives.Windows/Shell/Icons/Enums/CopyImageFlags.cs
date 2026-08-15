@@ -29,5 +29,5 @@ public enum CopyImageFlags : uint
     /// <summary>If uType is IMAGE_BITMAP, creates a DIB section instead of a DDB.</summary>
     LR_CREATEDIBSECTION = 0x2000U,
     /// <summary>Tries to reload the icon or cursor from the original resource file for a better resize.</summary>
-    LR_COPYFROMRESOURCE = 0x4000U
+    LR_COPYFROMRESOURCE = 0x4000U,
 }

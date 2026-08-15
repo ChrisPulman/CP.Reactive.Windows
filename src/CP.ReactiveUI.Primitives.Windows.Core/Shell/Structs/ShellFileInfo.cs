@@ -16,7 +16,12 @@ public readonly struct ShellFileInfo : IEquatable<ShellFileInfo>
     /// <param name="attributes">The shell file attributes.</param>
     /// <param name="displayName">The shell display name.</param>
     /// <param name="typeName">The shell type name.</param>
-    internal ShellFileInfo(IntPtr iconHandle, int iconIndex, uint attributes, string displayName, string typeName)
+    internal ShellFileInfo(
+        IntPtr iconHandle,
+        int iconIndex,
+        uint attributes,
+        string displayName,
+        string typeName)
     {
         IconHandle = new(iconHandle);
         IconIndex = iconIndex;
@@ -65,7 +70,13 @@ public readonly struct ShellFileInfo : IEquatable<ShellFileInfo>
     public bool Equals(ShellFileInfo other)
     {
         SafeIconHandle otherIconHandle = other.IconHandle;
-        return IconHandle.UseNativeHandle((leftHandle) => otherIconHandle.UseNativeHandle((rightHandle) => leftHandle == rightHandle)) && IconIndex == other.IconIndex && Attributes == other.Attributes && string.Equals(DisplayName, other.DisplayName, StringComparison.Ordinal) && string.Equals(TypeName, other.TypeName, StringComparison.Ordinal);
+        return IconHandle.UseNativeHandle(
+                (leftHandle) =>
+                    otherIconHandle.UseNativeHandle((rightHandle) => leftHandle == rightHandle))
+            && IconIndex == other.IconIndex
+            && Attributes == other.Attributes
+            && string.Equals(DisplayName, other.DisplayName, StringComparison.Ordinal)
+            && string.Equals(TypeName, other.TypeName, StringComparison.Ordinal);
     }
 
     /// <inheritdoc />
@@ -75,6 +86,8 @@ public readonly struct ShellFileInfo : IEquatable<ShellFileInfo>
         uint attributes = Attributes;
         string displayName = DisplayName;
         string typeName = TypeName;
-        return IconHandle.UseNativeHandle((iconHandle) => HashCode.Combine(iconHandle, iconIndex, attributes, displayName, typeName));
+        return IconHandle.UseNativeHandle(
+            (iconHandle) =>
+                HashCode.Combine(iconHandle, iconIndex, attributes, displayName, typeName));
     }
 }

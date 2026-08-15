@@ -210,5 +210,5 @@ public enum DeviceInterfaceClass
     VirtualAudioVideoControl,
     /// <summary>The GUID_DEVINTERFACE_SIDESHOW device interface class is defined for Windows SideShow devices.</summary>
     [Description("152E5811-FEB9-4B00-90F4-D32947AE1681")]
-    SideShow
+    SideShow,
 }

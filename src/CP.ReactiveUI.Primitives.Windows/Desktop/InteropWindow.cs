@@ -22,6 +22,14 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     /// <summary>The native window handle value used by the compatibility interface bridge.</summary>
     private readonly IntPtr _nativeHandle;
 
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.InteropWindow" /> class.</summary>
+    /// <param name="handle">IntPtr.</param>
+    public InteropWindow(IntPtr handle)
+    {
+        _nativeHandle = handle;
+        Handle = SafeNativeWindowHandle.FromUnowned(handle);
+    }
+
     /// <summary>Gets the safe native window handle wrapper.</summary>
     public SafeNativeWindowHandle Handle { get; }
 
@@ -47,18 +55,7 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     public bool HasClassname => !string.IsNullOrEmpty(Classname);
 
     /// <inheritdoc />
-    public bool HasParent
-    {
-        get
-        {
-            if (Parent.HasValue)
-            {
-                return Parent != IntPtr.Zero;
-            }
-
-            return false;
-        }
-    }
+    public bool HasParent => Parent.HasValue && Parent != IntPtr.Zero;
 
     /// <inheritdoc />
     public IntPtr? Parent { get; set; }
@@ -93,14 +90,6 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     /// <inheritdoc />
     public bool? CanScroll { get; set; }
 
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Windows.InteropWindow" /> class.</summary>
-    /// <param name="handle">IntPtr.</param>
-    public InteropWindow(IntPtr handle)
-    {
-        _nativeHandle = handle;
-        Handle = SafeNativeWindowHandle.FromUnowned(handle);
-    }
-
     /// <inheritdoc />
     public StringBuilder Dump() => Dump(InteropWindowRetrieveSettings.CacheAll, new(), string.Empty);
 
@@ -122,41 +111,10 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     }
 
     /// <inheritdoc />
-    public bool Equals(IInteropWindow other)
-    {
-        if (other is not null)
-        {
-            if (this != other)
-            {
-                return _nativeHandle.Equals(other.Handle);
-            }
-
-            return true;
-        }
-
-        return false;
-    }
+    public bool Equals(IInteropWindow other) => other is not null && (ReferenceEquals(this, other) || _nativeHandle.Equals(other.Handle));
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
-    {
-        if (obj is not null)
-        {
-            if (this != obj)
-            {
-                if (obj.GetType() == GetType())
-                {
-                    return Equals((IInteropWindow)obj);
-                }
-
-                return false;
-            }
-
-            return true;
-        }
-
-        return false;
-    }
+    public override bool Equals(object obj) => obj is IInteropWindow other && Equals(other);
 
     /// <inheritdoc />
     public override int GetHashCode() => _nativeHandle.GetHashCode();
@@ -167,17 +125,19 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     /// <param name="indentation">Output indentation.</param>
     private void AppendChildWindows(InteropWindowRetrieveSettings retrieveSettings, StringBuilder dump, string indentation)
     {
-        if (!HasParent)
+        if (HasParent)
         {
-            if ((retrieveSettings & InteropWindowRetrieveSettings.Children) != InteropWindowRetrieveSettings.None)
-            {
-                AppendWindowDump(this.GetChildren());
-            }
+            return;
+        }
 
-            if ((retrieveSettings & InteropWindowRetrieveSettings.ZOrderedChildren) != InteropWindowRetrieveSettings.None)
-            {
-                AppendWindowDump(this.GetZOrderedChildren());
-            }
+        if ((retrieveSettings & InteropWindowRetrieveSettings.Children) != InteropWindowRetrieveSettings.None)
+        {
+            AppendWindowDump(this.GetChildren());
+        }
+
+        if ((retrieveSettings & InteropWindowRetrieveSettings.ZOrderedChildren) != InteropWindowRetrieveSettings.None)
+        {
+            AppendWindowDump(this.GetZOrderedChildren());
         }
 
         void AppendWindowDump(IEnumerable<IInteropWindow> windows)
@@ -195,16 +155,16 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
     /// <param name="indentation">Output indentation.</param>
     private void AppendWindowState(InteropWindowRetrieveSettings retrieveSettings, StringBuilder dump, string indentation)
     {
-        _ = dump.AppendLine($"{indentation}{"Handle"}={_nativeHandle}");
-        AppendValue(InteropWindowRetrieveSettings.Classname, "Classname", Classname);
-        AppendValue(InteropWindowRetrieveSettings.Caption, "Caption", Caption);
-        AppendValue(InteropWindowRetrieveSettings.Text, "Text", Text);
-        AppendValue(InteropWindowRetrieveSettings.Info, "Info", Info);
-        AppendValue(InteropWindowRetrieveSettings.Maximized, "IsMaximized", IsMaximized);
-        AppendValue(InteropWindowRetrieveSettings.Minimized, "IsMinimized", IsMinimized);
-        AppendValue(InteropWindowRetrieveSettings.Visible, "IsVisible", IsVisible);
-        AppendValue(InteropWindowRetrieveSettings.Parent, "Parent", Parent);
-        AppendValue(InteropWindowRetrieveSettings.ScrollInfo, "CanScroll", CanScroll);
+        _ = dump.AppendLine($"{indentation}{nameof(Handle)}={_nativeHandle}");
+        AppendValue(InteropWindowRetrieveSettings.Classname, nameof(Classname), Classname);
+        AppendValue(InteropWindowRetrieveSettings.Caption, nameof(Caption), Caption);
+        AppendValue(InteropWindowRetrieveSettings.Text, nameof(Text), Text);
+        AppendValue(InteropWindowRetrieveSettings.Info, nameof(Info), Info);
+        AppendValue(InteropWindowRetrieveSettings.Maximized, nameof(IsMaximized), IsMaximized);
+        AppendValue(InteropWindowRetrieveSettings.Minimized, nameof(IsMinimized), IsMinimized);
+        AppendValue(InteropWindowRetrieveSettings.Visible, nameof(IsVisible), IsVisible);
+        AppendValue(InteropWindowRetrieveSettings.Parent, nameof(Parent), Parent);
+        AppendValue(InteropWindowRetrieveSettings.ScrollInfo, nameof(CanScroll), CanScroll);
         void AppendValue(InteropWindowRetrieveSettings requestedSetting, string name, object value)
         {
             if ((retrieveSettings & requestedSetting) != InteropWindowRetrieveSettings.None)

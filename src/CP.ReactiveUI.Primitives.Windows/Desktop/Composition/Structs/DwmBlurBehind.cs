@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.CompilerServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition;
 #else
@@ -24,20 +21,19 @@ public struct DwmBlurBehind : IEquatable<DwmBlurBehind>
     /// <summary>The native blur region handle.</summary>
     private IntPtr _blurRegion;
 
-    [CompilerGenerated]
-    private bool _003CEnable_003Ek__BackingField;
+    /// <summary>The configured blur-behind state.</summary>
+    private bool _enable;
 
-    [CompilerGenerated]
-    private bool _003CTransitionOnMaximized_003Ek__BackingField;
+    /// <summary>The configured maximized-window transition state.</summary>
+    private bool _transitionOnMaximized;
 
     /// <summary>Gets or sets a value indicating whether the window handle is registered for DWM blur behind.</summary>
     public bool Enable
     {
-        [CompilerGenerated]
-        readonly get => _003CEnable_003Ek__BackingField;
+        readonly get => _enable;
         set
         {
-            _003CEnable_003Ek__BackingField = value;
+            _enable = value;
             _flags |= DwmBlurBehindFlags.Enable;
         }
     }
@@ -45,11 +41,10 @@ public struct DwmBlurBehind : IEquatable<DwmBlurBehind>
     /// <summary>Gets or sets a value indicating whether the window colorization transitions when maximized.</summary>
     public bool TransitionOnMaximized
     {
-        [CompilerGenerated]
-        readonly get => _003CTransitionOnMaximized_003Ek__BackingField;
+        readonly get => _transitionOnMaximized;
         set
         {
-            _003CTransitionOnMaximized_003Ek__BackingField = value;
+            _transitionOnMaximized = value;
             _flags |= DwmBlurBehindFlags.TransitionMaximized;
         }
     }
@@ -58,19 +53,13 @@ public struct DwmBlurBehind : IEquatable<DwmBlurBehind>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when both values are equal.</returns>
-    public static bool operator ==(DwmBlurBehind left, DwmBlurBehind right)
-    {
-        return left.Equals(right);
-    }
+    public static bool operator ==(DwmBlurBehind left, DwmBlurBehind right) => left.Equals(right);
 
     /// <summary>Determines whether two values are not equal.</summary>
     /// <param name="left">The first value.</param>
     /// <param name="right">The second value.</param>
     /// <returns><see langword="true" /> when the values are not equal.</returns>
-    public static bool operator !=(DwmBlurBehind left, DwmBlurBehind right)
-    {
-        return !left.Equals(right);
-    }
+    public static bool operator !=(DwmBlurBehind left, DwmBlurBehind right) => !left.Equals(right);
 
     /// <summary>Sets the client-area region where blur behind is applied.</summary>
     /// <param name="blurRegion">The native blur region handle.</param>
@@ -81,26 +70,14 @@ public struct DwmBlurBehind : IEquatable<DwmBlurBehind>
     }
 
     /// <inheritdoc />
-    public override readonly bool Equals(object obj)
-    {
-        if (obj is DwmBlurBehind other)
-        {
-            return Equals(other);
-        }
-
-        return false;
-    }
+    public override readonly bool Equals(object obj) => obj is DwmBlurBehind other && Equals(other);
 
     /// <inheritdoc />
-    public readonly bool Equals(DwmBlurBehind other)
-    {
-        if (_flags == other._flags && Enable == other.Enable && _blurRegion == other._blurRegion)
-        {
-            return TransitionOnMaximized == other.TransitionOnMaximized;
-        }
-
-        return false;
-    }
+    public readonly bool Equals(DwmBlurBehind other) =>
+        _flags == other._flags
+        && _enable == other._enable
+        && _blurRegion == other._blurRegion
+        && _transitionOnMaximized == other._transitionOnMaximized;
 
     /// <inheritdoc />
     public override readonly int GetHashCode() => typeof(DwmBlurBehind).GetHashCode();

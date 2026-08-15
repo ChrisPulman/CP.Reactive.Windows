@@ -35,6 +35,18 @@ public readonly struct GdiBitmap : IEquatable<GdiBitmap>
     /// <summary>A pointer to the location of the bit values for the bitmap.</summary>
     private readonly IntPtr _bits;
 
+    /// <summary>Initializes a new instance of the <see cref="GdiBitmap" /> struct.</summary>
+    public GdiBitmap()
+    {
+        _type = default;
+        _width = default;
+        _height = default;
+        _widthBytes = default;
+        _planes = default;
+        _bitsPixel = default;
+        _bits = default;
+    }
+
     /// <summary>Gets the width of the bitmap, in pixels.</summary>
     public int Width => _width;
 
@@ -60,7 +72,14 @@ public readonly struct GdiBitmap : IEquatable<GdiBitmap>
     }
 
     /// <inheritdoc />
-    public bool Equals(GdiBitmap other) => _type == other._type && _width == other._width && _height == other._height && _widthBytes == other._widthBytes && _planes == other._planes && _bitsPixel == other._bitsPixel && _bits == other._bits;
+    public bool Equals(GdiBitmap other) =>
+        _type == other._type
+        && _width == other._width
+        && _height == other._height
+        && _widthBytes == other._widthBytes
+        && _planes == other._planes
+        && _bitsPixel == other._bitsPixel
+        && _bits == other._bits;
 
     /// <inheritdoc />
     public override bool Equals(object obj) => obj is GdiBitmap other && Equals(other);

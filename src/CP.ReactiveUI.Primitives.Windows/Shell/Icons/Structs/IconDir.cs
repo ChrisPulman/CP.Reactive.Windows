@@ -13,8 +13,17 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs;
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
 public readonly record struct IconDir
 {
+    /// <summary>Defines the cursor resource type value.</summary>
+    private const ushort CursorResourceType = 2;
+
+    /// <summary>Defines the icon resource type value.</summary>
+    private const ushort IconResourceType = 1;
+
+    /// <summary>Defines the native structure size.</summary>
+    private const int StructureSize = 6;
+
     /// <summary>Gets the size of the ICONDIR structure in bytes.</summary>
-    public static int Size => 6;
+    public static int Size => StructureSize;
 
     /// <summary>Gets or sets the reserved value, which must be zero.</summary>
     public ushort Reserved { get; init; }
@@ -25,22 +34,13 @@ public readonly record struct IconDir
     /// <summary>Gets or sets the number of image entries in this file.</summary>
     public ushort Count { get; init; }
 
-    /// <summary>Defines the cursor resource type value.</summary>
-    private const ushort CursorResourceType = 2;
-
-    /// <summary>Defines the icon resource type value.</summary>
-    private const ushort IconResourceType = 1;
-
-    /// <summary>Defines the native structure size.</summary>
-    private const int StructureSize = 6;
-
     /// <summary>Creates a new ICONDIR structure for an icon file.</summary>
     /// <param name="count">Number of icon entries.</param>
     /// <returns>The initialized ICONDIR structure.</returns>
-    public static IconDir CreateIcon(ushort count) => new IconDir { Type = 1, Count = count };
+    public static IconDir CreateIcon(ushort count) => new IconDir { Type = IconResourceType, Count = count };
 
     /// <summary>Creates a new ICONDIR structure for a cursor file.</summary>
     /// <param name="count">Number of cursor entries.</param>
     /// <returns>The initialized ICONDIR structure.</returns>
-    public static IconDir CreateCursor(ushort count) => new IconDir { Type = 2, Count = count };
+    public static IconDir CreateCursor(ushort count) => new IconDir { Type = CursorResourceType, Count = count };
 }

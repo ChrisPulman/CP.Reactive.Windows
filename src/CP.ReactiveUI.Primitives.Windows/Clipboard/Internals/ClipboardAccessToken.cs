@@ -15,15 +15,6 @@ internal sealed class ClipboardAccessToken : IClipboardAccessToken
     /// <summary>The action that releases the native clipboard lock.</summary>
     private readonly Action _disposeAction;
 
-    /// <inheritdoc />
-    public bool CanAccess { get; internal set; } = true;
-
-    /// <inheritdoc />
-    public bool IsOpenTimeout { get; internal set; }
-
-    /// <inheritdoc />
-    public bool IsLockTimeout { get; internal set; }
-
     /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals.ClipboardAccessToken" /> class.</summary>
     internal ClipboardAccessToken()
     {
@@ -35,6 +26,15 @@ internal sealed class ClipboardAccessToken : IClipboardAccessToken
     {
         _disposeAction = disposeAction ?? throw new ArgumentNullException(nameof(disposeAction));
     }
+
+    /// <inheritdoc />
+    public bool CanAccess { get; internal set; } = true;
+
+    /// <inheritdoc />
+    public bool IsOpenTimeout { get; internal set; }
+
+    /// <inheritdoc />
+    public bool IsLockTimeout { get; internal set; }
 
     /// <inheritdoc />
     public void Dispose()

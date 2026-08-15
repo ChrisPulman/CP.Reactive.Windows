@@ -9,14 +9,19 @@ public enum TitleBarInfoIndexes
 {
     /// <summary>Index for the titlebar.</summary>
     TitleBar,
+
     /// <summary>Not used.</summary>
     Reserved,
+
     /// <summary>Index for the minimize button.</summary>
     MinimizeButton,
+
     /// <summary>Index for the maximize button.</summary>
     MaximizeButton,
+
     /// <summary>Index for the help button.</summary>
     HelpButton,
+
     /// <summary>Index for the close button.</summary>
-    CloseButton
+    CloseButton,
 }

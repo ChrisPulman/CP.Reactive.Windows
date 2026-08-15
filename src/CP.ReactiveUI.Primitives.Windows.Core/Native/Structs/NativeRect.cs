@@ -63,6 +63,26 @@ public readonly struct NativeRect : IEquatable<NativeRect>
         }
     }
 
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRect" /> struct.</summary>
+    /// <param name="topLeft">The upper-left corner.</param>
+    /// <param name="bottomRight">The lower-right corner.</param>
+    public NativeRect(NativePoint topLeft, NativePoint bottomRight)
+    {
+        this = checked(
+            new NativeRect(
+                topLeft.X,
+                topLeft.Y,
+                bottomRight.X - topLeft.X,
+                bottomRight.Y - topLeft.Y));
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRect" /> struct.</summary>
+    /// <param name="left">The left edge.</param>
+    /// <param name="top">The top edge.</param>
+    /// <param name="size">NativeSize</param>
+    public NativeRect(int left, int top, NativeSize size)
+        : this(new NativePoint(left, top), size) { }
+
     /// <summary>Gets the empty native rectangle.</summary>
     public static NativeRect Empty { get; }
 
@@ -113,23 +133,6 @@ public readonly struct NativeRect : IEquatable<NativeRect>
 
     /// <summary>Gets a value indicating whether this native rectangle has zero area.</summary>
     public bool IsEmpty => Width * Height == 0;
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRect" /> struct.</summary>
-    /// <param name="topLeft">The upper-left corner.</param>
-    /// <param name="bottomRight">The lower-right corner.</param>
-    public NativeRect(NativePoint topLeft, NativePoint bottomRight)
-    {
-        this = checked(new NativeRect(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y));
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Native.Structs.NativeRect" /> struct.</summary>
-    /// <param name="left">The left edge.</param>
-    /// <param name="top">The top edge.</param>
-    /// <param name="size">NativeSize</param>
-    public NativeRect(int left, int top, NativeSize size)
-        : this(new NativePoint(left, top), size)
-    {
-    }
 
     /// <summary>Cast NativeRect to Rect</summary>
     /// <param name="rectangle">NativeRect</param>
@@ -198,7 +201,8 @@ public readonly struct NativeRect : IEquatable<NativeRect>
     }
 
     /// <inheritdoc />
-    public override string ToString() => $"{{Left: {_left}; Top: {_top}; Width: {Width}; Height: {Height};}}";
+    public override string ToString() =>
+        $"{{Left: {_left}; Top: {_top}; Width: {Width}; Height: {Height};}}";
 
     /// <inheritdoc />
     public override bool Equals(object obj)
@@ -218,10 +222,15 @@ public readonly struct NativeRect : IEquatable<NativeRect>
     }
 
     /// <inheritdoc />
-    public bool Equals(NativeRect other) => other.Left == _left && other.Top == _top && other.Right == _right && other.Bottom == _bottom;
+    public bool Equals(NativeRect other) =>
+        other.Left == _left
+        && other.Top == _top
+        && other.Right == _right
+        && other.Bottom == _bottom;
 
     /// <inheritdoc />
-    public override int GetHashCode() => (((((_left * 397) ^ _top) * 397) ^ _right) * 397) ^ _bottom;
+    public override int GetHashCode() =>
+        (((((_left * 397) ^ _top) * 397) ^ _right) * 397) ^ _bottom;
 
     /// <summary>Deconstructs this native rectangle into location and size values.</summary>
     /// <param name="location">NativePoint</param>
@@ -234,19 +243,23 @@ public readonly struct NativeRect : IEquatable<NativeRect>
 
     /// <summary>Converts this value to a drawing rectangle with floating-point dimensions.</summary>
     /// <returns>A drawing rectangle with the same bounds.</returns>
-    public RectangleF ToRectangleF() => NativeRectangleGeometry<int>.ToRectangleF(NativeRectangleConversions.ToBounds(this));
+    public RectangleF ToRectangleF() =>
+        NativeRectangleGeometry<int>.ToRectangleF(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a drawing rectangle.</summary>
     /// <returns>A drawing rectangle with the same bounds.</returns>
-    public Rectangle ToRectangle() => NativeRectangleGeometry<int>.ToRectangle(NativeRectangleConversions.ToBounds(this));
+    public Rectangle ToRectangle() =>
+        NativeRectangleGeometry<int>.ToRectangle(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a Windows rectangle.</summary>
     /// <returns>A Windows rectangle with the same bounds.</returns>
-    public Rect ToRect() => NativeRectangleGeometry<int>.ToRect(NativeRectangleConversions.ToBounds(this));
+    public Rect ToRect() =>
+        NativeRectangleGeometry<int>.ToRect(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Converts this value to a Windows integer rectangle.</summary>
     /// <returns>A Windows integer rectangle with the same bounds.</returns>
-    public Int32Rect ToInt32Rect() => NativeRectangleGeometry<int>.ToInt32Rect(NativeRectangleConversions.ToBounds(this));
+    public Int32Rect ToInt32Rect() =>
+        NativeRectangleGeometry<int>.ToInt32Rect(NativeRectangleConversions.ToBounds(this));
 
     /// <summary>Returns this value as a native rectangle.</summary>
     /// <returns>The current native rectangle.</returns>

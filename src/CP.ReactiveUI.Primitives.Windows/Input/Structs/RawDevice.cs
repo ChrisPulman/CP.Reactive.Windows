@@ -13,15 +13,6 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 [StructLayout(LayoutKind.Explicit)]
 public readonly record struct RawDevice
 {
-    /// <summary>Gets information on the mouse.</summary>
-    public RawMouse Mouse => _mouse;
-
-    /// <summary>Gets information on the keyboard.</summary>
-    public RawKeyboard Keyboard => _keyboard;
-
-    /// <summary>Gets information on the HID device.</summary>
-    public RawHID HID => _hid;
-
     /// <summary>Stores raw mouse data.</summary>
     [FieldOffset(0)]
     private readonly RawMouse _mouse;
@@ -33,4 +24,13 @@ public readonly record struct RawDevice
     /// <summary>Stores raw HID data.</summary>
     [FieldOffset(0)]
     private readonly RawHID _hid;
+
+    /// <summary>Gets information on the mouse.</summary>
+    public RawMouse Mouse => _mouse;
+
+    /// <summary>Gets information on the keyboard.</summary>
+    public RawKeyboard Keyboard => _keyboard;
+
+    /// <summary>Gets information on the HID device.</summary>
+    public RawHID HID => _hid;
 }

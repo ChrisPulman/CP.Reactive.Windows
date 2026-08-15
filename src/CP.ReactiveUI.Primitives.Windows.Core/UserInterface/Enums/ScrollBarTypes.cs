@@ -9,10 +9,13 @@ public enum ScrollBarTypes
 {
     /// <summary>The horizontal scroll bar of the specified window.</summary>
     Horizontal,
+
     /// <summary>The vertical scroll bar of the specified window.</summary>
     Vertical,
+
     /// <summary>A scroll bar control.</summary>
     Control,
+
     /// <summary>The horizontal and vertical scroll bars of the specified window.</summary>
-    Both
+    Both,
 }

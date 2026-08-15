@@ -4,6 +4,7 @@
 
 using System;
 using CP.ReactiveUI.Primitives.Windows.Native.Structs;
+using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
@@ -17,40 +18,20 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs;
 /// </summary>
 public readonly record struct MouseInput
 {
-    /// <summary>The native mouse button input data.</summary>
-    /// <param name="Flags">The mouse event flags.</param>
-    /// <param name="MouseData">The mouse data.</param>
-    private readonly record struct MouseButtonInputData(MouseEventFlags Flags, uint MouseData);
-
-    /// <summary>Gets the x coordinate or movement delta.</summary>
-    public int Dx => _dx;
-
-    /// <summary>Gets the y coordinate or movement delta.</summary>
-    public int Dy => _dy;
-
-    /// <summary>Gets the mouse button or wheel data.</summary>
-    public int MouseData => (int)_mouseData;
-
-    /// <summary>Gets the mouse event flags.</summary>
-    public MouseEventFlags MouseEventFlags => _mouseEventFlags;
-
-    /// <summary>Gets the mouse event timestamp.</summary>
-    public uint Timestamp => _timestamp;
-
-    /// <summary>Gets native extra information associated with the mouse event.</summary>
-    internal UIntPtr ExtraInfo => _extraInfo;
-
     /// <summary>The mouse data value for the first extended button.</summary>
-    private const int XButton1Data = 1;
+    private const uint XButton1Data = 1U;
 
     /// <summary>The mouse data value for the second extended button.</summary>
-    private const int XButton2Data = 2;
+    private const uint XButton2Data = 2U;
 
     /// <summary>The maximum absolute mouse coordinate.</summary>
     private const int AbsoluteCoordinateMaximum = 65_535;
 
     /// <summary>Gets the flags used when a mouse location is supplied.</summary>
     private const MouseEventFlags MouseMoveMouseEventFlags = MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute;
+
+    /// <summary>Gets the virtual-desktop bounds used to normalize pointer locations.</summary>
+    private static Func<NativeRect> _getScreenBounds = static () => DisplayTopology.ScreenBounds;
 
     /// <summary>Stores the x coordinate or movement delta.</summary>
     private readonly int _dx;
@@ -98,6 +79,24 @@ public readonly record struct MouseInput
         _extraInfo = extraInfo;
     }
 
+    /// <summary>Gets the x coordinate or movement delta.</summary>
+    public int Dx => _dx;
+
+    /// <summary>Gets the y coordinate or movement delta.</summary>
+    public int Dy => _dy;
+
+    /// <summary>Gets the mouse button or wheel data.</summary>
+    public int MouseData => unchecked((int)_mouseData);
+
+    /// <summary>Gets the mouse event flags.</summary>
+    public MouseEventFlags MouseEventFlags => _mouseEventFlags;
+
+    /// <summary>Gets the mouse event timestamp.</summary>
+    public uint Timestamp => _timestamp;
+
+    /// <summary>Gets native extra information associated with the mouse event.</summary>
+    internal UIntPtr ExtraInfo => _extraInfo;
+
     /// <summary>Create a MouseInput struct for a wheel move.</summary>
     /// <param name="wheelDelta">How much does the wheel move.</param>
     /// <returns>MouseInput.</returns>
@@ -118,8 +117,8 @@ public readonly record struct MouseInput
     {
         location = RemapLocation(location);
         MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
-        return new(location?.X ?? 0, location?.Y ?? 0, (uint)wheelDelta, mouseEventFlags | MouseEventFlags.Wheel, messageTime);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        return new(location?.X ?? 0, location?.Y ?? 0, unchecked((uint)wheelDelta), mouseEventFlags | MouseEventFlags.Wheel, messageTime);
     }
 
     /// <summary>Create a MouseInput struct for a mouse move.</summary>
@@ -134,7 +133,7 @@ public readonly record struct MouseInput
     public static MouseInput MouseMove(NativePoint location, uint? timestamp)
     {
         location = RemapLocation(location);
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location.X, location.Y, 0U, MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute, messageTime);
     }
 
@@ -159,7 +158,7 @@ public readonly record struct MouseInput
         location = RemapLocation(location);
         MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
         MouseButtonInputData buttonData = GetButtonDownData(mouseButtons);
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location?.X ?? 0, location?.Y ?? 0, buttonData.MouseData, mouseEventFlags | buttonData.Flags, messageTime);
     }
 
@@ -184,8 +183,19 @@ public readonly record struct MouseInput
         location = RemapLocation(location);
         MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
         MouseButtonInputData buttonData = GetButtonUpData(mouseButtons);
-        uint messageTime = timestamp ?? checked((uint)Environment.TickCount);
+        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location?.X ?? 0, location?.Y ?? 0, buttonData.MouseData, mouseEventFlags | buttonData.Flags, messageTime);
+    }
+
+    /// <summary>Overrides virtual-desktop bounds for deterministic tests.</summary>
+    /// <param name="getScreenBounds">The replacement virtual-desktop-bounds operation.</param>
+    /// <returns>A lifetime that restores the previous operation.</returns>
+    internal static IDisposable OverrideScreenBoundsForTesting(Func<NativeRect> getScreenBounds)
+    {
+        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getScreenBounds);
+        Func<NativeRect> previousGetScreenBounds = _getScreenBounds;
+        _getScreenBounds = getScreenBounds;
+        return new ActionDisposable(() => _getScreenBounds = previousGetScreenBounds);
     }
 
     /// <summary>The coordinates need to be mapped from 0-65535 where 0 is left and 65535 is right.</summary>
@@ -193,29 +203,32 @@ public readonly record struct MouseInput
     /// <returns>The remapped absolute mouse coordinate.</returns>
     private static NativePoint RemapLocation(NativePoint location)
     {
-        NativeRect bounds = DisplayTopology.ScreenBounds;
-        checked
-        {
-            if (bounds.Width * bounds.Height != 0)
-            {
-                return new(location.X * unchecked(65_535 / bounds.Width), location.Y * unchecked(65_535 / bounds.Height));
-            }
-
-            return location;
-        }
+        NativeRect bounds = _getScreenBounds();
+        return bounds.Width > 0 && bounds.Height > 0
+            ? new(
+                NormalizeCoordinate((long)location.X - bounds.Left, bounds.Width),
+                NormalizeCoordinate((long)location.Y - bounds.Top, bounds.Height))
+            : location;
     }
 
     /// <summary>Maps nullable coordinates to absolute input coordinates when a location is present.</summary>
     /// <param name="location">The nullable location to map.</param>
     /// <returns>The mapped nullable location.</returns>
-    private static NativePoint? RemapLocation(NativePoint? location)
+    private static NativePoint? RemapLocation(NativePoint? location) => location.HasValue ? RemapLocation(location.Value) : null;
+
+    /// <summary>Converts a virtual-desktop coordinate to the absolute SendInput range.</summary>
+    /// <param name="coordinate">The coordinate measured from the virtual desktop origin.</param>
+    /// <param name="dimension">The virtual desktop dimension.</param>
+    /// <returns>The clamped absolute SendInput coordinate.</returns>
+    private static int NormalizeCoordinate(long coordinate, int dimension)
     {
-        if (!location.HasValue)
+        long normalizedCoordinate = (coordinate * AbsoluteCoordinateMaximum) / dimension;
+        if (normalizedCoordinate <= 0L)
         {
-            return null;
+            return 0;
         }
 
-        return RemapLocation(location.Value);
+        return normalizedCoordinate >= AbsoluteCoordinateMaximum ? AbsoluteCoordinateMaximum : (int)normalizedCoordinate;
     }
 
     /// <summary>Gets the native mouse button data for a button-down event.</summary>
@@ -228,8 +241,8 @@ public readonly record struct MouseInput
         AddButtonData(mouseButtons, MouseButtons.Left, MouseEventFlags.LeftDown, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Right, MouseEventFlags.RightDown, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Middle, MouseEventFlags.MiddleDown, 0U, ref mouseEventFlags, ref mouseData);
-        AddButtonData(mouseButtons, MouseButtons.XButton1, MouseEventFlags.XDown, 1U, ref mouseEventFlags, ref mouseData);
-        AddButtonData(mouseButtons, MouseButtons.XButton2, MouseEventFlags.XDown, 2U, ref mouseEventFlags, ref mouseData);
+        AddButtonData(mouseButtons, MouseButtons.XButton1, MouseEventFlags.XDown, XButton1Data, ref mouseEventFlags, ref mouseData);
+        AddButtonData(mouseButtons, MouseButtons.XButton2, MouseEventFlags.XDown, XButton2Data, ref mouseEventFlags, ref mouseData);
         return new(mouseEventFlags, mouseData);
     }
 
@@ -243,8 +256,8 @@ public readonly record struct MouseInput
         AddButtonData(mouseButtons, MouseButtons.Left, MouseEventFlags.LeftUp, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Right, MouseEventFlags.RightUp, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Middle, MouseEventFlags.MiddleUp, 0U, ref mouseEventFlags, ref mouseData);
-        AddButtonData(mouseButtons, MouseButtons.XButton1, MouseEventFlags.XUp, 1U, ref mouseEventFlags, ref mouseData);
-        AddButtonData(mouseButtons, MouseButtons.XButton2, MouseEventFlags.XUp, 2U, ref mouseEventFlags, ref mouseData);
+        AddButtonData(mouseButtons, MouseButtons.XButton1, MouseEventFlags.XUp, XButton1Data, ref mouseEventFlags, ref mouseData);
+        AddButtonData(mouseButtons, MouseButtons.XButton2, MouseEventFlags.XUp, XButton2Data, ref mouseEventFlags, ref mouseData);
         return new(mouseEventFlags, mouseData);
     }
 
@@ -263,4 +276,9 @@ public readonly record struct MouseInput
             mouseData |= data;
         }
     }
+
+    /// <summary>The native mouse button input data.</summary>
+    /// <param name="Flags">The mouse event flags.</param>
+    /// <param name="MouseData">The mouse data.</param>
+    private readonly record struct MouseButtonInputData(MouseEventFlags Flags, uint MouseData);
 }

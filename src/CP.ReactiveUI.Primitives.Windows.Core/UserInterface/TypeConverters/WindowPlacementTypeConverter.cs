@@ -16,30 +16,51 @@ namespace CP.ReactiveUI.Primitives.Windows.Native.UserInterface.TypeConverters;
 public class WindowPlacementTypeConverter : TypeConverter
 {
     /// <summary>Stores the native point type converter value.</summary>
-    private readonly NativePointTypeConverter _nativePointTypeConverter = TypeDescriptor.GetConverter(typeof(NativePoint)) as NativePointTypeConverter;
+    private readonly NativePointTypeConverter _nativePointTypeConverter =
+        TypeDescriptor.GetConverter(typeof(NativePoint)) as NativePointTypeConverter;
 
     /// <summary>Stores the native rect type converter value.</summary>
-    private readonly NativeRectTypeConverter _nativeRectTypeConverter = TypeDescriptor.GetConverter(typeof(NativeRect)) as NativeRectTypeConverter;
+    private readonly NativeRectTypeConverter _nativeRectTypeConverter =
+        TypeDescriptor.GetConverter(typeof(NativeRect)) as NativeRectTypeConverter;
 
     /// <inheritdoc />
-    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+    public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) =>
+        sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 
     /// <inheritdoc />
-    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
+    public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) =>
+        destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
     /// <inheritdoc />
-    public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+    public override object ConvertFrom(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value)
     {
         if (value is string windowPlacementString)
         {
             string[] cmdMinMaxNormal = windowPlacementString.Split('|');
-            if (cmdMinMaxNormal.Length == 4 && Enum.TryParse<ShowWindowCommands>(cmdMinMaxNormal[0], ignoreCase: true, out var showCommand))
+            if (
+                cmdMinMaxNormal.Length == 4
+                && Enum.TryParse<ShowWindowCommands>(
+                    cmdMinMaxNormal[0],
+                    ignoreCase: true,
+                    out var showCommand))
             {
                 WindowPlacement windowPlacement = WindowPlacement.Create();
                 windowPlacement.ShowCmd = showCommand;
-                windowPlacement.MinPosition = ((NativePoint?)_nativePointTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[1])) ?? NativePoint.Empty;
-                windowPlacement.MaxPosition = ((NativePoint?)_nativePointTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[2])) ?? NativePoint.Empty;
-                windowPlacement.NormalPosition = ((NativeRect?)_nativeRectTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[3])) ?? NativeRect.Empty;
+                windowPlacement.MinPosition =
+                    (
+                        (NativePoint?)
+                            _nativePointTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[1])) ?? NativePoint.Empty;
+                windowPlacement.MaxPosition =
+                    (
+                        (NativePoint?)
+                            _nativePointTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[2])) ?? NativePoint.Empty;
+                windowPlacement.NormalPosition =
+                    (
+                        (NativeRect?)
+                            _nativeRectTypeConverter.ConvertFromInvariantString(cmdMinMaxNormal[3])) ?? NativeRect.Empty;
                 return windowPlacement;
             }
         }
@@ -48,13 +69,20 @@ public class WindowPlacementTypeConverter : TypeConverter
     }
 
     /// <inheritdoc />
-    public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+    public override object ConvertTo(
+        ITypeDescriptorContext context,
+        CultureInfo culture,
+        object value,
+        Type destinationType)
     {
         if (destinationType == typeof(string) && value is WindowPlacement windowPlacement)
         {
-            string minimum = _nativePointTypeConverter.ConvertToInvariantString(windowPlacement.MinPosition);
-            string maximum = _nativePointTypeConverter.ConvertToInvariantString(windowPlacement.MaxPosition);
-            string normal = _nativeRectTypeConverter.ConvertToInvariantString(windowPlacement.NormalPosition);
+            string minimum = _nativePointTypeConverter.ConvertToInvariantString(
+                windowPlacement.MinPosition);
+            string maximum = _nativePointTypeConverter.ConvertToInvariantString(
+                windowPlacement.MaxPosition);
+            string normal = _nativeRectTypeConverter.ConvertToInvariantString(
+                windowPlacement.NormalPosition);
             return $"{windowPlacement.ShowCmd}|{minimum}|{maximum}|{normal}";
         }
 

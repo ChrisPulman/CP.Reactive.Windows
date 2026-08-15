@@ -21,35 +21,13 @@ public class KeyboardHookEventArgs : EventArgs
     public bool IsModifier { get; internal set; }
 
     /// <summary>Gets true if Alt key is pressed.</summary>
-    public bool IsAlt
-    {
-        get
-        {
-            if (!IsLeftAlt)
-            {
-                return IsRightAlt;
-            }
-
-            return true;
-        }
-    }
+    public bool IsAlt => IsLeftAlt || IsRightAlt;
 
     /// <summary>Gets a value indicating whether caps lock is active.</summary>
     public bool IsCapsLockActive { get; internal set; }
 
     /// <summary>Gets true if control is pressed.</summary>
-    public bool IsControl
-    {
-        get
-        {
-            if (!IsLeftControl)
-            {
-                return IsRightControl;
-            }
-
-            return true;
-        }
-    }
+    public bool IsControl => IsLeftControl || IsRightControl;
 
     /// <summary>Gets a value indicating whether this is a key-down event.</summary>
     public bool IsKeyDown { get; internal set; }
@@ -85,35 +63,13 @@ public class KeyboardHookEventArgs : EventArgs
     public bool IsScrollLockActive { get; internal set; }
 
     /// <summary>Gets true if shift is pressed.</summary>
-    public bool IsShift
-    {
-        get
-        {
-            if (!IsLeftShift)
-            {
-                return IsRightShift;
-            }
-
-            return true;
-        }
-    }
+    public bool IsShift => IsLeftShift || IsRightShift;
 
     /// <summary>Gets a value indicating whether this is a system key.</summary>
     public bool IsSystemKey { get; internal set; }
 
     /// <summary>Gets true if shift is pressed.</summary>
-    public bool IsWindows
-    {
-        get
-        {
-            if (!IsLeftWindows)
-            {
-                return IsRightWindows;
-            }
-
-            return true;
-        }
-    }
+    public bool IsWindows => IsLeftWindows || IsRightWindows;
 
     /// <summary>Gets the key code itself.</summary>
     public VirtualKeyCode Key { get; internal set; }
@@ -131,18 +87,7 @@ public class KeyboardHookEventArgs : EventArgs
     public bool IsInjectedByProcess => (Flags & ExtendedKeyFlags.Injected) != 0;
 
     /// <summary>Gets a value indicating whether a lower-integrity process injected this event.</summary>
-    public bool IsInjectedByLowerIntegrityLevelProcess
-    {
-        get
-        {
-            if ((Flags & ExtendedKeyFlags.Injected) != ExtendedKeyFlags.None)
-            {
-                return (Flags & ExtendedKeyFlags.LowerIntegretyInjected) != 0;
-            }
-
-            return false;
-        }
-    }
+    public bool IsInjectedByLowerIntegrityLevelProcess => (Flags & ExtendedKeyFlags.Injected) != ExtendedKeyFlags.None && (Flags & ExtendedKeyFlags.LowerIntegretyInjected) != ExtendedKeyFlags.None;
 
     /// <summary>Generate KeyboardHookEventArgs for a key down.</summary>
     /// <param name="virtualKeyCode">VirtualKeyCode.</param>

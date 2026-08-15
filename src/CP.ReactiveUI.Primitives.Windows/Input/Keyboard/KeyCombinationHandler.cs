@@ -18,6 +18,20 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     /// <summary>The number of configured combination keys that are currently pressed.</summary>
     private int _pressedCombinationKeyCount;
 
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeyCombinationHandler" /> class.</summary>
+    /// <param name="keyCombination">IEnumerable with VirtualKeyCodes.</param>
+    public KeyCombinationHandler(IEnumerable<VirtualKeyCode> keyCombination)
+    {
+        Configure(keyCombination);
+    }
+
+    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeyCombinationHandler" /> class.</summary>
+    /// <param name="keyCombination">params with VirtualKeyCodes.</param>
+    public KeyCombinationHandler(params VirtualKeyCode[] keyCombination)
+    {
+        Configure(keyCombination);
+    }
+
     /// <summary>Gets get the VirtualKeyCodes which trigger the combination.</summary>
     public VirtualKeyCode[] TriggerCombination { get; private set; }
 
@@ -44,35 +58,10 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     public bool TriggerOnKeyUp { get; set; }
 
     /// <inheritdoc />
-    public bool HasKeysPressed
-    {
-        get
-        {
-            if (OtherPressedKeys.Count <= 0)
-            {
-                return _pressedCombinationKeyCount > 0;
-            }
-
-            return true;
-        }
-    }
+    public bool HasKeysPressed => OtherPressedKeys.Count > 0 || _pressedCombinationKeyCount > 0;
 
     /// <summary>Gets the keys that do not makeup the combination, where there are any Handle cannot return true.</summary>
     protected ISet<VirtualKeyCode> OtherPressedKeys { get; } = new HashSet<VirtualKeyCode>();
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeyCombinationHandler" /> class.</summary>
-    /// <param name="keyCombination">IEnumerable with VirtualKeyCodes.</param>
-    public KeyCombinationHandler(IEnumerable<VirtualKeyCode> keyCombination)
-    {
-        Configure(keyCombination);
-    }
-
-    /// <summary>Initializes a new instance of the <see cref="T:CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard.KeyCombinationHandler" /> class.</summary>
-    /// <param name="keyCombination">params with VirtualKeyCodes.</param>
-    public KeyCombinationHandler(params VirtualKeyCode[] keyCombination)
-    {
-        Configure(keyCombination);
-    }
 
     /// <summary>Configure the key combinations.</summary>
     /// <param name="keyCombination">IEnumerable of VirtualKeyCode.</param>
@@ -114,46 +103,15 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     /// <param name="current">The event virtual key code.</param>
     /// <param name="expected">The configured virtual key code.</param>
     /// <returns><see langword="true" /> when the current key matches the expected key.</returns>
-    protected virtual bool CompareVirtualKeyCode(VirtualKeyCode current, VirtualKeyCode expected)
-    {
-        bool flag = current == expected;
-        if (!flag)
+    protected virtual bool CompareVirtualKeyCode(VirtualKeyCode current, VirtualKeyCode expected) =>
+        current == expected
+        || expected switch
         {
-            bool flag2;
-            switch (expected)
-            {
-            case VirtualKeyCode.Shift:
-            {
-                bool flag3 = (uint)(current - 160) <= 1U;
-                flag2 = flag3;
-                break;
-            }
-
-            case VirtualKeyCode.Control:
-            {
-                bool flag3 = (uint)(current - 162) <= 1U;
-                flag2 = flag3;
-                break;
-            }
-
-            case VirtualKeyCode.Menu:
-            {
-                bool flag3 = (uint)(current - 164) <= 1U;
-                flag2 = flag3;
-                break;
-            }
-
-            default:
-            {
-                flag2 = false;
-                break;
-            }
-            }
-            flag = flag2;
-        }
-
-        return flag;
-    }
+            VirtualKeyCode.Shift => current is VirtualKeyCode.LeftShift or VirtualKeyCode.RightShift,
+            VirtualKeyCode.Control => current is VirtualKeyCode.LeftControl or VirtualKeyCode.RightControl,
+            VirtualKeyCode.Menu => current is VirtualKeyCode.LeftMenu or VirtualKeyCode.RightMenu,
+            _ => false,
+        };
 
     /// <summary>Returns the distinct keys from the supplied key combination.</summary>
     /// <param name="keyCombination">The key combination to inspect.</param>
@@ -212,25 +170,11 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     /// <param name="keyMatched">A value indicating whether the event key is part of this combination.</param>
     /// <param name="wasAllKeysDown">A value indicating whether all combination keys were down before this event.</param>
     /// <returns><see langword="true" /> when this event handles the combination.</returns>
-    private bool IsCombinationHandled(KeyboardHookEventArgs keyboardHookEventArgs, bool keyMatched, bool wasAllKeysDown)
-    {
-        if (OtherPressedKeys.Count == 0)
-        {
-            if (!TriggerOnKeyUp)
-            {
-                if (keyboardHookEventArgs.IsKeyDown)
-                {
-                    return _pressedCombinationKeyCount == TriggerCombination.Length;
-                }
-
-                return false;
-            }
-
-            return !keyboardHookEventArgs.IsKeyDown && keyMatched && wasAllKeysDown;
-        }
-
-        return false;
-    }
+    private bool IsCombinationHandled(KeyboardHookEventArgs keyboardHookEventArgs, bool keyMatched, bool wasAllKeysDown) =>
+        OtherPressedKeys.Count == 0
+        && (TriggerOnKeyUp
+            ? !keyboardHookEventArgs.IsKeyDown && keyMatched && wasAllKeysDown
+            : keyboardHookEventArgs.IsKeyDown && _pressedCombinationKeyCount == TriggerCombination.Length);
 
     /// <summary>Updates the count of configured keys currently pressed.</summary>
     /// <param name="keyIndex">The configured key index.</param>
