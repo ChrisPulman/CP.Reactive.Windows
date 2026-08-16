@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+# Windows command scripts are executed by cmd.exe.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets must never undergo line-ending conversion.
+*.ico binary
+*.png binary
+*.snk binary
+*.p12 binary
+*.pfx binary

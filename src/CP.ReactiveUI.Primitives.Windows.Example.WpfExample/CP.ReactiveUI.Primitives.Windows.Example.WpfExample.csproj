@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <OutputType>WinExe</OutputType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="delete.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Icons\delete.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="log4net" />
+    <Using Include="ReactiveUI.Primitives" />
+  </ItemGroup>
+</Project>

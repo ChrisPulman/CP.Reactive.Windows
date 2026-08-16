@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <OutputType>WinExe</OutputType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <UseWindowsForms>true</UseWindowsForms>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Integrations\CP.ReactiveUI.Primitives.Windows.Integrations.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" />
+    <PackageReference Include="System.Resources.Extensions" Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="log4net" />
+    <Using Include="ReactiveUI.Primitives" />
+  </ItemGroup>
+</Project>

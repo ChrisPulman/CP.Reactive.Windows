@@ -1,0 +1,43 @@
+{
+  "$schema": "https://aka.ms/dotnet-mtp-json-schema",
+  "diagnostic": {
+    "enabled": false
+  },
+  "platform": {
+    "execution": {
+      "parallel": false
+    }
+  },
+  "codeCoverage": {
+    "Configuration": {
+      "Format": "cobertura",
+      "IncludeTestAssembly": false,
+      "CodeCoverage": {
+        "SkipAutoProperties": false,
+        "ModulePaths": {
+          "Include": [
+            ".*CP\\.ReactiveUI\\.Primitives\\.Windows.*\\.dll$"
+          ],
+          "Exclude": [
+            ".*\\.Tests\\..*",
+            ".*\\.Tests\\.Benchmarks\\..*",
+            ".*\\.Example\\..*"
+          ]
+        },
+        "Sources": {
+          "Exclude": [
+            ".*\\\\obj\\\\.*",
+            "(?i).*\\.g(?:\\.i)?\\.cs$",
+            "(?i).*\\.designer\\.cs$"
+          ]
+        },
+        "Attributes": {
+          "Exclude": [
+            "^System\\.Runtime\\.CompilerServices\\.CompilerGeneratedAttribute$",
+            "^System\\.CodeDom\\.Compiler\\.GeneratedCodeAttribute$"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+<Project>
+  <PropertyGroup>
+    <WindowsLegacyTargetFrameworks>net462;net472;net48;net481</WindowsLegacyTargetFrameworks>
+    <WindowsModernTargetFrameworks>net10.0-windows</WindowsModernTargetFrameworks>
+    <WindowsPreviewTargetFrameworks>net11.0-windows</WindowsPreviewTargetFrameworks>
+    <WindowsPackageTargetFrameworks>$(WindowsLegacyTargetFrameworks);$(WindowsModernTargetFrameworks)</WindowsPackageTargetFrameworks>
+    <WindowsPackageTargetFrameworks Condition="'$(EnableDotNet11PreviewTargetFrameworks)' == 'true'">$(WindowsPackageTargetFrameworks);$(WindowsPreviewTargetFrameworks)</WindowsPackageTargetFrameworks>
+
+    <Authors>Chris Pulman</Authors>
+    <Copyright>Copyright © Chris Pulman 2026</Copyright>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/chrispulman/CP.Reactive.Windows</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/chrispulman/CP.Reactive.Windows</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <RunAnalyzers>true</RunAnalyzers>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    <DebugType>embedded</DebugType>
+    <Deterministic>true</Deterministic>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**\.codex-diagnostics\**;**/.codex-diagnostics/**;**\.codex-recovery\**;**/.codex-recovery/**;**\.codex-tools\**;**/.codex-tools/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Tests'">
+    <IsTestProject>true</IsTestProject>
+    <OutputType>Exe</OutputType>
+    <TUnitImplicitUsings>true</TUnitImplicitUsings>
+    <TUnitAssertionsImplicitUsings>true</TUnitAssertionsImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net462' Or '$(TargetFramework)' == 'net472' Or '$(TargetFramework)' == 'net48' Or '$(TargetFramework)' == 'net481'">
+    <DefineConstants>$(DefineConstants);NETFRAMEWORK</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' != '' And $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net11.0'))">
+    <Features>$(Features);runtime-async=on</Features>
+  </PropertyGroup>
+
+  <!-- MinVer (versioning) — replaces Nerdbank.GitVersioning. Floor at 0.9,
+       so untagged builds produce 0.9.x-alpha.0.<height> until a v0.9.x
+       (or later) tag is reachable. -->
+  <PropertyGroup>
+    <MinVerAutoIncrement>minor</MinVerAutoIncrement>
+    <MinVerDefaultPreReleaseIdentifiers>alpha.0</MinVerDefaultPreReleaseIdentifiers>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerMinimumMajorMinor>0.9</MinVerMinimumMajorMinor>
+  </PropertyGroup>
+
+  <!-- Alias Lock to the dedicated System.Threading.Lock on .NET 9+ (faster EnterScope fast path),
+     and to a plain object elsewhere (the lock statement falls back to Monitor). -->
+  <ItemGroup Condition="'$(TargetFramework)' != '' And $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
+    <Using Include="System.Threading.Lock" Alias="Lock" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != '' And !$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net9.0'))">
+    <Using Include="System.Object" Alias="Lock" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Core'">
+    <Compile Include="$(MSBuildThisFileDirectory)src\PolyFills\*.cs" Link="PolyFills\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="CP.ReactiveUI.Primitives.Windows.PolyFills" />
+    <Using Include="System.Reflection.Assembly" Alias="ReflectionAssembly" />
+    <Using Include="System.ComponentModel.Win32Exception" Alias="NativeWin32Exception" />
+    <PackageReference Include="MinVer" PrivateAssets="all" />
+    <PackageReference Include="PerformanceSharp.Analyzers" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Include="SecuritySharp.Analyzers" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <PackageReference Include="StyleSharp.Analyzers" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <InternalsVisibleTo Include="CP.ReactiveUI.Primitives.Windows.Tests" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework' And '$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Core'">
+    <Compile Include="$(MSBuildThisFileDirectory)src\PolyFills\NetFramework\*.cs"
+             Exclude="$(MSBuildThisFileDirectory)src\PolyFills\NetFramework\ModuleInitializerAttribute.cs"
+             LinkBase="PolyFills\NetFramework" />
+    <Using Include="System.Security.Permissions" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'CP.ReactiveUI.Primitives.Windows.Tests'">
+    <Compile Include="$(MSBuildThisFileDirectory)src\PolyFills\NetFramework\ModuleInitializerAttribute.cs"
+             Link="PolyFills\NetFramework\ModuleInitializerAttribute.cs"
+             Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="TUnit" />
+    <None Include="$(MSBuildThisFileDirectory)testconfig.json">
+      <Link>$(AssemblyName).testconfig.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup Condition="!$(MSBuildProjectName.Contains('Tests')) And !$(MSBuildProjectName.Contains('Example'))">
+    <None Include="$(MSBuildThisFileDirectory)src\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

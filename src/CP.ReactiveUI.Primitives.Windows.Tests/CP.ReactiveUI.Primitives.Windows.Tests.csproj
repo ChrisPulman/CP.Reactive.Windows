@@ -1,0 +1,175 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(ReactiveTestShim)' == 'true'">
+    <DefineConstants>$(DefineConstants);REACTIVE_TEST_SHIM</DefineConstants>
+    <IntermediateOutputPath>obj\$(Configuration)\$(TargetFramework)\reactive-shim\</IntermediateOutputPath>
+    <OutputPath>bin\$(Configuration)\$(TargetFramework)\reactive-shim\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Integrations\CP.ReactiveUI.Primitives.Windows.Integrations.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Reactive\CP.ReactiveUI.Primitives.Windows.Reactive.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="log4net" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ReactiveTestShim)' == 'true'">
+    <Compile Remove="DuplicateNativeCapabilityTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Drawing" />
+    <Using Include="System.IO" />
+    <Using Include="System.Globalization" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Text" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
+    <Using Include="log4net" />
+    <Using Include="Microsoft.Win32" />
+    <Using Include="ReactiveUI.Primitives.Reactive" />
+    <Using Include="ReactiveUI.Primitives.Disposables" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Apps" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Clipboard.Internals" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices.Structs" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Composition.Structs" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.Interop" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums.IconMetricSize" Alias="IconMetricSize" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Enums.DpiAwarenessContext" Alias="DpiAwarenessContext" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Forms" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi.Wpf" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Mouse" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Input.Structs" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Lifecycle" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Lifecycle.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Media" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Media.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Enumerations" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Messaging.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Power" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Power.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Software" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows.Enums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Apps" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Structs" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Composition.Structs" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Structs" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Enums.IconMetricSize" Alias="IconMetricSize" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Enums.DpiAwarenessContext" Alias="DpiAwarenessContext" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Forms" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Wpf" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Mouse" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Lifecycle" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Lifecycle.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Media" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Media.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Software" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows.Enums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Interop.Com" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Shell" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Shell.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Shell.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Security" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Security.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Security.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Extensions" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.TypeConverters" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface.TypeConverters" />
+    <Using Include="ReactiveUI.Primitives.Signals" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi" Alias="Gdi" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.Enums" Alias="GdiEnums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs" Alias="GdiStructs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles.SafeIconHandle" Alias="SafeIconHandle" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons" Alias="Icons" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Enums" Alias="IconEnums" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfo" Alias="IconInfo" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.Structs.IconInfoEx" Alias="IconInfoEx" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Icons.CapturedCursor" Alias="CapturedCursor" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons" Alias="Icons" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Enums" Alias="IconEnums" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Structs.IconInfo" Alias="IconInfo" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Structs.IconInfoEx" Alias="IconInfoEx" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.CapturedCursor" Alias="CapturedCursor" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Shell.Dialogs.FileDialog" Alias="DialogFileDialog" Condition="'$(ReactiveTestShim)' != 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.FileDialog" Alias="DialogFileDialog" Condition="'$(ReactiveTestShim)' == 'true'" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.UserInterface" Alias="User32" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Devices.DeviceNotification" Alias="LeanDeviceNotification" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Power.WaitableTimer" Alias="LeanWaitableTimer" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Windows.WinEventHook" Alias="LeanWinEventHook" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.DeviceNotification" Alias="ReactiveDeviceNotification" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power.WaitableTimer" Alias="ReactiveWaitableTimer" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows.WinEventHook" Alias="ReactiveWinEventHook" />
+    <Using Include="System.Drawing.Point" Alias="Point" />
+    <Using Include="System.Windows.Forms.Application" Alias="FormsApplication" />
+    <Using Include="System.Windows.Forms.Button" Alias="Button" />
+    <Using Include="System.Windows.Forms.Form" Alias="Form" />
+    <Using Include="System.Windows.Forms.Message" Alias="FormsMessage" />
+    <Using Include="System.Windows.Interop" />
+    <Using Include="TUnit.Core.Executors" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Tests.CoverageTestValues" Static="true" />
+  </ItemGroup>
+</Project>

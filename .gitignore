@@ -396,3 +396,19 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/.codex-diagnostics
+**/.codex-diagnostics/
+/.codex-recovery
+**/.codex-recovery/
+/.codex-tools
+**/.codex-tools/
+/.codex-temp/
+/.codex-verify/
+/reactive-diagnostics/
+/.nuke/temp/
+/output/
+
+# Local build diagnostics
+/build-errors*.txt
+/lean-tests.json
+/reactive-tests.json

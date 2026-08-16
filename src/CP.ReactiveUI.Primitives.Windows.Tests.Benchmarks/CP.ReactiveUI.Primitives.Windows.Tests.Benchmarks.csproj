@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="BenchmarkDotNet.Attributes" />
+    <Using Include="ReactiveUI.Primitives" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Desktop.Display" />
+  </ItemGroup>
+</Project>

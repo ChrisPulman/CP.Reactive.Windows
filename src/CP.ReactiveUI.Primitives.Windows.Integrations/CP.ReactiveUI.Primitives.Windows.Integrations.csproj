@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Optional Windows integrations for Citrix WFAPI and the legacy WinForms WebBrowser control.</Description>
+    <IsPackable>true</IsPackable>
+    <PackageTags>windows citrix webbrowser integration</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <PackageReference Include="log4net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.IO" />
+    <Using Include="System.Net.Sockets" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Security" />
+    <Using Include="System.Windows.Forms" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Enums" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Structs" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Interop.Com" />
+    <Using Include="CP.ReactiveUI.Primitives.Windows.Native.Structs" />
+    <Using Include="log4net" />
+    <Using Include="Microsoft.Win32" />
+  </ItemGroup>
+</Project>

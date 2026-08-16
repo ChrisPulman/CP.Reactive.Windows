@@ -1,0 +1,89 @@
+name: BuildOnly
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  windows-latest:
+    name: windows-latest
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6.0.0
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+            11.0.x
+          dotnet-quality: 'preview'
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v3
+        with:
+          vs-prerelease: true
+
+      - name: 'Cache: .nuke/temp, ~/.nuget/packages'
+        uses: actions/cache@v6
+        with:
+          path: |
+            .nuke/temp
+            ~/.nuget/packages
+          key: ${{ runner.os }}-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
+
+      - name: 'Run: Compile'
+        run: ./build.cmd Compile
+
+      - name: Build Reactive shared-source TUnit host
+        shell: pwsh
+        run: |
+          dotnet build .\src\CP.ReactiveUI.Primitives.Windows.Tests\CP.ReactiveUI.Primitives.Windows.Tests.csproj `
+            --configuration Release `
+            --framework net10.0-windows `
+            -p:ReactiveTestShim=true `
+            -p:EnableDotNet11PreviewTargetFrameworks=true
+
+      - name: Tests + Coverage (.NET 10, MTP)
+        shell: pwsh
+        run: |
+          dotnet .\src\CP.ReactiveUI.Primitives.Windows.Tests\bin\Release\net10.0-windows\CP.ReactiveUI.Primitives.Windows.Tests.dll `
+            --minimum-expected-tests 1 `
+            --config-file .\testconfig.json `
+            --results-directory .\src\TestResults\net10 `
+            --coverage `
+            --coverage-output CP.ReactiveUI.Primitives.Windows.Tests.cobertura.xml `
+            --coverage-output-format cobertura
+
+      - name: Reactive shared-source Tests + Coverage (.NET 10, MTP)
+        shell: pwsh
+        run: |
+          dotnet .\src\CP.ReactiveUI.Primitives.Windows.Tests\bin\Release\net10.0-windows\reactive-shim\net10.0-windows\CP.ReactiveUI.Primitives.Windows.Tests.dll `
+            --minimum-expected-tests 1 `
+            --config-file .\testconfig.json `
+            --results-directory .\src\TestResults\reactive-net10 `
+            --coverage `
+            --coverage-output CP.ReactiveUI.Primitives.Windows.Reactive.Tests.cobertura.xml `
+            --coverage-output-format cobertura
+
+      - name: Tests (.NET 11 Preview, MTP)
+        shell: pwsh
+        run: |
+          dotnet .\src\CP.ReactiveUI.Primitives.Windows.Tests\bin\Release\net11.0-windows\CP.ReactiveUI.Primitives.Windows.Tests.dll `
+            --minimum-expected-tests 1 `
+            --config-file .\testconfig.json `
+            --results-directory .\src\TestResults\net11
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        with:
+          name: tmp-coverage
+          path: |
+            ./src/TestResults/**/*.cobertura.xml
+          if-no-files-found: warn
+          retention-days: 3
