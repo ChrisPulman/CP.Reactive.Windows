@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -66,8 +63,8 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
     /// <returns><see langword="true" /> when the sequence was handled.</returns>
     public bool Handle(KeyboardHookEventArgs keyboardHookEventArgs)
     {
-        bool currentHandled = CurrentHandler.Handle(keyboardHookEventArgs);
-        bool currentNotPressed = !CurrentHandler.HasKeysPressed;
+        var currentHandled = CurrentHandler.Handle(keyboardHookEventArgs);
+        var currentNotPressed = !CurrentHandler.HasKeysPressed;
         if (currentHandled)
         {
             _isHandled[_offset] = true;
@@ -82,7 +79,7 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
             return false;
         }
 
-        bool allHandled = Array.TrueForAll(_isHandled, static (b) => b);
+        var allHandled = Array.TrueForAll(_isHandled, static (b) => b);
         AdvanceOrReset(currentNotPressed);
         return currentHandled && allHandled;
     }
@@ -93,7 +90,7 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
     private static IKeyboardHookEventHandler[] CopyHandlers(IEnumerable<IKeyboardHookEventHandler> handlers)
     {
         List<IKeyboardHookEventHandler> copy = new();
-        foreach (IKeyboardHookEventHandler handler in handlers)
+        foreach (var handler in handlers)
         {
             copy.Add(handler);
         }
@@ -106,7 +103,7 @@ public class KeySequenceHandler : IKeyboardHookEventHandler
     {
         _expireAfter = null;
         _offset = 0;
-        for (int i = 0; i < _isHandled.Length; i = checked(i + 1))
+        for (var i = 0; i < _isHandled.Length; i = checked(i + 1))
         {
             _isHandled[i] = false;
         }

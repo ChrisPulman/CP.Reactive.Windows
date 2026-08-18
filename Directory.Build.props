@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <WindowsLegacyTargetFrameworks>net462;net472;net48;net481</WindowsLegacyTargetFrameworks>
-    <WindowsModernTargetFrameworks>net10.0-windows</WindowsModernTargetFrameworks>
+    <WindowsModernTargetFrameworks>net8.0-windows;net9.0-windows;net10.0-windows</WindowsModernTargetFrameworks>
     <WindowsPreviewTargetFrameworks>net11.0-windows</WindowsPreviewTargetFrameworks>
     <WindowsPackageTargetFrameworks>$(WindowsLegacyTargetFrameworks);$(WindowsModernTargetFrameworks)</WindowsPackageTargetFrameworks>
     <WindowsPackageTargetFrameworks Condition="'$(EnableDotNet11PreviewTargetFrameworks)' == 'true'">$(WindowsPackageTargetFrameworks);$(WindowsPreviewTargetFrameworks)</WindowsPackageTargetFrameworks>

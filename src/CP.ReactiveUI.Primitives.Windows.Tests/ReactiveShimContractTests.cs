@@ -13,6 +13,12 @@ public class ReactiveShimContractTests
     /// <summary>The namespace prefix emitted by the lean build.</summary>
     private const string LeanNamespacePrefix = "CP.ReactiveUI.Primitives.Windows.";
 
+    /// <summary>The Unit type emitted by the System.Reactive build.</summary>
+    private const string ReactiveUnitTypeName = "System.Reactive.Unit";
+
+    /// <summary>The void signal type emitted by the lean build.</summary>
+    private const string LeanVoidTypeName = "ReactiveUI.Primitives.RxVoid";
+
     /// <summary>Verifies representative shared types are emitted into distinct package assemblies and namespaces.</summary>
     /// <returns>A task that completes when the assertions have run.</returns>
     [Test]
@@ -149,5 +155,8 @@ public class ReactiveShimContractTests
     /// <summary>Normalizes the namespace difference introduced by <c>REACTIVE_SHIM</c>.</summary>
     /// <param name="value">The signature to normalize.</param>
     /// <returns>The normalized signature.</returns>
-    private static string Normalize(string value) => value.Replace(ReactiveNamespacePrefix, LeanNamespacePrefix);
+    private static string Normalize(string value) =>
+        value
+            .Replace(ReactiveNamespacePrefix, LeanNamespacePrefix)
+            .Replace(ReactiveUnitTypeName, LeanVoidTypeName);
 }

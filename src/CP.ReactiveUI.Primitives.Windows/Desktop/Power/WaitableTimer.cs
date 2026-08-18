@@ -2,13 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using Microsoft.Win32.SafeHandles;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power;
 #else
@@ -78,7 +71,7 @@ public sealed class WaitableTimer : IDisposable
     /// </param>
     public WaitableTimer(string name, bool manualReset)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNullOrEmpty(name);
+        Throw.IfNullOrEmpty(name);
         _handle = SystemStateApi.CreateWaitableTimer(IntPtr.Zero, manualReset, name);
     }
 
@@ -104,7 +97,7 @@ public sealed class WaitableTimer : IDisposable
     public bool SetOnce(TimeSpan delay, bool wakeSystem)
     {
         ThrowIfDisposed();
-        long dueTime = ToRelativeFileTime(delay);
+        var dueTime = ToRelativeFileTime(delay);
         return SystemStateApi.SetWaitableTimer(_handle, ref dueTime, 0, wakeSystem);
     }
 
@@ -123,7 +116,7 @@ public sealed class WaitableTimer : IDisposable
     public bool SetAt(DateTimeOffset dueTime, bool wakeSystem)
     {
         ThrowIfDisposed();
-        long fileTime = dueTime.ToFileTime();
+        var fileTime = dueTime.ToFileTime();
         return SystemStateApi.SetWaitableTimer(_handle, ref fileTime, 0, wakeSystem);
     }
 
@@ -144,7 +137,7 @@ public sealed class WaitableTimer : IDisposable
     public bool SetPeriodic(TimeSpan initialDelay, int period, bool wakeSystem)
     {
         ThrowIfDisposed();
-        long dueTime = ToRelativeFileTime(initialDelay);
+        var dueTime = ToRelativeFileTime(initialDelay);
         return SystemStateApi.SetWaitableTimer(_handle, ref dueTime, period, wakeSystem);
     }
 
@@ -253,8 +246,8 @@ public sealed class WaitableTimer : IDisposable
     /// <returns>A scope that restores the previous wait operation.</returns>
     internal static IDisposable OverrideWaitForSingleObjectForTesting(Func<SafeWaitHandle, uint, uint> waitForSingleObject)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(waitForSingleObject);
-        Func<SafeWaitHandle, uint, uint> waitForSingleObject2 = _waitForSingleObject;
+        Throw.IfNull(waitForSingleObject);
+        var waitForSingleObject2 = _waitForSingleObject;
         _waitForSingleObject = waitForSingleObject;
         return Scope.Create(waitForSingleObject2, static previous =>
         {
@@ -267,7 +260,7 @@ public sealed class WaitableTimer : IDisposable
     /// <returns>A scope that restores the previous callback.</returns>
     internal static IDisposable OverrideSignalObservationCancellationForTesting(Action onSignalObservationCancelled)
     {
-        Action previous = _onSignalObservationCancelled;
+        var previous = _onSignalObservationCancelled;
         _onSignalObservationCancelled = onSignalObservationCancelled;
         return Scope.Create(previous, static callback =>
         {
@@ -298,7 +291,7 @@ public sealed class WaitableTimer : IDisposable
             return uint.MaxValue;
         }
 
-        double totalMilliseconds = timeout.TotalMilliseconds;
+        var totalMilliseconds = timeout.TotalMilliseconds;
         if (totalMilliseconds < 0.0 || totalMilliseconds > MaximumUInt32Milliseconds)
         {
             throw new ArgumentOutOfRangeException(nameof(timeout), timeout, "The timeout must be infinite or between zero and UInt32.MaxValue milliseconds.");
@@ -308,7 +301,7 @@ public sealed class WaitableTimer : IDisposable
     }
 
     /// <summary>Throws when this instance has been disposed.</summary>
-    private void ThrowIfDisposed() => CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_disposed, this);
+    private void ThrowIfDisposed() => Throw.IfDisposed(_disposed, this);
 
     /// <summary>Waits for the timer with cancellation support.</summary>
     /// <param name="timeout">The timeout.</param>
@@ -316,21 +309,21 @@ public sealed class WaitableTimer : IDisposable
     /// <returns><see langword="true" /> when signaled; otherwise <see langword="false" />.</returns>
     private bool WaitCore(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        uint remainingMilliseconds = ToMilliseconds(timeout);
+        var remainingMilliseconds = ToMilliseconds(timeout);
         while (true)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            uint waitMilliseconds = remainingMilliseconds == InfiniteTimeout
+            var waitMilliseconds = remainingMilliseconds == InfiniteTimeout
                 ? PollMilliseconds
                 : Math.Min(remainingMilliseconds, PollMilliseconds);
-            uint waitResult = _waitForSingleObject(_handle, waitMilliseconds);
+            var waitResult = _waitForSingleObject(_handle, waitMilliseconds);
             switch (waitResult)
             {
                 case WaitObject0:
                     return true;
                 case WaitTimeout:
                     {
-                        bool hasFiniteTimeout = remainingMilliseconds != InfiniteTimeout;
+                        var hasFiniteTimeout = remainingMilliseconds != InfiniteTimeout;
                         if (hasFiniteTimeout)
                         {
                             if (remainingMilliseconds <= waitMilliseconds)

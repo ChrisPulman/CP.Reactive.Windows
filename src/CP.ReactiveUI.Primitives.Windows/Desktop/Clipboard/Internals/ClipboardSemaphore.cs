@@ -2,13 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals;
 #else
@@ -58,10 +51,10 @@ internal sealed partial class ClipboardSemaphore : IDisposable
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(Func<IntPtr, bool> openClipboard, Func<bool> closeClipboard, Func<int, TimeSpan, IntPtr?> tryAcquireMessageWindow)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(openClipboard);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(closeClipboard);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(tryAcquireMessageWindow);
-        ClipboardSemaphoreOperations operations = _operations;
+        Throw.IfNull(openClipboard);
+        Throw.IfNull(closeClipboard);
+        Throw.IfNull(tryAcquireMessageWindow);
+        var operations = _operations;
         _operations = new(openClipboard, closeClipboard, tryAcquireMessageWindow);
         return Scope.Create(operations, static previous => _operations = previous);
     }
@@ -72,9 +65,9 @@ internal sealed partial class ClipboardSemaphore : IDisposable
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideSharedMessageWindowOperationsForTesting(Func<IDisposable> keepAlive, Func<IntPtr> getNativeHandle)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(keepAlive);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getNativeHandle);
-        SharedMessageWindowOperations sharedMessageWindowOperations = _sharedMessageWindowOperations;
+        Throw.IfNull(keepAlive);
+        Throw.IfNull(getNativeHandle);
+        var sharedMessageWindowOperations = _sharedMessageWindowOperations;
         _sharedMessageWindowOperations = new(keepAlive, getNativeHandle);
         return Scope.Create(sharedMessageWindowOperations, static previous => _sharedMessageWindowOperations = previous);
     }
@@ -84,7 +77,7 @@ internal sealed partial class ClipboardSemaphore : IDisposable
     /// <returns>A scope that restores the previous factory and deferred lifetime.</returns>
     internal static IDisposable OverrideMessageWindowLifetimeFactoryForTesting(Func<IDisposable> messageWindowLifetimeFactory)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messageWindowLifetimeFactory);
+        Throw.IfNull(messageWindowLifetimeFactory);
         (Func<IDisposable> Factory, Lazy<IDisposable> Lifetime) previous = (_messageWindowLifetimeFactory, _messageWindowLifetime);
         _messageWindowLifetimeFactory = messageWindowLifetimeFactory;
         _messageWindowLifetime = CreateMessageWindowLifetime();
@@ -105,7 +98,7 @@ internal sealed partial class ClipboardSemaphore : IDisposable
     /// <returns>A scope that restores the previous operations without invoking a native entry point.</returns>
     internal static IDisposable UseDefaultOperationsForTesting()
     {
-        ClipboardSemaphoreOperations operations = _operations;
+        var operations = _operations;
         _operations = CreateDefaultOperations();
         return Scope.Create(operations, static previous => _operations = previous);
     }
@@ -114,7 +107,7 @@ internal sealed partial class ClipboardSemaphore : IDisposable
     /// <returns>A scope that restores the previous operations without accessing the shared window.</returns>
     internal static IDisposable UseDefaultSharedMessageWindowOperationsForTesting()
     {
-        SharedMessageWindowOperations operations = _sharedMessageWindowOperations;
+        var operations = _sharedMessageWindowOperations;
         _sharedMessageWindowOperations = CreateDefaultSharedMessageWindowOperations();
         return Scope.Create(operations, static previous => _sharedMessageWindowOperations = previous);
     }
@@ -167,7 +160,7 @@ internal sealed partial class ClipboardSemaphore : IDisposable
             return new ClipboardAccessToken { CanAccess = false, IsOpenTimeout = true };
         }
 
-        bool isOpened = false;
+        var isOpened = false;
         do
         {
             if (OpenClipboard(windowHandle))
@@ -306,10 +299,10 @@ internal sealed partial class ClipboardSemaphore : IDisposable
         _ = _sharedMessageWindowOperations.KeepAlive();
         checked
         {
-            int remainingHandleAttempts = retries + 1;
+            var remainingHandleAttempts = retries + 1;
             do
             {
-                IntPtr windowHandle = _sharedMessageWindowOperations.GetNativeHandle();
+                var windowHandle = _sharedMessageWindowOperations.GetNativeHandle();
                 if (windowHandle != IntPtr.Zero)
                 {
                     return windowHandle;
@@ -393,7 +386,7 @@ internal sealed partial class ClipboardSemaphore : IDisposable
         /// <returns><see langword="true" /> when a handle was acquired.</returns>
         public bool TryAcquireMessageWindow(int retries, TimeSpan retryInterval, out IntPtr windowHandle)
         {
-            IntPtr? acquiredHandle = tryAcquireMessageWindow(retries, retryInterval);
+            var acquiredHandle = tryAcquireMessageWindow(retries, retryInterval);
             windowHandle = acquiredHandle.GetValueOrDefault();
             return acquiredHandle.HasValue;
         }

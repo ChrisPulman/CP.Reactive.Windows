@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using CP.ReactiveUI.Primitives.Windows.Native.Extensions;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display;
 #else
@@ -40,7 +34,7 @@ public static class DisplayTopology
     public static NativeRect GetBounds(NativePoint point)
     {
         DisplayInfo candidate = null;
-        foreach (DisplayInfo display in GetSnapshot())
+        foreach (var display in GetSnapshot())
         {
             if (display.IsPrimary && candidate is null)
             {
@@ -66,15 +60,15 @@ public static class DisplayTopology
             return NativeRect.Empty;
         }
 
-        int left = displays[0].Bounds.Left;
-        int top = displays[0].Bounds.Top;
-        int right = displays[0].Bounds.Right;
-        int bottom = displays[0].Bounds.Bottom;
+        var left = displays[0].Bounds.Left;
+        var top = displays[0].Bounds.Top;
+        var right = displays[0].Bounds.Right;
+        var bottom = displays[0].Bounds.Bottom;
         checked
         {
-            for (int index = 1; index < displays.Count; index++)
+            for (var index = 1; index < displays.Count; index++)
             {
-                NativeRect bounds = displays[index].Bounds;
+                var bounds = displays[index].Bounds;
                 left = Math.Min(left, bounds.Left);
                 top = Math.Min(top, bounds.Top);
                 right = Math.Max(right, bounds.Right);
@@ -104,10 +98,10 @@ public static class DisplayTopology
         Func<IObservable<WindowMessage>> windowMessages,
         Func<IReadOnlyList<DisplayInfo>> snapshotProvider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(windowMessages);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(snapshotProvider);
-        Func<IObservable<WindowMessage>> previousWindowMessages = _windowMessages;
-        Func<IReadOnlyList<DisplayInfo>> previousSnapshotProvider = _snapshotProvider;
+        Throw.IfNull(windowMessages);
+        Throw.IfNull(snapshotProvider);
+        var previousWindowMessages = _windowMessages;
+        var previousSnapshotProvider = _snapshotProvider;
         _windowMessages = windowMessages;
         _snapshotProvider = snapshotProvider;
         return Scope.Create(

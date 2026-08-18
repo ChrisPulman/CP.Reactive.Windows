@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
 #else
@@ -116,8 +112,8 @@ public readonly record struct MouseInput
     public static MouseInput MoveMouseWheel(int wheelDelta, NativePoint? location, uint? timestamp)
     {
         location = RemapLocation(location);
-        MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location?.X ?? 0, location?.Y ?? 0, unchecked((uint)wheelDelta), mouseEventFlags | MouseEventFlags.Wheel, messageTime);
     }
 
@@ -133,7 +129,7 @@ public readonly record struct MouseInput
     public static MouseInput MouseMove(NativePoint location, uint? timestamp)
     {
         location = RemapLocation(location);
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location.X, location.Y, 0U, MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute, messageTime);
     }
 
@@ -156,9 +152,9 @@ public readonly record struct MouseInput
     public static MouseInput MouseDown(MouseButtons mouseButtons, NativePoint? location, uint? timestamp)
     {
         location = RemapLocation(location);
-        MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
-        MouseButtonInputData buttonData = GetButtonDownData(mouseButtons);
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
+        var buttonData = GetButtonDownData(mouseButtons);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location?.X ?? 0, location?.Y ?? 0, buttonData.MouseData, mouseEventFlags | buttonData.Flags, messageTime);
     }
 
@@ -181,9 +177,9 @@ public readonly record struct MouseInput
     public static MouseInput MouseUp(MouseButtons mouseButtons, NativePoint? location, uint? timestamp)
     {
         location = RemapLocation(location);
-        MouseEventFlags mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
-        MouseButtonInputData buttonData = GetButtonUpData(mouseButtons);
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var mouseEventFlags = (location.HasValue ? (MouseEventFlags.Move | MouseEventFlags.Virtualdesk | MouseEventFlags.Absolute) : MouseEventFlags.None);
+        var buttonData = GetButtonUpData(mouseButtons);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(location?.X ?? 0, location?.Y ?? 0, buttonData.MouseData, mouseEventFlags | buttonData.Flags, messageTime);
     }
 
@@ -192,8 +188,8 @@ public readonly record struct MouseInput
     /// <returns>A lifetime that restores the previous operation.</returns>
     internal static IDisposable OverrideScreenBoundsForTesting(Func<NativeRect> getScreenBounds)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getScreenBounds);
-        Func<NativeRect> previousGetScreenBounds = _getScreenBounds;
+        Throw.IfNull(getScreenBounds);
+        var previousGetScreenBounds = _getScreenBounds;
         _getScreenBounds = getScreenBounds;
         return new ActionDisposable(() => _getScreenBounds = previousGetScreenBounds);
     }
@@ -203,7 +199,7 @@ public readonly record struct MouseInput
     /// <returns>The remapped absolute mouse coordinate.</returns>
     private static NativePoint RemapLocation(NativePoint location)
     {
-        NativeRect bounds = _getScreenBounds();
+        var bounds = _getScreenBounds();
         return bounds.Width > 0 && bounds.Height > 0
             ? new(
                 NormalizeCoordinate((long)location.X - bounds.Left, bounds.Width),
@@ -222,7 +218,7 @@ public readonly record struct MouseInput
     /// <returns>The clamped absolute SendInput coordinate.</returns>
     private static int NormalizeCoordinate(long coordinate, int dimension)
     {
-        long normalizedCoordinate = (coordinate * AbsoluteCoordinateMaximum) / dimension;
+        var normalizedCoordinate = (coordinate * AbsoluteCoordinateMaximum) / dimension;
         if (normalizedCoordinate <= 0L)
         {
             return 0;
@@ -236,8 +232,8 @@ public readonly record struct MouseInput
     /// <returns>The native button data.</returns>
     private static MouseButtonInputData GetButtonDownData(MouseButtons mouseButtons)
     {
-        MouseEventFlags mouseEventFlags = MouseEventFlags.None;
-        uint mouseData = 0U;
+        var mouseEventFlags = MouseEventFlags.None;
+        var mouseData = 0U;
         AddButtonData(mouseButtons, MouseButtons.Left, MouseEventFlags.LeftDown, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Right, MouseEventFlags.RightDown, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Middle, MouseEventFlags.MiddleDown, 0U, ref mouseEventFlags, ref mouseData);
@@ -251,8 +247,8 @@ public readonly record struct MouseInput
     /// <returns>The native button data.</returns>
     private static MouseButtonInputData GetButtonUpData(MouseButtons mouseButtons)
     {
-        MouseEventFlags mouseEventFlags = MouseEventFlags.None;
-        uint mouseData = 0U;
+        var mouseEventFlags = MouseEventFlags.None;
+        var mouseData = 0U;
         AddButtonData(mouseButtons, MouseButtons.Left, MouseEventFlags.LeftUp, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Right, MouseEventFlags.RightUp, 0U, ref mouseEventFlags, ref mouseData);
         AddButtonData(mouseButtons, MouseButtons.Middle, MouseEventFlags.MiddleUp, 0U, ref mouseEventFlags, ref mouseData);

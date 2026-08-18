@@ -73,8 +73,8 @@ public static partial class InteropWindowExtensions
         public IInteropWindow Fill(InteropWindowRetrieveSettings retrieveSettings)
         {
             ValidateRetrieveSettings(retrieveSettings);
-            bool forceUpdate = HasSetting(retrieveSettings, InteropWindowRetrieveSettings.ForceUpdate);
-            bool autoCorrect = HasSetting(retrieveSettings, InteropWindowRetrieveSettings.AutoCorrectValues);
+            var forceUpdate = HasSetting(retrieveSettings, InteropWindowRetrieveSettings.ForceUpdate);
+            var autoCorrect = HasSetting(retrieveSettings, InteropWindowRetrieveSettings.AutoCorrectValues);
             FillCachedState(interopWindow, retrieveSettings, forceUpdate, autoCorrect);
             FillRelationshipState(interopWindow, retrieveSettings, forceUpdate);
             return interopWindow;
@@ -124,7 +124,7 @@ public static partial class InteropWindowExtensions
             interopWindow.HasZOrderedChildren = false;
             List<IInteropWindow> children = [];
             interopWindow.Children = children;
-            foreach (IInteropWindow child in WindowsEnumerator.EnumerateWindows(interopWindow))
+            foreach (var child in WindowsEnumerator.EnumerateWindows(interopWindow))
             {
                 child.ParentWindow = interopWindow;
                 children.Add(child);
@@ -183,10 +183,10 @@ public static partial class InteropWindowExtensions
                     windowInfo.Bounds = extendedFrameBounds;
                 }
 
-                IInteropWindow parentWindow = interopWindow.GetParentWindow();
+                var parentWindow = interopWindow.GetParentWindow();
                 if (interopWindow.HasParent)
                 {
-                    WindowInfo parentInfo = parentWindow.GetInfo(forceUpdate);
+                    var parentInfo = parentWindow.GetInfo(forceUpdate);
                     windowInfo.Bounds = windowInfo.Bounds.Intersect(parentInfo.Bounds);
                     windowInfo.ClientBounds = windowInfo.ClientBounds.Intersect(parentInfo.ClientBounds);
                 }
@@ -210,8 +210,8 @@ public static partial class InteropWindowExtensions
                 return interopWindow.Parent.Value;
             }
 
-            IntPtr parent = Volatile.Read(ref _operations).GetParent(interopWindow.Handle);
-            IInteropWindow parentWindow = interopWindow.ParentWindow;
+            var parent = Volatile.Read(ref _operations).GetParent(interopWindow.Handle);
+            var parentWindow = interopWindow.ParentWindow;
             if (parentWindow is null || parentWindow.Handle != parent)
             {
                 interopWindow.ParentWindow = null;
@@ -235,7 +235,7 @@ public static partial class InteropWindowExtensions
                 return interopWindow.ParentWindow;
             }
 
-            IntPtr parent = interopWindow.Parent ?? interopWindow.GetParent(forceUpdate);
+            var parent = interopWindow.Parent ?? interopWindow.GetParent(forceUpdate);
             interopWindow.ParentWindow = ((parent == IntPtr.Zero) ? null : InteropWindowFactory.CreateFor(parent));
             return interopWindow.ParentWindow;
         }
@@ -274,7 +274,7 @@ public static partial class InteropWindowExtensions
                 return interopWindow.ProcessId.Value;
             }
 
-            int threadId = User32Api.GetWindowThreadProcessId(interopWindow.Handle, out var processId);
+            var threadId = User32Api.GetWindowThreadProcessId(interopWindow.Handle, out var processId);
             interopWindow.ThreadId = threadId;
             interopWindow.ProcessId = processId;
             return interopWindow.ProcessId.Value;
@@ -284,15 +284,15 @@ public static partial class InteropWindowExtensions
         /// <returns>The window region, or null when no region is available.</returns>
         public Region GetRegion()
         {
-            InteropWindowOperations operations = Volatile.Read(ref _operations);
-            using (SafeRegionHandle region = operations.CreateRectRegion())
+            var operations = Volatile.Read(ref _operations);
+            using (var region = operations.CreateRectRegion())
             {
                 if (region.IsInvalid)
                 {
                     return null;
                 }
 
-                RegionResults result = operations.GetWindowRegion(interopWindow.Handle, region);
+                var result = operations.GetWindowRegion(interopWindow.Handle, region);
                 if (result is not RegionResults.Error and not RegionResults.NullRegion)
                 {
                     return operations.CreateRegion(region);
@@ -348,7 +348,7 @@ public static partial class InteropWindowExtensions
             ScrollInfo initialScrollInfo = ScrollInfo.Create(ScrollInfoMask.All);
             checked
             {
-                InteropWindowOperations operations = Volatile.Read(ref _operations);
+                var operations = Volatile.Read(ref _operations);
                 if (operations.GetScrollInfo(interopWindow.Handle, scrollBarType, ref initialScrollInfo) && initialScrollInfo.Minimum != initialScrollInfo.Maximum)
                 {
                     WindowScroller result = new WindowScroller
@@ -399,7 +399,7 @@ public static partial class InteropWindowExtensions
             interopWindow.HasZOrderedChildren = true;
             List<IInteropWindow> children = [];
             interopWindow.Children = children;
-            foreach (IInteropWindow child in InteropWindowQueryExtensions.GetTopWindows(interopWindow))
+            foreach (var child in InteropWindowQueryExtensions.GetTopWindows(interopWindow))
             {
                 child.ParentWindow = interopWindow;
                 children.Add(child);
@@ -563,8 +563,8 @@ public static partial class InteropWindowExtensions
                 return default;
             }
 
-            InteropWindowOperations operations = Volatile.Read(ref _operations);
-            IntPtr foregroundWindow = operations.GetForegroundWindow();
+            var operations = Volatile.Read(ref _operations);
+            var foregroundWindow = operations.GetForegroundWindow();
             if (foregroundWindow == interopWindow.Handle)
             {
                 return default;
@@ -575,8 +575,8 @@ public static partial class InteropWindowExtensions
                 _ = interopWindow.Restore();
             }
 
-            int threadId1 = operations.GetWindowThreadProcessId(foregroundWindow);
-            int threadId2 = operations.GetWindowThreadProcessId(interopWindow.Handle);
+            var threadId1 = operations.GetWindowThreadProcessId(foregroundWindow);
+            var threadId2 = operations.GetWindowThreadProcessId(interopWindow.Handle);
             if (threadId1 != threadId2)
             {
                 _ = operations.AttachThreadInput(threadId1, threadId2, true);
@@ -614,8 +614,8 @@ public static partial class InteropWindowExtensions
         /// <returns>IEnumerable of IInteropWindow.</returns>
         public IEnumerable<IInteropWindow> GetLinkedWindows()
         {
-            int selectedProcessId = interopWindow.GetProcessId();
-            foreach (IInteropWindow window in Volatile.Read(ref _operations).GetTopLevelWindows())
+            var selectedProcessId = interopWindow.GetProcessId();
+            foreach (var window in Volatile.Read(ref _operations).GetTopLevelWindows())
             {
                 if (window.Handle != interopWindow.Handle && window.GetProcessId() == selectedProcessId)
                 {
@@ -629,7 +629,7 @@ public static partial class InteropWindowExtensions
         /// <returns>true if a location if found, and the formLocation is also set.</returns>
         public bool GetVisibleLocation(out NativePoint formLocation)
         {
-            NativeRect windowRectangle = interopWindow.GetInfo().Bounds;
+            var windowRectangle = interopWindow.GetInfo().Bounds;
             return GetVisibleLocation(windowRectangle, DisplayTopology.GetSnapshot(), out formLocation);
         }
 
@@ -637,10 +637,10 @@ public static partial class InteropWindowExtensions
         /// <returns>A bitmap capture, or null when capture fails.</returns>
         public Bitmap PrintWindow()
         {
-            NativeRect windowRect = interopWindow.GetInfo().Bounds;
+            var windowRect = interopWindow.GetInfo().Bounds;
             Win32Exception exceptionOccurred = null;
-            using Region region = interopWindow.GetRegion();
-            PixelFormat pixelFormat = GetCapturePixelFormat(region);
+            using var region = interopWindow.GetRegion();
+            var pixelFormat = GetCapturePixelFormat(region);
             Bitmap printWindowBitmap = new(windowRect.Width, windowRect.Height, pixelFormat);
             using (Graphics graphics = Graphics.FromImage(printWindowBitmap))
             {
@@ -684,7 +684,7 @@ public static partial class InteropWindowExtensions
         out NativePoint formLocation)
     {
         formLocation = windowRectangle.Location;
-        DisplayInfo primaryDisplay = FindPrimaryDisplay(displays);
+        var primaryDisplay = FindPrimaryDisplay(displays);
         if (primaryDisplay is null)
         {
             return false;
@@ -692,7 +692,7 @@ public static partial class InteropWindowExtensions
 
         using (Region workingArea = new(primaryDisplay.Bounds))
         {
-            foreach (DisplayInfo display in displays)
+            foreach (var display in displays)
             {
                 if (!display.IsPrimary)
                 {
@@ -705,7 +705,7 @@ public static partial class InteropWindowExtensions
                 return true;
             }
 
-            foreach (DisplayInfo display2 in displays)
+            foreach (var display2 in displays)
             {
                 Rectangle newWindowRectangle = new(display2.WorkingArea.Location, windowRectangle.Size);
                 if (workingArea.AreRectangleCornersVisisble(newWindowRectangle))
@@ -736,7 +736,7 @@ public static partial class InteropWindowExtensions
     /// <returns>The managed region.</returns>
     internal static Region CreateRegionFromData(byte[] regionDataBytes)
     {
-        int rectangleCount = BitConverter.ToInt32(regionDataBytes, RegionDataRectangleCountOffset);
+        var rectangleCount = BitConverter.ToInt32(regionDataBytes, RegionDataRectangleCountOffset);
         if (rectangleCount <= 0)
         {
             return null;
@@ -746,18 +746,18 @@ public static partial class InteropWindowExtensions
         region.MakeEmpty();
         checked
         {
-            for (int index = 0; index < rectangleCount; index++)
+            for (var index = 0; index < rectangleCount; index++)
             {
-                int offset = RegionDataHeaderSize + (index * NativeRectangleByteSize);
+                var offset = RegionDataHeaderSize + (index * NativeRectangleByteSize);
                 if (offset + NativeRectangleByteSize > regionDataBytes.Length)
                 {
                     break;
                 }
 
-                int left = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleLeftOffset);
-                int top = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleTopOffset);
-                int right = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleRightOffset);
-                int bottom = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleBottomOffset);
+                var left = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleLeftOffset);
+                var top = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleTopOffset);
+                var right = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleRightOffset);
+                var bottom = BitConverter.ToInt32(regionDataBytes, offset + NativeRectangleBottomOffset);
                 region.Union(Rectangle.FromLTRB(left, top, right, bottom));
             }
 
@@ -771,7 +771,7 @@ public static partial class InteropWindowExtensions
     internal static DisplayInfo FindPrimaryDisplay(IReadOnlyList<DisplayInfo> displays)
     {
         DisplayInfo firstDisplay = null;
-        foreach (DisplayInfo display in displays)
+        foreach (var display in displays)
         {
             firstDisplay ??= display;
 
@@ -891,7 +891,7 @@ public static partial class InteropWindowExtensions
     /// <returns>true when the window was rendered.</returns>
     private static bool TryPrintWindow(IInteropWindow interopWindow, Graphics graphics)
     {
-        IntPtr deviceContext = graphics.GetHdc();
+        var deviceContext = graphics.GetHdc();
         try
         {
             return User32Api.PrintWindow(interopWindow.Handle, deviceContext, PrintWindowFlags.PW_COMPLETE);
@@ -941,13 +941,13 @@ public static partial class InteropWindowExtensions
             Throw.IfNull(regionHandle);
             Throw.IfNull(getSize);
             Throw.IfNull(getData);
-            uint dataSize = getSize(regionHandle);
+            var dataSize = getSize(regionHandle);
             if (dataSize == 0 || dataSize > int.MaxValue)
             {
                 return null;
             }
 
-            byte[] regionDataBytes = new byte[checked((int)dataSize)];
+            var regionDataBytes = new byte[checked((int)dataSize)];
             return getData(regionHandle, dataSize, regionDataBytes) == 0
                 ? null
                 : CreateRegionFromData(regionDataBytes);

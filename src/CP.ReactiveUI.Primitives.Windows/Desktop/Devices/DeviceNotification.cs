@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices;
 #else
@@ -130,7 +126,7 @@ public static class DeviceNotification
         ReactiveSignal.Create((IObserver<DeviceNotificationEvent> observer) =>
         {
             DevBroadcastDeviceInterface devBroadcastDeviceInterface = DevBroadcastDeviceInterface.Create();
-            DeviceNotifyFlags deviceNotifyFlags = DeviceNotifyFlags.None;
+            var deviceNotifyFlags = DeviceNotifyFlags.None;
             if (deviceInterfaceClass != DeviceInterfaceClass.Unknown)
             {
                 devBroadcastDeviceInterface.DeviceClass = deviceInterfaceClass;
@@ -140,7 +136,7 @@ public static class DeviceNotification
                 deviceNotifyFlags |= DeviceNotifyFlags.AllInterfaceClasses;
             }
 
-            IntPtr deviceNotificationHandle = IntPtr.Zero;
+            var deviceNotificationHandle = IntPtr.Zero;
             return (from message in listen(
                 windowHandle =>
                 {
@@ -178,7 +174,7 @@ public static class DeviceNotification
         DeviceNotifyFlags flags,
         Func<IntPtr, IntPtr, DeviceNotifyFlags, IntPtr> register)
     {
-        IntPtr notificationFilterPointer = Marshal.AllocHGlobal(Marshal.SizeOf<DevBroadcastDeviceInterface>());
+        var notificationFilterPointer = Marshal.AllocHGlobal(Marshal.SizeOf<DevBroadcastDeviceInterface>());
         try
         {
             Marshal.StructureToPtr(notificationFilter, notificationFilterPointer, fDeleteOld: false);
@@ -207,8 +203,8 @@ public static class DeviceNotification
     internal static Func<IntPtr, IntPtr, DeviceNotifyFlags, IntPtr> SetRegisterDeviceNotificationForTesting(
         Func<IntPtr, IntPtr, DeviceNotifyFlags, IntPtr> registerDeviceNotification)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registerDeviceNotification);
-        Func<IntPtr, IntPtr, DeviceNotifyFlags, IntPtr> previousRegisterDeviceNotification = _registerDeviceNotification;
+        Throw.IfNull(registerDeviceNotification);
+        var previousRegisterDeviceNotification = _registerDeviceNotification;
         _registerDeviceNotification = registerDeviceNotification;
         return previousRegisterDeviceNotification;
     }

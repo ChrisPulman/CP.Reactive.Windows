@@ -35,31 +35,32 @@ namespace CP.ReactiveUI.Primitives.Windows.Example.FormsExample
         /// </summary>
         private void InitializeComponent()
         {
-            this.extendedWebBrowser1 = new ExtendedWebBrowser();
+            this.extendedWebBrowser1 = new CP.ReactiveUI.Primitives.Windows.Integrations.Browser.ExtendedWebBrowser();
             this.SuspendLayout();
             // 
             // extendedWebBrowser1
             // 
             this.extendedWebBrowser1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.extendedWebBrowser1.Location = new System.Drawing.Point(0, 0);
-            this.extendedWebBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
+            this.extendedWebBrowser1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.extendedWebBrowser1.MinimumSize = new System.Drawing.Size(15, 16);
             this.extendedWebBrowser1.Name = "extendedWebBrowser1";
             this.extendedWebBrowser1.ScriptErrorsSuppressed = true;
-            this.extendedWebBrowser1.Size = new System.Drawing.Size(773, 361);
+            this.extendedWebBrowser1.Size = new System.Drawing.Size(580, 293);
             this.extendedWebBrowser1.TabIndex = 0;
-            this.extendedWebBrowser1.Url = new System.Uri("https://dapplo.net", System.UriKind.Absolute);
-
-            this.components = new System.ComponentModel.Container();
+            this.extendedWebBrowser1.Url = new System.Uri("https://reactiveui.net/", System.UriKind.Absolute);
             // 
-            // Form1
+            // WebBrowserForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(773, 361);
+            this.ClientSize = new System.Drawing.Size(580, 293);
             this.Controls.Add(this.extendedWebBrowser1);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.Name = "WebBrowserForm";
             this.Text = "WebBrowserForm";
             this.ResumeLayout(false);
+
         }
 
         #endregion

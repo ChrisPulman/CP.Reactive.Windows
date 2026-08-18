@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -83,14 +81,14 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
             return false;
         }
 
-        bool wasAllKeysDown = _pressedCombinationKeyCount == TriggerCombination.Length;
-        bool keyMatched = TryUpdateMatchedKey(keyboardHookEventArgs, out var isRepeat);
+        var wasAllKeysDown = _pressedCombinationKeyCount == TriggerCombination.Length;
+        var keyMatched = TryUpdateMatchedKey(keyboardHookEventArgs, out var isRepeat);
         if (!keyMatched)
         {
             TrackOtherKey(keyboardHookEventArgs);
         }
 
-        bool isHandled = IsCombinationHandled(keyboardHookEventArgs, keyMatched, wasAllKeysDown);
+        var isHandled = IsCombinationHandled(keyboardHookEventArgs, keyMatched, wasAllKeysDown);
         if (isHandled && !IsPassThrough)
         {
             keyboardHookEventArgs.Handled = true;
@@ -119,7 +117,7 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     private static VirtualKeyCode[] DistinctKeys(IEnumerable<VirtualKeyCode> keyCombination)
     {
         List<VirtualKeyCode> keys = new();
-        foreach (VirtualKeyCode key in keyCombination)
+        foreach (var key in keyCombination)
         {
             if (!keys.Contains(key))
             {
@@ -137,7 +135,7 @@ public class KeyCombinationHandler : IKeyboardHookEventHandler
     private bool TryUpdateMatchedKey(KeyboardHookEventArgs keyboardHookEventArgs, out bool isRepeat)
     {
         isRepeat = false;
-        for (int i = 0; i < TriggerCombination.Length; i = checked(i + 1))
+        for (var i = 0; i < TriggerCombination.Length; i = checked(i + 1))
         {
             if (CompareVirtualKeyCode(keyboardHookEventArgs.Key, TriggerCombination[i]))
             {

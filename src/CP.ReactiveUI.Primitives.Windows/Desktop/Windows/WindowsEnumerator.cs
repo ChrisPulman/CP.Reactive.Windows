@@ -2,13 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -105,7 +98,7 @@ public static class WindowsEnumerator
         return result;
         bool EnumWindowsProc(IntPtr windowHandle, IntPtr _)
         {
-            InteropWindow interopWindow = InteropWindowFactory.CreateFor(windowHandle);
+            var interopWindow = InteropWindowFactory.CreateFor(windowHandle);
             if (wherePredicate is null || wherePredicate(interopWindow))
             {
                 result.Add(interopWindow);
@@ -140,7 +133,7 @@ public static class WindowsEnumerator
                     return false;
                 }
 
-                InteropWindow interopWindow = InteropWindowFactory.CreateFor(windowHandle);
+                var interopWindow = InteropWindowFactory.CreateFor(windowHandle);
                 observer.OnNext(interopWindow);
                 return !cancellationTokenSource.IsCancellationRequested;
             }

@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Drawing;
-using System.IO;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
 #else
@@ -42,19 +38,19 @@ public static class IconStreamExtensions
             {
                 try
                 {
-                    byte[] sourceBuffer = new byte[iconStream.Length];
+                    var sourceBuffer = new byte[iconStream.Length];
                     _ = iconStream.Read(sourceBuffer, 0, (int)iconStream.Length);
-                    short count = BitConverter.ToInt16(sourceBuffer, IconCountOffset);
-                    for (int index = 0; index < count; index++)
+                    var count = BitConverter.ToInt16(sourceBuffer, IconCountOffset);
+                    for (var index = 0; index < count; index++)
                     {
-                        int entryOffset = IconDirectoryHeaderSize + (IconDirectorySize * index);
-                        byte num = sourceBuffer[entryOffset];
-                        byte height = sourceBuffer[entryOffset + 1];
+                        var entryOffset = IconDirectoryHeaderSize + (IconDirectorySize * index);
+                        var num = sourceBuffer[entryOffset];
+                        var height = sourceBuffer[entryOffset + 1];
                         if (num == 0 && height == 0)
                         {
-                            int imageSize =
+                            var imageSize =
                                 BitConverter.ToInt32(sourceBuffer, entryOffset + IconDirectoryImageSizeOffset);
-                            int imageOffset =
+                            var imageOffset =
                                 BitConverter.ToInt32(sourceBuffer, entryOffset + IconDirectoryEntryOffset);
                             using (MemoryStream destinationStream = new())
                             {

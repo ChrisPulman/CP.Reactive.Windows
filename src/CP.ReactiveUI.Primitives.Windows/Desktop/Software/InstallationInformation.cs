@@ -2,12 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
 using System.Reflection;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
-using log4net;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Software;
@@ -37,16 +33,16 @@ public static class InstallationInformation
     /// <returns>IEnumerable with SoftwareDetails.</returns>
     public static IEnumerable<SoftwareDetails> InstalledSoftware()
     {
-        using IInstalledSoftwareRegistryKey registryKey = GetRegistry().OpenLocalMachineSubKey(UninstallKey);
+        using var registryKey = GetRegistry().OpenLocalMachineSubKey(UninstallKey);
         if (registryKey is null)
         {
             yield break;
         }
 
-        string[] subKeyNames = registryKey.GetSubKeyNames();
-        foreach (string subKeyName in subKeyNames)
+        var subKeyNames = registryKey.GetSubKeyNames();
+        foreach (var subKeyName in subKeyNames)
         {
-            using IInstalledSoftwareRegistryKey subKey = registryKey.OpenSubKey(subKeyName);
+            using var subKey = registryKey.OpenSubKey(subKeyName);
             if (subKey is not null)
             {
                 yield return MapFromRegistryKey(subKeyName, subKey);
@@ -66,8 +62,8 @@ public static class InstallationInformation
         Func<string, object> getValue,
         Func<string, RegistryValueKind> getValueKind)
     {
-        SoftwareDetails softwareDetails = CreateSoftwareDetails(subkeyName);
-        foreach (string valueName in valueNames)
+        var softwareDetails = CreateSoftwareDetails(subkeyName);
+        foreach (var valueName in valueNames)
         {
             if (SoftwareDetailsPropertyMap.TryGetValue(valueName, out var propertyInfo)
                 && TryGetRegistryValue(propertyInfo, getValue, getValueKind, out var value))
@@ -84,8 +80,8 @@ public static class InstallationInformation
     /// <returns>The previous registry reader.</returns>
     internal static IInstalledSoftwareRegistry SetRegistryForTesting(IInstalledSoftwareRegistry registry)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registry);
-        IInstalledSoftwareRegistry registry2 = GetRegistry();
+        Throw.IfNull(registry);
+        var registry2 = GetRegistry();
         _registryOverride = registry == WindowsInstalledSoftwareRegistry.Instance ? null : registry;
         return registry2;
     }
@@ -116,8 +112,8 @@ public static class InstallationInformation
     private static Dictionary<string, PropertyInfo> CreateSoftwareDetailsPropertyMap()
     {
         Dictionary<string, PropertyInfo> propertyMap = new(StringComparer.OrdinalIgnoreCase);
-        PropertyInfo[] properties = typeof(SoftwareDetails).GetProperties(BindingFlags.Instance | BindingFlags.Public);
-        foreach (PropertyInfo propertyInfo in properties)
+        var properties = typeof(SoftwareDetails).GetProperties(BindingFlags.Instance | BindingFlags.Public);
+        foreach (var propertyInfo in properties)
         {
             propertyMap[propertyInfo.Name] = propertyInfo;
         }
@@ -134,7 +130,7 @@ public static class InstallationInformation
     private static bool TryGetRegistryValue(PropertyInfo propertyInfo, Func<string, object> getValue, Func<string, RegistryValueKind> getValueKind, out object value)
     {
         value = null;
-        object propertyValue = getValue(propertyInfo.Name);
+        var propertyValue = getValue(propertyInfo.Name);
         if (propertyValue is null)
         {
             return false;
@@ -163,13 +159,13 @@ public static class InstallationInformation
         {
             case RegistryValueKind.DWord:
                 {
-                    int intValue = Convert.ToInt32(propertyValue);
+                    var intValue = Convert.ToInt32(propertyValue);
                     return propertyType != typeof(bool) ? intValue : intValue == 1;
                 }
 
             case RegistryValueKind.QWord:
                 {
-                    long longValue = Convert.ToInt64(propertyValue);
+                    var longValue = Convert.ToInt64(propertyValue);
                     return propertyType != typeof(bool) ? longValue : longValue == 1L;
                 }
 
@@ -194,7 +190,7 @@ public static class InstallationInformation
         /// <inheritdoc />
         public IInstalledSoftwareRegistryKey OpenLocalMachineSubKey(string subkeyName)
         {
-            RegistryKey registryKey = Registry.LocalMachine.OpenSubKey(subkeyName);
+            var registryKey = Registry.LocalMachine.OpenSubKey(subkeyName);
             return registryKey is not null ? new WindowsInstalledSoftwareRegistryKey(registryKey) : null;
         }
     }
@@ -212,7 +208,7 @@ public static class InstallationInformation
         /// <inheritdoc />
         public IInstalledSoftwareRegistryKey OpenSubKey(string subkeyName)
         {
-            RegistryKey subKey = registryKey.OpenSubKey(subkeyName);
+            var subKey = registryKey.OpenSubKey(subkeyName);
             return subKey is not null ? new WindowsInstalledSoftwareRegistryKey(subKey) : null;
         }
 

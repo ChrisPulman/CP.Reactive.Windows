@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -65,7 +59,7 @@ public static partial class WinEventHook
         int thread) => ReactiveSignal.CreateSafe<WinEventInfo>(observer =>
         {
             WinEventDelegate winEventDelegate = WinEventHookDelegate;
-            IntPtr hookHandle = NativeMethods.SetWinEventHook(winEventStart, winEventEnd, IntPtr.Zero, winEventDelegate, process, thread, WinEventHookFlags.None);
+            var hookHandle = NativeMethods.SetWinEventHook(winEventStart, winEventEnd, IntPtr.Zero, winEventDelegate, process, thread, WinEventHookFlags.None);
             if (hookHandle == IntPtr.Zero)
             {
                 observer.OnError(new Win32Exception(Marshal.GetLastWin32Error()));

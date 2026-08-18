@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -30,7 +28,7 @@ internal class IFileOpenDialog : FileDialogComObject
     internal virtual unsafe IShellItemArray GetResults()
     {
         IntPtr items = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(GetResultsSlot))(Handle, out items));
+        ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(GetResultsSlot))(Handle, out items));
         return new(items);
     }
 }

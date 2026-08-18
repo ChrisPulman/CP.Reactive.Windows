@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
 #else
@@ -142,7 +136,7 @@ public class InteropWindow : IEquatable<IInteropWindow>, IInteropWindow
 
         void AppendWindowDump(IEnumerable<IInteropWindow> windows)
         {
-            foreach (IInteropWindow window in windows)
+            foreach (var window in windows)
             {
                 _ = window.Dump(retrieveSettings, dump, $"{indentation}\t");
             }

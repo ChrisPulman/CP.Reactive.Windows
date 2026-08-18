@@ -2,15 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Threading;
-using System.Windows.Forms;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
@@ -59,13 +51,13 @@ public static class BitmapScaleHandler
     /// <returns>The scaled bitmap.</returns>
     public static Bitmap SimpleBitmapScaler(Bitmap bitmap, int dpi)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(bitmap);
+        Throw.IfNull(bitmap);
         if (dpi == DpiCalculator.DefaultScreenDpi)
         {
             return bitmap;
         }
 
-        NativeSize newSize = DpiCalculator.ScaleWithDpi(bitmap.Size, dpi);
+        var newSize = DpiCalculator.ScaleWithDpi(bitmap.Size, dpi);
         Bitmap result = new(newSize.Width, newSize.Height, bitmap.PixelFormat);
         using Graphics graphics = Graphics.FromImage(result);
         graphics.InterpolationMode = InterpolationMode.NearestNeighbor;

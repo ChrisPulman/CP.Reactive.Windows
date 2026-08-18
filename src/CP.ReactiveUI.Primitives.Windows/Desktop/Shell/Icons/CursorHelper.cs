@@ -2,26 +2,11 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 using CP.ReactiveUI.Primitives.Windows.Native.Gdi.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
 using CP.ReactiveUI.Primitives.Windows.Native.Gdi.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
 using CP.ReactiveUI.Primitives.Windows.Native.Structs.PixelFormats;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
 using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
 
 #if REACTIVE_SHIM
@@ -80,7 +65,7 @@ public static class CursorHelper
     {
         try
         {
-            int? num = _cursorBaseSizeProvider();
+            var num = _cursorBaseSizeProvider();
             if (num.HasValue)
             {
                 return num.GetValueOrDefault();
@@ -145,13 +130,13 @@ public static class CursorHelper
         }
 
         Bitmap bmp = new(width, height, PixelFormat.Format32bppPArgb);
-        BitmapData data = bmp.LockBits(new(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
+        var data = bmp.LockBits(new(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format32bppPArgb);
         checked
         {
             BitmapInfoHeader bitmapInfoHeader = BitmapInfoHeader.Create(width, -height, ThirtyTwoBitPixel);
             bitmapInfoHeader.SizeImage = 0U;
             using SafeWindowDcHandle deviceContextHandle = SafeWindowDcHandle.FromWindowClientArea(IntPtr.Zero);
-            int copiedScanLines = Gdi32Api.GetDIBits(deviceContextHandle, colorBitmapHandle, 0U, (uint)height, data.Scan0, ref bitmapInfoHeader, DibColors.RgbColors);
+            var copiedScanLines = Gdi32Api.GetDIBits(deviceContextHandle, colorBitmapHandle, 0U, (uint)height, data.Scan0, ref bitmapInfoHeader, DibColors.RgbColors);
             return CreateRawColorBitmap(copiedScanLines, bmp, data, width, height, out hasAlpha);
         }
     }
@@ -183,7 +168,7 @@ public static class CursorHelper
     /// <returns>A bitmap object that represents the icon handle rendered at the specified size.</returns>
     public static Bitmap BitmapFromHIcon(IntPtr iconHandle, int width, int height, DrawIconExFlags flags, PixelFormat pixelFormat)
     {
-        PixelFormat format = GetIconBitmapPixelFormat(flags, pixelFormat);
+        var format = GetIconBitmapPixelFormat(flags, pixelFormat);
         Bitmap bmp = new(width, height, format);
         using Graphics g = Graphics.FromImage(bmp);
         if (format == PixelFormat.Format24bppRgb)
@@ -226,7 +211,7 @@ public static class CursorHelper
             return false;
         }
 
-        string lower = moduleName.ToLowerInvariant();
+        var lower = moduleName.ToLowerInvariant();
         return lower.Contains("user32")
             || lower.Contains("\\windows\\cursors\\")
             || lower.Contains("main.cpl");
@@ -261,10 +246,9 @@ public static class CursorHelper
             return;
         }
 
-        int x = position.X;
-        int y = position.Y;
-        int sourceWidth = cursor.Size.Width;
-        int sourceHeight = cursor.Size.Height;
+        var (x, y) = position;
+        var sourceWidth = cursor.Size.Width;
+        var sourceHeight = cursor.Size.Height;
         if (destinationSize.IsEmpty)
         {
             destinationSize = new(sourceWidth, sourceHeight);
@@ -272,7 +256,7 @@ public static class CursorHelper
 
         if (cursor.MaskLayer is null)
         {
-            GraphicsState state = targetGraphics.Save();
+            var state = targetGraphics.Save();
             targetGraphics.SmoothingMode = SmoothingMode.HighQuality;
             targetGraphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
             targetGraphics.CompositingQuality = CompositingQuality.HighQuality;
@@ -297,9 +281,9 @@ public static class CursorHelper
         targetGraphics.TransformPoints(CoordinateSpace.Device, CoordinateSpace.World, pts);
         position = new(pts[0].X, pts[0].Y);
         using SafeGraphicsDcHandle hdcDest = SafeGraphicsDcHandle.FromGraphics(targetGraphics);
-        using SafeCompatibleDcHandle hdcSrc = Gdi32Api.CreateCompatibleDC(hdcDest);
+        using var hdcSrc = Gdi32Api.CreateCompatibleDC(hdcDest);
         using SafeHBitmapHandle hbmMask = new(cursor.MaskLayer.GetHbitmap());
-        SafeNonDisposableObjectHandle hbmOld = Gdi32Api.SelectObject(hdcSrc, hbmMask);
+        var hbmOld = Gdi32Api.SelectObject(hdcSrc, hbmMask);
         ThrowIfObjectSelectionFailed(hbmOld.IsInvalid, Marshal.GetLastWin32Error());
 
         ThrowIfRasterOperationFailed(
@@ -359,19 +343,18 @@ public static class CursorHelper
     /// <exception cref="T:System.NotSupportedException">Thrown when the target bitmap's pixel format is not supported.</exception>
     public static void DrawCursorOnBitmap(Bitmap targetBitmap, CapturedCursor cursor, NativePoint position, NativeSize destinationSize)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(targetBitmap);
+        Throw.IfNull(targetBitmap);
         if (cursor is not null && cursor.ColorLayer is not null)
         {
-            int x = position.X;
-            int y = position.Y;
-            int sourceWidth = cursor.Size.Width;
-            int sourceHeight = cursor.Size.Height;
+            var (x, y) = position;
+            var sourceWidth = cursor.Size.Width;
+            var sourceHeight = cursor.Size.Height;
             if (destinationSize.IsEmpty)
             {
                 destinationSize = new(sourceWidth, sourceHeight);
             }
 
-            bool needsScaling = destinationSize.Width != sourceWidth || destinationSize.Height != sourceHeight;
+            var needsScaling = destinationSize.Width != sourceWidth || destinationSize.Height != sourceHeight;
             if (cursor.MaskLayer is null)
             {
                 DrawScaledAlphaCursorOnBitmap(targetBitmap, cursor.ColorLayer, destinationSize, x, y, needsScaling);
@@ -388,8 +371,8 @@ public static class CursorHelper
     /// <returns>The previous provider.</returns>
     internal static Func<int?> SetCursorBaseSizeProviderForTesting(Func<int?> provider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
-        Func<int?> cursorBaseSizeProvider = _cursorBaseSizeProvider;
+        Throw.IfNull(provider);
+        var cursorBaseSizeProvider = _cursorBaseSizeProvider;
         _cursorBaseSizeProvider = provider;
         return cursorBaseSizeProvider;
     }
@@ -399,8 +382,8 @@ public static class CursorHelper
     /// <returns>The previous provider.</returns>
     internal static CursorInfoProvider SetCursorInfoProviderForTesting(CursorInfoProvider provider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
-        CursorInfoProvider cursorInfoProvider = _cursorInfoProvider;
+        Throw.IfNull(provider);
+        var cursorInfoProvider = _cursorInfoProvider;
         _cursorInfoProvider = provider;
         return cursorInfoProvider;
     }
@@ -410,8 +393,8 @@ public static class CursorHelper
     /// <returns>The previous provider.</returns>
     internal static CursorIconInfoProvider SetCursorIconInfoProviderForTesting(CursorIconInfoProvider provider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
-        CursorIconInfoProvider cursorIconInfoProvider = _cursorIconInfoProvider;
+        Throw.IfNull(provider);
+        var cursorIconInfoProvider = _cursorIconInfoProvider;
         _cursorIconInfoProvider = provider;
         return cursorIconInfoProvider;
     }
@@ -421,8 +404,8 @@ public static class CursorHelper
     /// <returns>The previous operation.</returns>
     internal static CursorCaptureOperation SetCursorCaptureOperationForTesting(CursorCaptureOperation operation)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(operation);
-        CursorCaptureOperation cursorCaptureOperation = _cursorCaptureOperation;
+        Throw.IfNull(operation);
+        var cursorCaptureOperation = _cursorCaptureOperation;
         _cursorCaptureOperation = operation;
         return cursorCaptureOperation;
     }
@@ -432,8 +415,8 @@ public static class CursorHelper
     /// <returns>The previous renderer.</returns>
     internal static CursorBitmapRenderer SetCursorBitmapRendererForTesting(CursorBitmapRenderer renderer)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(renderer);
-        CursorBitmapRenderer cursorBitmapRenderer = _cursorBitmapRenderer;
+        Throw.IfNull(renderer);
+        var cursorBitmapRenderer = _cursorBitmapRenderer;
         _cursorBitmapRenderer = renderer;
         return cursorBitmapRenderer;
     }
@@ -443,8 +426,8 @@ public static class CursorHelper
     /// <returns>The previous provider.</returns>
     internal static CursorMaskLayerProvider SetCursorMaskLayerProviderForTesting(CursorMaskLayerProvider provider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(provider);
-        CursorMaskLayerProvider cursorMaskLayerProvider = _cursorMaskLayerProvider;
+        Throw.IfNull(provider);
+        var cursorMaskLayerProvider = _cursorMaskLayerProvider;
         _cursorMaskLayerProvider = provider;
         return cursorMaskLayerProvider;
     }
@@ -477,14 +460,14 @@ public static class CursorHelper
     /// <param name="iconInfo">The icon information.</param>
     internal static void CaptureCurrentCursor(CapturedCursor result, IntPtr cursorHandle, in IconInfoEx iconInfo)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(result);
-        int baseSize = GetCursorBaseSize();
-        uint dpi = NativeDpiMethods.GetDpiForSystem();
-        int targetWidth = checked((int)((float)baseSize * ((float)dpi / DpiScaleBase)));
-        int targetHeight = targetWidth;
-        CursorHandleSelection bestCursor = GetBestCursorHandle(in iconInfo, cursorHandle, targetWidth, targetHeight);
-        NativeSize nativeSize = GetNativeCursorSize(in iconInfo, bestCursor.IsFresh, targetWidth, targetHeight);
-        bool isCustomCursor = nativeSize.Width != DefaultCursorSize || nativeSize.Height != DefaultCursorSize;
+        Throw.IfNull(result);
+        var baseSize = GetCursorBaseSize();
+        var dpi = NativeDpiMethods.GetDpiForSystem();
+        var targetWidth = checked((int)((float)baseSize * ((float)dpi / DpiScaleBase)));
+        var targetHeight = targetWidth;
+        var bestCursor = GetBestCursorHandle(in iconInfo, cursorHandle, targetWidth, targetHeight);
+        var nativeSize = GetNativeCursorSize(in iconInfo, bestCursor.IsFresh, targetWidth, targetHeight);
+        var isCustomCursor = nativeSize.Width != DefaultCursorSize || nativeSize.Height != DefaultCursorSize;
         ApplyCursorSize(
             result,
             in iconInfo,
@@ -529,9 +512,9 @@ public static class CursorHelper
             return null;
         }
 
-        byte* pixel = unchecked((byte*)(void*)bitmapData.Scan0);
-        int byteCount = checked(width * height * PixelByteCount);
-        for (int index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
+        var pixel = unchecked((byte*)(void*)bitmapData.Scan0);
+        var byteCount = checked(width * height * PixelByteCount);
+        for (var index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
         {
             if (pixel[index] != 0)
             {
@@ -542,7 +525,7 @@ public static class CursorHelper
 
         if (!hasAlpha)
         {
-            for (int index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
+            for (var index = AlphaByteOffset; index < byteCount; index += PixelByteCount)
             {
                 pixel[index] = byte.MaxValue;
             }
@@ -571,7 +554,7 @@ public static class CursorHelper
     /// <returns>The configured cursor base size, or <see langword="null" /> when unavailable.</returns>
     private static int? ReadConfiguredCursorBaseSize()
     {
-        using RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\Cursors");
+        using var key = Registry.CurrentUser.OpenSubKey("Control Panel\\Cursors");
         return GetConfiguredCursorBaseSize(RegistryValueReader.GetValue(key, "CursorBaseSize"));
     }
 
@@ -584,7 +567,7 @@ public static class CursorHelper
     /// <param name="needsScaling">A value indicating whether scaling is required.</param>
     private static void DrawScaledAlphaCursorOnBitmap(Bitmap targetBitmap, Bitmap cursorBitmap, NativeSize destinationSize, int x, int y, bool needsScaling)
     {
-        Bitmap cursorToUse = cursorBitmap;
+        var cursorToUse = cursorBitmap;
         if (needsScaling)
         {
             cursorToUse = new(cursorBitmap, destinationSize.Width, destinationSize.Height);
@@ -612,8 +595,8 @@ public static class CursorHelper
     /// <param name="needsScaling">A value indicating whether scaling is required.</param>
     private static void DrawScaledMaskedCursorOnBitmap(Bitmap targetBitmap, CapturedCursor cursor, NativeSize destinationSize, int x, int y, bool needsScaling)
     {
-        Bitmap scaledColor = cursor.ColorLayer;
-        Bitmap scaledMask = cursor.MaskLayer;
+        var scaledColor = cursor.ColorLayer;
+        var scaledMask = cursor.MaskLayer;
         if (needsScaling)
         {
             scaledColor = new(cursor.ColorLayer, destinationSize.Width, destinationSize.Height);
@@ -658,8 +641,8 @@ public static class CursorHelper
             return;
         }
 
-        int handleWidth = GetMaskWidth(in iconInfo);
-        float scale = (float)targetWidth / (float)handleWidth;
+        var handleWidth = GetMaskWidth(in iconInfo);
+        var scale = (float)targetWidth / (float)handleWidth;
         result.HotSpot = checked(new NativePoint((int)((float)iconInfo.Hotspot.X * scale), (int)((float)iconInfo.Hotspot.Y * scale)));
         result.Size = new(targetWidth, targetHeight);
     }
@@ -693,7 +676,7 @@ public static class CursorHelper
     /// <returns>The selected cursor handle and ownership flag.</returns>
     private static CursorHandleSelection GetBestCursorHandle(in IconInfoEx iconInfo, IntPtr fallbackHandle, int targetWidth, int targetHeight)
     {
-        IntPtr cursorHandle = LoadSystemCursor(in iconInfo, targetWidth, targetHeight);
+        var cursorHandle = LoadSystemCursor(in iconInfo, targetWidth, targetHeight);
         return cursorHandle != IntPtr.Zero
             ? new(cursorHandle, isFresh: true)
             : new(fallbackHandle, isFresh: false);
@@ -735,7 +718,7 @@ public static class CursorHelper
     private static int GetMaskWidth(in IconInfoEx iconInfo)
     {
         GdiBitmap maskInfo = default;
-        int copiedBytes = Gdi32Api.GetObject(iconInfo.BitmaskBitmapHandle, Marshal.SizeOf<GdiBitmap>(), ref maskInfo);
+        var copiedBytes = Gdi32Api.GetObject(iconInfo.BitmaskBitmapHandle, Marshal.SizeOf<GdiBitmap>(), ref maskInfo);
         return GetBitmapWidth(copiedBytes, maskInfo.Width);
     }
 
@@ -758,7 +741,7 @@ public static class CursorHelper
             return new(targetWidth, targetHeight);
         }
 
-        int height = iconInfo.ColorBitmapHandle.IsInvalid
+        var height = iconInfo.ColorBitmapHandle.IsInvalid
             ? bitmapInfo.Height / MonochromeMaskHeightDivisor
             : bitmapInfo.Height;
         return new(bitmapInfo.Width, height);
@@ -891,22 +874,22 @@ public static class CursorHelper
         {
             using BitmapAccessor<TTarget> targetAccessor = new(targetBitmap, readOnly: false);
             using BitmapAccessor<Bgra32> cursorAccessor = new(cursorBitmap, readOnly: true);
-            for (int cy = 0; cy < cursorBitmap.Height; cy++)
+            for (var cy = 0; cy < cursorBitmap.Height; cy++)
             {
-                int ty = y + cy;
+                var ty = y + cy;
                 if (ty < 0 || ty >= targetAccessor.Height)
                 {
                     continue;
                 }
 
-                Span<TTarget> targetRow = targetAccessor.GetRowSpan(ty);
-                Span<Bgra32> cursorRow = cursorAccessor.GetRowSpan(cy);
-                for (int cx = 0; cx < cursorBitmap.Width; cx++)
+                var targetRow = targetAccessor.GetRowSpan(ty);
+                var cursorRow = cursorAccessor.GetRowSpan(cy);
+                for (var cx = 0; cx < cursorBitmap.Width; cx++)
                 {
-                    int tx = x + cx;
+                    var tx = x + cx;
                     if (tx >= 0 && tx < targetAccessor.Width)
                     {
-                        ref Bgra32 cursorPixel = ref cursorRow[cx];
+                        ref var cursorPixel = ref cursorRow[cx];
                         if (cursorPixel.A != 0)
                         {
                             BlendAlphaPixel(targetRow, tx, cursorPixel);
@@ -996,23 +979,23 @@ public static class CursorHelper
     {
         checked
         {
-            for (int cy = 0; cy < colorAccessor.Height; cy++)
+            for (var cy = 0; cy < colorAccessor.Height; cy++)
             {
-                int ty = y + cy;
+                var ty = y + cy;
                 if (ty < 0 || ty >= targetAccessor.Height)
                 {
                     continue;
                 }
 
-                Span<TTarget> targetRow = targetAccessor.GetRowSpan(ty);
-                Span<TSource> colorRow = colorAccessor.GetRowSpan(cy);
-                Span<TSource> maskRow = maskAccessor.GetRowSpan(cy);
-                for (int cx = 0; cx < colorAccessor.Width; cx++)
+                var targetRow = targetAccessor.GetRowSpan(ty);
+                var colorRow = colorAccessor.GetRowSpan(cy);
+                var maskRow = maskAccessor.GetRowSpan(cy);
+                for (var cx = 0; cx < colorAccessor.Width; cx++)
                 {
-                    int tx = x + cx;
+                    var tx = x + cx;
                     if (tx >= 0 && tx < targetAccessor.Width)
                     {
-                        MaskColor sourcePixel = GetMaskColor(colorRow, maskRow, cx);
+                        var sourcePixel = GetMaskColor(colorRow, maskRow, cx);
                         ApplyMaskToTarget(targetRow, tx, sourcePixel);
                     }
                 }
@@ -1032,7 +1015,7 @@ public static class CursorHelper
         {
             if (typeof(TTarget) == typeof(Bgra32))
             {
-                ref Bgra32 target = ref Unsafe.As<TTarget, Bgra32>(ref targetRow[targetIndex]);
+                ref var target = ref Unsafe.As<TTarget, Bgra32>(ref targetRow[targetIndex]);
                 target = new(
                     (byte)((target.R & sourcePixel.Mask) ^ sourcePixel.Red),
                     (byte)((target.G & sourcePixel.Mask) ^ sourcePixel.Green),
@@ -1040,7 +1023,7 @@ public static class CursorHelper
             }
             else
             {
-                ref Bgr24 bgrTarget = ref Unsafe.As<TTarget, Bgr24>(ref targetRow[targetIndex]);
+                ref var bgrTarget = ref Unsafe.As<TTarget, Bgr24>(ref targetRow[targetIndex]);
                 bgrTarget = new(
                     (byte)((bgrTarget.R & sourcePixel.Mask) ^ sourcePixel.Red),
                     (byte)((bgrTarget.G & sourcePixel.Mask) ^ sourcePixel.Green),
@@ -1060,13 +1043,13 @@ public static class CursorHelper
     {
         if (typeof(TSource) == typeof(Bgra32))
         {
-            ref Bgra32 reference = ref Unsafe.As<TSource, Bgra32>(ref Unsafe.AsRef(in maskRow[sourceIndex]));
-            ref Bgra32 color = ref Unsafe.As<TSource, Bgra32>(ref Unsafe.AsRef(in colorRow[sourceIndex]));
+            ref var reference = ref Unsafe.As<TSource, Bgra32>(ref Unsafe.AsRef(in maskRow[sourceIndex]));
+            ref var color = ref Unsafe.As<TSource, Bgra32>(ref Unsafe.AsRef(in colorRow[sourceIndex]));
             return new(reference.B, color.R, color.G, color.B);
         }
 
-        ref Bgr24 reference2 = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in maskRow[sourceIndex]));
-        ref Bgr24 bgrColor = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in colorRow[sourceIndex]));
+        ref var reference2 = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in maskRow[sourceIndex]));
+        ref var bgrColor = ref Unsafe.As<TSource, Bgr24>(ref Unsafe.AsRef(in colorRow[sourceIndex]));
         return new(reference2.B, bgrColor.R, bgrColor.G, bgrColor.B);
     }
 

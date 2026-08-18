@@ -22,8 +22,8 @@ public static class BitmapExtensions
         /// <returns>BitmapSource.</returns>
         public BitmapSource ToBitmapSource()
         {
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(bitmap);
-            IntPtr bitmapHandle = bitmap.GetHbitmap();
+            Throw.IfNull(bitmap);
+            var bitmapHandle = bitmap.GetHbitmap();
             try
             {
                 return Imaging.CreateBitmapSourceFromHBitmap(bitmapHandle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -43,7 +43,7 @@ public static class BitmapExtensions
         /// <returns>BitmapSource.</returns>
         public BitmapSource ToBitmapSource()
         {
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(image);
+            Throw.IfNull(image);
             return ((Bitmap)image).ToBitmapSource();
         }
     }

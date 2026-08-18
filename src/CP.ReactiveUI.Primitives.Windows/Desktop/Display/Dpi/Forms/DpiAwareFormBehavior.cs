@@ -2,9 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Windows.Forms;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Forms;
@@ -27,7 +25,7 @@ public sealed class DpiAwareFormBehavior : IDisposable
     /// <param name="form">The form to attach DPI-aware behavior to.</param>
     public DpiAwareFormBehavior(Form form)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(form);
+        Throw.IfNull(form);
         _form = form;
         _handleScope = new(form, DpiAwarenessContext.PerMonitorAwareV2, DpiAwarenessContext.PerMonitorAware);
         DpiHandler = new(needsListenerWorkaround: true);
@@ -67,7 +65,7 @@ public sealed class DpiAwareFormBehavior : IDisposable
     {
         if (_form.IsHandleCreated)
         {
-            long windowHandle = _form.Handle.ToInt64();
+            var windowHandle = _form.Handle.ToInt64();
             _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(windowHandle, (int)WindowsMessages.WM_NCCREATE, 0L, 0L));
             _ = DpiHandler.HandleWindowMessages(WindowMessageInfo.Create(windowHandle, (int)WindowsMessages.WM_CREATE, 0L, 0L));
         }
@@ -79,5 +77,5 @@ public sealed class DpiAwareFormBehavior : IDisposable
     private void OnHandleCreated(object sender, EventArgs e) => InitializeDpiForCurrentHandle();
 
     /// <summary>Throws when this behavior has been disposed.</summary>
-    private void ThrowIfDisposed() => CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_disposed, this);
+    private void ThrowIfDisposed() => Throw.IfDisposed(_disposed, this);
 }

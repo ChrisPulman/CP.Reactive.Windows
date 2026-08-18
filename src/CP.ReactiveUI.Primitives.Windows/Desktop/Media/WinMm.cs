@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Media;
 #else
@@ -58,10 +53,10 @@ public static partial class WinMm
         Func<string, UIntPtr, SoundSettings, bool> playName,
         Func<IntPtr, UIntPtr, SoundSettings, bool> playPointer)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(playBytes);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(playName);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(playPointer);
-        WinMmOperations operations = _operations;
+        Throw.IfNull(playBytes);
+        Throw.IfNull(playName);
+        Throw.IfNull(playPointer);
+        var operations = _operations;
         _operations = new(playBytes, playName, playPointer);
         return Scope.Create(operations, RestoreOperations);
     }

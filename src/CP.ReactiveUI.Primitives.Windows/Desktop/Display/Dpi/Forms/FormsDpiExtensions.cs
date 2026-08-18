@@ -69,8 +69,8 @@ public static class FormsDpiExtensions
     internal static Func<Control, IObservable<WindowMessageInfo>> ExchangeWindowMessageSource(
         Func<Control, IObservable<WindowMessageInfo>> windowMessageSource)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(windowMessageSource);
-        Func<Control, IObservable<WindowMessageInfo>> previousWindowMessageSource = _windowMessageSource;
+        Throw.IfNull(windowMessageSource);
+        var previousWindowMessageSource = _windowMessageSource;
         _windowMessageSource = windowMessageSource;
         return previousWindowMessageSource;
     }

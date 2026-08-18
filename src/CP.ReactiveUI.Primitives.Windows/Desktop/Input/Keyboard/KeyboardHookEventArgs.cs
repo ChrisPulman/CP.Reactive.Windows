@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Text;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -104,7 +100,7 @@ public class KeyboardHookEventArgs : EventArgs
     /// <returns>The calculated event time.</returns>
     public DateTimeOffset GetEventTime(TimeProvider timeProvider)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(timeProvider);
+        Throw.IfNull(timeProvider);
         TimeSpan runningTimeSpan = TimeSpan.FromMilliseconds(checked(Environment.TickCount - TimeStamp));
         return timeProvider.GetLocalNow().Subtract(runningTimeSpan);
     }

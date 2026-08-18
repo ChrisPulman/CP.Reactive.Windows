@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
 #else
@@ -60,16 +57,16 @@ internal sealed class WindowsNativeHookApi : INativeHookApi
         Func<HookTypes, LowLevelHookProc, IntPtr, uint, IntPtr> setWindowsHookEx,
         Func<IntPtr, bool> unhookWindowsHookEx)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(callNextHookEx);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getAsyncKeyState);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getKeyState);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setWindowsHookEx);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unhookWindowsHookEx);
-        Func<IntPtr, int, IntPtr, IntPtr, IntPtr> previousCallNextHookEx = _callNextHookEx;
-        Func<VirtualKeyCode, short> previousGetAsyncKeyState = _getAsyncKeyState;
-        Func<VirtualKeyCode, short> previousGetKeyState = _getKeyState;
-        Func<HookTypes, LowLevelHookProc, IntPtr, uint, IntPtr> previousSetWindowsHookEx = _setWindowsHookEx;
-        Func<IntPtr, bool> previousUnhookWindowsHookEx = _unhookWindowsHookEx;
+        Throw.IfNull(callNextHookEx);
+        Throw.IfNull(getAsyncKeyState);
+        Throw.IfNull(getKeyState);
+        Throw.IfNull(setWindowsHookEx);
+        Throw.IfNull(unhookWindowsHookEx);
+        var previousCallNextHookEx = _callNextHookEx;
+        var previousGetAsyncKeyState = _getAsyncKeyState;
+        var previousGetKeyState = _getKeyState;
+        var previousSetWindowsHookEx = _setWindowsHookEx;
+        var previousUnhookWindowsHookEx = _unhookWindowsHookEx;
         _callNextHookEx = callNextHookEx;
         _getAsyncKeyState = getAsyncKeyState;
         _getKeyState = getKeyState;

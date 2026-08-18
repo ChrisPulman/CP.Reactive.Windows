@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -36,28 +31,31 @@ public static class ClipboardFileExtensions
     {
         /// <summary>Get a list of file-names on the clipboard.</summary>
         /// <returns>IEnumerable of string.</returns>
-        public unsafe IEnumerable<string> GetFileNames()
+        public IEnumerable<string> GetFileNames()
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            using ClipboardNativeInfo readInfo = clipboardAccessToken.ReadInfo((uint)StandardClipboardFormats.Drop);
-            int files = NativeMethods.DragQueryFile(readInfo.GlobalHandle, uint.MaxValue, null, 0);
-            if (files <= 0)
+            using var readInfo = clipboardAccessToken.ReadInfo((uint)StandardClipboardFormats.Drop);
+            unsafe
             {
-                return [];
-            }
-
-            List<string> result = new(files);
-            char* filename = stackalloc char[MaximumPathLength];
-            for (uint i = 0U; i < files; i = checked(i + 1))
-            {
-                int characterCount = NativeMethods.DragQueryFile(readInfo.GlobalHandle, i, filename, MaximumPathLength);
-                if (characterCount != 0)
+                var files = NativeMethods.DragQueryFile(readInfo.GlobalHandle, uint.MaxValue, null, 0);
+                if (files <= 0)
                 {
-                    result.Add(new(filename, 0, characterCount));
+                    return [];
                 }
-            }
 
-            return result;
+                List<string> result = new(files);
+                var filename = stackalloc char[MaximumPathLength];
+                for (var i = 0U; i < files; i = checked(i + 1))
+                {
+                    var characterCount = NativeMethods.DragQueryFile(readInfo.GlobalHandle, i, filename, MaximumPathLength);
+                    if (characterCount != 0)
+                    {
+                        result.Add(new(filename, 0, characterCount));
+                    }
+                }
+
+                return result;
+            }
         }
 
         /// <summary>Set a list of file-names on the clipboard in CF_HDROP (Drop) format.</summary>
@@ -66,23 +64,23 @@ public static class ClipboardFileExtensions
         {
             clipboardAccessToken.ThrowWhenNoAccess();
             List<string> files = new();
-            int dataSize = DropFilesHeaderSize + WideCharacterSize;
+            var dataSize = DropFilesHeaderSize + WideCharacterSize;
             checked
             {
-                foreach (string fileName in fileNames)
+                foreach (var fileName in fileNames)
                 {
                     files.Add(fileName);
                     dataSize += (fileName.Length + TerminalCharacterCount) * WideCharacterSize;
                 }
 
-                using ClipboardNativeInfo writeInfo =
+                using var writeInfo =
                     clipboardAccessToken.WriteInfo((uint)StandardClipboardFormats.Drop, dataSize);
                 Marshal.WriteInt32(writeInfo.MemoryPtr, 0, DropFilesHeaderSize);
                 Marshal.WriteInt32(writeInfo.MemoryPtr, WideFlagOffset, 1);
-                int offset = DropFilesHeaderSize;
-                foreach (string file in files)
+                var offset = DropFilesHeaderSize;
+                foreach (var file in files)
                 {
-                    byte[] fileBytes = Encoding.Unicode.GetBytes($"{file}\u0000");
+                    var fileBytes = Encoding.Unicode.GetBytes($"{file}\u0000");
                     Marshal.Copy(fileBytes, 0, writeInfo.MemoryPtr + offset, fileBytes.Length);
                     offset += fileBytes.Length;
                 }

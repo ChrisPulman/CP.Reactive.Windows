@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs;
 #else
@@ -60,14 +57,14 @@ public static class FileDialog
 
         if (filters is not null)
         {
-            for (int i = 0; i < filters.Length; i++)
+            for (var i = 0; i < filters.Length; i++)
             {
                 (string, string) f = filters[i];
                 _ = builder.AddFilter(f.Item1, f.Item2);
             }
         }
 
-        FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
+        var result = builder.ShowDialog(ownerHandle, DialogExecutor);
         return !result.WasCancelled ? result.SelectedPath : null;
     }
 
@@ -93,7 +90,7 @@ public static class FileDialog
     /// <exception cref="T:System.PlatformNotSupportedException">Called on a non-Windows platform.</exception>
     public static IReadOnlyList<string> PickFilesToOpen(IntPtr ownerHandle, string title, string initialDirectory, (string Name, string Pattern)[] filters)
     {
-        FileOpenDialogBuilder builder = new FileOpenDialogBuilder().AllowMultipleSelection();
+        var builder = new FileOpenDialogBuilder().AllowMultipleSelection();
         if (title is not null)
         {
             _ = builder.WithTitle(title);
@@ -106,14 +103,14 @@ public static class FileDialog
 
         if (filters is not null)
         {
-            for (int i = 0; i < filters.Length; i++)
+            for (var i = 0; i < filters.Length; i++)
             {
                 (string, string) f = filters[i];
                 _ = builder.AddFilter(f.Item1, f.Item2);
             }
         }
 
-        FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
+        var result = builder.ShowDialog(ownerHandle, DialogExecutor);
         return !result.WasCancelled ? result.SelectedPaths : [];
     }
 
@@ -158,14 +155,14 @@ public static class FileDialog
 
         if (filters is not null)
         {
-            for (int i = 0; i < filters.Length; i++)
+            for (var i = 0; i < filters.Length; i++)
             {
                 (string, string) f = filters[i];
                 _ = builder.AddFilter(f.Item1, f.Item2);
             }
         }
 
-        FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
+        var result = builder.ShowDialog(ownerHandle, DialogExecutor);
         return !result.WasCancelled ? result.SelectedPath : null;
     }
 
@@ -195,7 +192,7 @@ public static class FileDialog
             _ = builder.WithInitialDirectory(initialDirectory);
         }
 
-        FileDialogResult result = builder.ShowDialog(ownerHandle, DialogExecutor);
+        var result = builder.ShowDialog(ownerHandle, DialogExecutor);
         return !result.WasCancelled ? result.SelectedPath : null;
     }
 

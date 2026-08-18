@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -99,8 +97,8 @@ public static class ClipboardCloudExtensions
     private static void SetDWordFormat(IClipboardAccessToken clipboardAccessToken, string format, uint value)
     {
         clipboardAccessToken.ThrowWhenNoAccess();
-        uint formatId = ClipboardFormatExtensions.MapFormatToId(format);
-        using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, DWordByteCount);
+        var formatId = ClipboardFormatExtensions.MapFormatToId(format);
+        using var writeInfo = clipboardAccessToken.WriteInfo(formatId, DWordByteCount);
         Marshal.WriteInt32(writeInfo.MemoryPtr, checked((int)value));
     }
 }

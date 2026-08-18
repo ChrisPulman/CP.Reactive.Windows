@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 #else
@@ -29,7 +26,7 @@ public static partial class WindowsMessage
     /// <summary>Gets the name of a windows message that was registered with RegisterWindowMessage.</summary>
     /// <param name="messageId">The message ID returned by RegisterWindowMessage.</param>
     /// <returns>The message name, or <c>null</c> when the message cannot be resolved.</returns>
-    public static unsafe string GetWindowsMessage(uint messageId)
+    public static string GetWindowsMessage(uint messageId)
     {
         if (messageId < FirstRegisteredMessage)
         {
@@ -37,12 +34,15 @@ public static partial class WindowsMessage
             return windowsMessages.ToString();
         }
 
-        char* clipboardFormatName = stackalloc char[ClipboardFormatNameLength];
-        int numberOfChars = ClipboardNativeMethods.GetClipboardFormatName(
-            messageId,
-            clipboardFormatName,
-            ClipboardFormatNameLength);
-        return numberOfChars > 0 ? new(clipboardFormatName, 0, numberOfChars) : null;
+        unsafe
+        {
+            var clipboardFormatName = stackalloc char[ClipboardFormatNameLength];
+            var numberOfChars = ClipboardNativeMethods.GetClipboardFormatName(
+                messageId,
+                clipboardFormatName,
+                ClipboardFormatNameLength);
+            return numberOfChars > 0 ? new(clipboardFormatName, 0, numberOfChars) : null;
+        }
     }
 
     /// <summary>Registers a Windows message.</summary>
@@ -57,8 +57,8 @@ public static partial class WindowsMessage
     /// <returns>A scope that restores the production registration operation.</returns>
     internal static IDisposable OverrideRegistrationForTesting(Func<string, uint> registerWindowsMessage)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registerWindowsMessage);
-        Func<string, uint> previous = _registerWindowsMessageOverride;
+        Throw.IfNull(registerWindowsMessage);
+        var previous = _registerWindowsMessageOverride;
         _registerWindowsMessageOverride = registerWindowsMessage;
         return Scope.Create(previous, static previousOperation =>
         {

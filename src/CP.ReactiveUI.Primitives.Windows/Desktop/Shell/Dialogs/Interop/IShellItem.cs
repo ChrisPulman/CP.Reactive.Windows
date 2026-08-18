@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -29,7 +26,7 @@ internal class IShellItem : ComObject
     internal virtual unsafe string GetDisplayName(ShellItemDisplayName displayName)
     {
         IntPtr name = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, ShellItemDisplayName, out IntPtr, int>)(void*)GetMethod(GetDisplayNameSlot))(Handle, displayName, out name));
+        ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, ShellItemDisplayName, out IntPtr, int>)(void*)GetMethod(GetDisplayNameSlot))(Handle, displayName, out name));
         try
         {
             return Marshal.PtrToStringUni(name);

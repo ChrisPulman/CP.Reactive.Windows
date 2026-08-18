@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -66,7 +64,7 @@ internal class FileDialogComObject : ComObject
         using NativeFilterSpecs nativeFilters = new(filterSpecs);
         delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, uint, IntPtr, int>)(void*)GetMethod(SetFileTypesSlot);
-        ComObject.ThrowIfFailed(nativeFilters.SetFileTypes(method, Handle));
+        ThrowIfFailed(nativeFilters.SetFileTypes(method, Handle));
     }
 
     /// <summary>Sets the selected file type index.</summary>
@@ -75,7 +73,7 @@ internal class FileDialogComObject : ComObject
     {
         delegate* unmanaged[Stdcall]<IntPtr, uint, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, uint, int>)(void*)GetMethod(SetFileTypeIndexSlot);
-        ComObject.ThrowIfFailed(method(Handle, fileTypeIndex));
+        ThrowIfFailed(method(Handle, fileTypeIndex));
     }
 
     /// <summary>Sets the dialog options.</summary>
@@ -84,7 +82,7 @@ internal class FileDialogComObject : ComObject
     {
         delegate* unmanaged[Stdcall]<IntPtr, FileOpenOptions, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, FileOpenOptions, int>)(void*)GetMethod(SetOptionsSlot);
-        ComObject.ThrowIfFailed(method(Handle, options));
+        ThrowIfFailed(method(Handle, options));
     }
 
     /// <summary>Sets the initial folder.</summary>
@@ -93,7 +91,7 @@ internal class FileDialogComObject : ComObject
     {
         delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, IntPtr, int>)(void*)GetMethod(SetFolderSlot);
-        ComObject.ThrowIfFailed(method(Handle, shellItem.Handle));
+        ThrowIfFailed(method(Handle, shellItem.Handle));
     }
 
     /// <summary>Sets the file name.</summary>
@@ -104,7 +102,7 @@ internal class FileDialogComObject : ComObject
             (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetFileNameSlot);
         fixed (char* namePointer = name)
         {
-            ComObject.ThrowIfFailed(method(Handle, namePointer));
+            ThrowIfFailed(method(Handle, namePointer));
         }
     }
 
@@ -116,7 +114,7 @@ internal class FileDialogComObject : ComObject
             (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetTitleSlot);
         fixed (char* titlePointer = title)
         {
-            ComObject.ThrowIfFailed(method(Handle, titlePointer));
+            ThrowIfFailed(method(Handle, titlePointer));
         }
     }
 
@@ -127,7 +125,7 @@ internal class FileDialogComObject : ComObject
         IntPtr item = default;
         delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, out IntPtr, int>)(void*)GetMethod(GetResultSlot);
-        ComObject.ThrowIfFailed(method(Handle, out item));
+        ThrowIfFailed(method(Handle, out item));
         return new(item);
     }
 
@@ -139,7 +137,7 @@ internal class FileDialogComObject : ComObject
         delegate* unmanaged[Stdcall]<IntPtr, IntPtr, FileDialogAddPlaceFlags, int> method =
             (delegate* unmanaged[Stdcall]<IntPtr, IntPtr, FileDialogAddPlaceFlags, int>)
                 (void*)GetMethod(AddPlaceSlot);
-        ComObject.ThrowIfFailed(method(Handle, shellItem.Handle, addPlaceFlags));
+        ThrowIfFailed(method(Handle, shellItem.Handle, addPlaceFlags));
     }
 
     /// <summary>Sets the default extension.</summary>
@@ -150,7 +148,7 @@ internal class FileDialogComObject : ComObject
             (delegate* unmanaged[Stdcall]<IntPtr, char*, int>)(void*)GetMethod(SetDefaultExtensionSlot);
         fixed (char* extensionPointer = defaultExtension)
         {
-            ComObject.ThrowIfFailed(method(Handle, extensionPointer));
+            ThrowIfFailed(method(Handle, extensionPointer));
         }
     }
 }

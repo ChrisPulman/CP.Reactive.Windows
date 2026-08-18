@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Structs;
 #else
@@ -101,7 +98,7 @@ public readonly struct DevBroadcastHandle : IEquatable<DevBroadcastHandle>
     /// <returns>The data byte.</returns>
     private byte GetDataByte()
     {
-        byte[] data = _data;
+        var data = _data;
         return data is null || data.Length <= 0 ? (byte)0 : data[0];
     }
 }

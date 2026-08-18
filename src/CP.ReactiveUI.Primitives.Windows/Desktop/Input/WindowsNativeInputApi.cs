@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
 #else
@@ -49,9 +44,9 @@ internal sealed partial class WindowsNativeInputApi : INativeInputApi
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(GetLastInputInfoOperation getLastInputInfo, SendInputOperation sendInput)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getLastInputInfo);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(sendInput);
-        NativeInputOperations operations = _operations;
+        Throw.IfNull(getLastInputInfo);
+        Throw.IfNull(sendInput);
+        var operations = _operations;
         _operations = new(getLastInputInfo, sendInput);
         return Scope.Create(operations, static operations2 =>
         {

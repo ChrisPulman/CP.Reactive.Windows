@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals;
 #else
@@ -21,7 +15,7 @@ internal static unsafe partial class NativeMethods
 #endif
 {
     /// <summary>Lazy shell32 module handle.</summary>
-    private static readonly Lazy<IntPtr> Shell32Module = new(static () => System.Runtime.InteropServices.NativeLibrary.Load("shell32.dll"));
+    private static readonly Lazy<IntPtr> Shell32Module = new(static () => NativeLibrary.Load("shell32.dll"));
 
     /// <summary>Clipboard empty operation used by this type.</summary>
     private static Func<bool> _emptyClipboard = EmptyClipboardNative;
@@ -186,16 +180,13 @@ internal static unsafe partial class NativeMethods
         Func<IntPtr, bool> addClipboardFormatListener,
         Func<IntPtr, bool> removeClipboardFormatListener)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(addClipboardFormatListener);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(removeClipboardFormatListener);
-        Func<IntPtr, bool> previousAdd = _addClipboardFormatListener;
-        Func<IntPtr, bool> previousRemove = _removeClipboardFormatListener;
+        Throw.IfNull(addClipboardFormatListener);
+        Throw.IfNull(removeClipboardFormatListener);
+        var previousAdd = _addClipboardFormatListener;
+        var previousRemove = _removeClipboardFormatListener;
         _addClipboardFormatListener = addClipboardFormatListener;
         _removeClipboardFormatListener = removeClipboardFormatListener;
-        return Scope.Create((previousAdd, previousRemove), static previous =>
-        {
-            (_addClipboardFormatListener, _removeClipboardFormatListener) = previous;
-        });
+        return Scope.Create((previousAdd, previousRemove), static previous => (_addClipboardFormatListener, _removeClipboardFormatListener) = previous);
     }
 
     /// <summary>Overrides clipboard emptying for deterministic tests.</summary>
@@ -203,8 +194,8 @@ internal static unsafe partial class NativeMethods
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideEmptyClipboardForTesting(Func<bool> emptyClipboard)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(emptyClipboard);
-        Func<bool> previous = _emptyClipboard;
+        Throw.IfNull(emptyClipboard);
+        var previous = _emptyClipboard;
         _emptyClipboard = emptyClipboard;
         return Scope.Create(previous, static previousOperation => _emptyClipboard = previousOperation);
     }
@@ -214,8 +205,8 @@ internal static unsafe partial class NativeMethods
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideDragQueryFileForTesting(DragQueryFileOperation dragQueryFile)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(dragQueryFile);
-        DragQueryFileOperation previous = _dragQueryFile;
+        Throw.IfNull(dragQueryFile);
+        var previous = _dragQueryFile;
         _dragQueryFile = dragQueryFile;
         return Scope.Create(previous, static previousOperation => _dragQueryFile = previousOperation);
     }
@@ -225,7 +216,7 @@ internal static unsafe partial class NativeMethods
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideDragQueryFileForTesting(Func<IntPtr, uint, int> dragQueryFile)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(dragQueryFile);
+        Throw.IfNull(dragQueryFile);
         return OverrideDragQueryFileForTesting((dropHandle, fileIndex, _, _) => dragQueryFile(dropHandle, fileIndex));
     }
 
@@ -234,8 +225,8 @@ internal static unsafe partial class NativeMethods
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideSetClipboardDataForTesting(Func<uint, IntPtr, IntPtr> setClipboardData)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setClipboardData);
-        Func<uint, IntPtr, IntPtr> setClipboardData2 = _setClipboardData;
+        Throw.IfNull(setClipboardData);
+        var setClipboardData2 = _setClipboardData;
         _setClipboardData = setClipboardData;
         return Scope.Create(setClipboardData2, static previous => _setClipboardData = previous);
     }
@@ -310,7 +301,7 @@ internal static unsafe partial class NativeMethods
         char* fileName,
         int characterCount)
     {
-        IntPtr export = System.Runtime.InteropServices.NativeLibrary.GetExport(Shell32Module.Value, "DragQueryFileW");
+        var export = NativeLibrary.GetExport(Shell32Module.Value, "DragQueryFileW");
         delegate* unmanaged[Stdcall]<IntPtr, uint, char*, int, int> dragQueryFile =
             (delegate* unmanaged[Stdcall]<IntPtr, uint, char*, int, int>)(void*)export;
         return dragQueryFile(dropHandle, fileIndex, fileName, characterCount);

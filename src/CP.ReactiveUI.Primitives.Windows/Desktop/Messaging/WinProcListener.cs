@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
 #if NETFRAMEWORK
 using System.Security.Permissions;
 #endif
@@ -18,6 +16,9 @@ namespace CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
 /// <summary>This is a Listener for WinProc messages.</summary>
 public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListenerState
 {
+    /// <summary>The control whose native handle is observed.</summary>
+    private readonly Control _control;
+
     /// <summary>The subscribed window procedure hooks.</summary>
     private List<HwndSourceHook> _hooks = new();
 
@@ -25,16 +26,17 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <param name="control">Control to listen to.</param>
     public WinProcListener(Control control)
     {
-        if (control.IsHandleCreated && Handle == IntPtr.Zero)
+        Throw.IfNull(control);
+        Throw.IfDisposed(control.IsDisposed, control);
+
+        _control = control;
+        control.HandleCreated += OnHandleCreated;
+        control.HandleDestroyed += OnHandleDestroyed;
+        control.Disposed += OnControlDisposed;
+        if (control.IsHandleCreated)
         {
             AssignHandle(control.Handle);
         }
-        else
-        {
-            control.HandleCreated += OnHandleCreated;
-        }
-
-        control.HandleDestroyed += OnHandleDestroyed;
     }
 
     /// <summary>Gets a value indicating whether the WinProcListener is already disposed.</summary>
@@ -43,15 +45,32 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <inheritdoc />
     public void Dispose()
     {
+        if (IsDisposed)
+        {
+            return;
+        }
+
         IsDisposed = true;
-        _hooks = null;
-        ReleaseHandle();
+        _control.HandleCreated -= OnHandleCreated;
+        _control.HandleDestroyed -= OnHandleDestroyed;
+        _control.Disposed -= OnControlDisposed;
+        _hooks = new();
+        if (Handle != IntPtr.Zero)
+        {
+            ReleaseHandle();
+        }
     }
 
     /// <summary>Adds an event handler.</summary>
     /// <param name="hook">HwndSourceHook.</param>
     public void AddHook(HwndSourceHook hook)
     {
+        Throw.IfNull(hook);
+        if (IsDisposed)
+        {
+            return;
+        }
+
         List<HwndSourceHook> newHooks = new(_hooks);
         newHooks.Add(hook);
         _hooks = newHooks;
@@ -61,6 +80,12 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <param name="hook">HwndSourceHook, The event handler to remove.</param>
     public void RemoveHook(HwndSourceHook hook)
     {
+        Throw.IfNull(hook);
+        if (IsDisposed)
+        {
+            return;
+        }
+
         List<HwndSourceHook> newHooks = new(_hooks);
         _ = newHooks.Remove(hook);
         _hooks = newHooks;
@@ -73,8 +98,8 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <returns><c>true</c> when a hook handles the message.</returns>
     internal static bool ProcessHooksForTesting(IWinProcListenerState listenerState, IEnumerable<HwndSourceHook> hooks, ref Message message)
     {
-        bool handled = false;
-        foreach (HwndSourceHook sourceHook in hooks ?? new List<HwndSourceHook>())
+        var handled = false;
+        foreach (var sourceHook in hooks ?? new List<HwndSourceHook>())
         {
             if (listenerState.IsDisposed)
             {
@@ -108,8 +133,12 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <param name="e">EventArgs.</param>
     private void OnHandleCreated(object sender, EventArgs e)
     {
-        IntPtr handle = ((Control)sender).Handle;
-        AssignHandle(handle);
+        _ = sender;
+        _ = e;
+        if (!IsDisposed && Handle == IntPtr.Zero)
+        {
+            AssignHandle(_control.Handle);
+        }
     }
 
     /// <summary>Remove the handle.</summary>
@@ -117,8 +146,22 @@ public sealed class WinProcListener : NativeWindow, IDisposable, IWinProcListene
     /// <param name="e">EventArgs.</param>
     private void OnHandleDestroyed(object sender, EventArgs e)
     {
-        ReleaseHandle();
-        _hooks = null;
+        _ = sender;
+        _ = e;
+        if (Handle != IntPtr.Zero)
+        {
+            ReleaseHandle();
+        }
+    }
+
+    /// <summary>Disposes the listener when its control is disposed.</summary>
+    /// <param name="sender">The event source.</param>
+    /// <param name="e">The event arguments.</param>
+    private void OnControlDisposed(object sender, EventArgs e)
+    {
+        _ = sender;
+        _ = e;
+        Dispose();
     }
 
     /// <summary>Helper class to process the message.</summary>

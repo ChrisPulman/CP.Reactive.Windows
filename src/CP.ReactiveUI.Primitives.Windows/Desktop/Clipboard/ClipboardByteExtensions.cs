@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.IO;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -41,8 +38,8 @@ public static class ClipboardByteExtensions
         /// <returns>byte array.</returns>
         public byte[] GetAsBytes(uint formatId)
         {
-            using ClipboardNativeInfo readInfo = clipboardAccessToken.ReadInfo(formatId);
-            byte[] bytes = new byte[readInfo.Size];
+            using var readInfo = clipboardAccessToken.ReadInfo(formatId);
+            var bytes = new byte[readInfo.Size];
             Marshal.Copy(readInfo.MemoryPtr, bytes, 0, readInfo.Size);
             return bytes;
         }
@@ -62,7 +59,7 @@ public static class ClipboardByteExtensions
         /// <param name="formatId">uint with the format ID to place the bytes under.</param>
         public unsafe void SetAsBytes(byte[] bytes, uint formatId)
         {
-            using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, bytes.Length);
+            using var writeInfo = clipboardAccessToken.WriteInfo(formatId, bytes.Length);
             using UnmanagedMemoryStream unsafeMemoryStream = new((byte*)(void*)writeInfo.MemoryPtr, bytes.Length, bytes.Length, FileAccess.Write);
             unsafeMemoryStream.Write(bytes, 0, bytes.Length);
         }

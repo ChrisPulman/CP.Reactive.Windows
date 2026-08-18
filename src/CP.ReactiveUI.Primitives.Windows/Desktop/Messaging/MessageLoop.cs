@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 #else
@@ -75,9 +69,9 @@ public static class MessageLoop
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(GetMessageOperation getMessage, DispatchOperation dispatch)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getMessage);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(dispatch);
-        MessageLoopOperations operations = _operations;
+        Throw.IfNull(getMessage);
+        Throw.IfNull(dispatch);
+        var operations = _operations;
         _operations = new(getMessage, dispatch);
         return Scope.Create(operations, static previous =>
         {

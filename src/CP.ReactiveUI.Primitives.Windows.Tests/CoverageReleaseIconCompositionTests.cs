@@ -67,7 +67,7 @@ public sealed class CoverageReleaseIconCompositionTests
         {
             var executablePath = Path.Combine(temporaryDirectory.FullName, "app.exe");
             var manifestPath = Path.Combine(temporaryDirectory.FullName, "AppxManifest.xml");
-            File.WriteAllBytes(executablePath, []);
+            await WriteAllBytesAsync(executablePath, []);
             const string manifest = "<Package xmlns=\"http://schemas.microsoft.com/appx/manifest/foundation/windows10\"><Properties><Logo>C:</Logo></Properties></Package>";
 #if NETFRAMEWORK
             File.WriteAllText(manifestPath, manifest);
@@ -138,6 +138,21 @@ public sealed class CoverageReleaseIconCompositionTests
         IsApp = static _ => false,
         TrySendMessage = static (IntPtr _, WindowsMessages _, IntPtr _, out IntPtr result) => SetNoIcon(out result),
     };
+
+    /// <summary>Writes bytes asynchronously across all target frameworks.</summary>
+    /// <param name="path">The target file path.</param>
+    /// <param name="bytes">The bytes to write.</param>
+    /// <returns>A task representing the asynchronous write.</returns>
+    private static async Task WriteAllBytesAsync(string path, byte[] bytes)
+    {
+#if NETFRAMEWORK
+        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+        await stream.WriteAsync(bytes, 0, bytes.Length);
+#else
+        await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+        await stream.WriteAsync(bytes.AsMemory(), CancellationToken.None);
+#endif
+    }
 
     /// <summary>Sets a zero icon result for a message probe.</summary>
     /// <param name="result">The returned icon handle.</param>

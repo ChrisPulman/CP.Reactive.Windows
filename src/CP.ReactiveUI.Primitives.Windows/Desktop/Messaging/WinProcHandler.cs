@@ -2,11 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
 using System.Windows.Interop;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
@@ -67,14 +63,14 @@ public class WinProcHandler
     /// <returns>IDisposable which unsubscribes the hWndSourceHook when Dispose is called.</returns>
     public IDisposable Subscribe(WinProcHandlerHook winProcHandlerHook)
     {
-        List<WinProcHandlerHook> hooks = _hooks;
+        var hooks = _hooks;
         if (hooks is not null && hooks.Contains(winProcHandlerHook))
         {
             return EmptyDisposable.Instance;
         }
 
         GetMessageHandlerWindow(this).AddHook(winProcHandlerHook.Hook);
-        List<WinProcHandlerHook> newHooks = ((_hooks is null) ? new List<WinProcHandlerHook>() : new List<WinProcHandlerHook>(_hooks));
+        var newHooks = ((_hooks is null) ? new List<WinProcHandlerHook>() : new List<WinProcHandlerHook>(_hooks));
         newHooks.Add(winProcHandlerHook);
         _hooks = newHooks;
         return Scope.Create(winProcHandlerHook, Unsubscribe);
@@ -83,7 +79,7 @@ public class WinProcHandler
     /// <summary>Unsubscribe all current hooks.</summary>
     public void UnsubscribeAllHooks()
     {
-        foreach (WinProcHandlerHook winProcHandlerHook in _hooks ?? new List<WinProcHandlerHook>())
+        foreach (var winProcHandlerHook in _hooks ?? new List<WinProcHandlerHook>())
         {
             GetMessageHandlerWindow(this).RemoveHook(winProcHandlerHook.Hook);
             winProcHandlerHook.Disposable?.Dispose();
@@ -102,9 +98,9 @@ public class WinProcHandler
     /// <returns>A scope that restores the previous factory and source.</returns>
     internal static IDisposable OverrideMessageWindowFactoryForTesting(Func<IMessageHandlerWindow> messageWindowFactory)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messageWindowFactory);
-        Func<IMessageHandlerWindow> messageWindowFactory2 = _messageWindowFactory;
-        IMessageHandlerWindow previousSource = _messageSource;
+        Throw.IfNull(messageWindowFactory);
+        var messageWindowFactory2 = _messageWindowFactory;
+        var previousSource = _messageSource;
         _messageWindowFactory = messageWindowFactory;
         _messageSource = null;
         return Scope.Create((MessageWindowFactory: messageWindowFactory2, MessageSource: previousSource), static previous =>

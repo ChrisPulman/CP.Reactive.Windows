@@ -2,21 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native;
-using CP.ReactiveUI.Primitives.Windows.Native.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Extensions;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi;
 using CP.ReactiveUI.Primitives.Windows.Native.Gdi.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-using log4net;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
@@ -31,25 +17,25 @@ public static partial class NativeDpiMethods
     {
         /// <summary>Lazy-loaded Shcore module handle.</summary>
         private static readonly Lazy<IntPtr> ShcoreModule =
-            new(static () => System.Runtime.InteropServices.NativeLibrary.Load(
+            new(static () => NativeLibrary.Load(
                 "shcore.dll",
                 typeof(NativeMethods).Assembly,
                 DllImportSearchPath.System32));
 
         /// <summary>Lazy-loaded User32 module handle.</summary>
         private static readonly Lazy<IntPtr> User32Module =
-            new(static () => System.Runtime.InteropServices.NativeLibrary.Load(
+            new(static () => NativeLibrary.Load(
                 "user32.dll",
                 typeof(NativeMethods).Assembly,
                 DllImportSearchPath.System32));
 
         /// <summary>Provides Shcore export pointers.</summary>
         private static Func<string, IntPtr> _shcoreExportProvider =
-            static exportName => System.Runtime.InteropServices.NativeLibrary.GetExport(ShcoreModule.Value, exportName);
+            static exportName => NativeLibrary.GetExport(ShcoreModule.Value, exportName);
 
         /// <summary>Provides User32 export pointers.</summary>
         private static Func<string, IntPtr> _user32ExportProvider =
-            static exportName => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, exportName);
+            static exportName => NativeLibrary.GetExport(User32Module.Value, exportName);
 
         /// <summary>Retrieves the DPI awareness for a process.</summary>
         /// <param name="processHandle">The process handle to query, or zero for the current process.</param>
@@ -360,10 +346,10 @@ public static partial class NativeDpiMethods
         /// <returns>A disposable scope that restores the previous export providers.</returns>
         internal static IDisposable ExchangeExportProviders(Func<string, IntPtr> shcoreExportProvider, Func<string, IntPtr> user32ExportProvider)
         {
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(shcoreExportProvider);
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(user32ExportProvider);
-            Func<string, IntPtr> previousShcoreExportProvider = _shcoreExportProvider;
-            Func<string, IntPtr> previousUser32ExportProvider = _user32ExportProvider;
+            Throw.IfNull(shcoreExportProvider);
+            Throw.IfNull(user32ExportProvider);
+            var previousShcoreExportProvider = _shcoreExportProvider;
+            var previousUser32ExportProvider = _user32ExportProvider;
             _shcoreExportProvider = shcoreExportProvider;
             _user32ExportProvider = user32ExportProvider;
             return Scope.Create(
@@ -691,8 +677,8 @@ public static partial class NativeDpiMethods
     /// <returns>The previous native DPI API.</returns>
     internal static INativeDpiApi ExchangeApi(INativeDpiApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        INativeDpiApi previousApi = _api;
+        Throw.IfNull(api);
+        var previousApi = _api;
         _api = api;
         return previousApi;
     }
@@ -702,8 +688,8 @@ public static partial class NativeDpiMethods
     /// <returns>The previous DPI fallback interop implementation.</returns>
     internal static IDpiCoreInterop ExchangeCoreInterop(IDpiCoreInterop coreInterop)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(coreInterop);
-        IDpiCoreInterop previousCoreInterop = _coreInterop;
+        Throw.IfNull(coreInterop);
+        var previousCoreInterop = _coreInterop;
         _coreInterop = coreInterop;
         return previousCoreInterop;
     }
@@ -718,12 +704,12 @@ public static partial class NativeDpiMethods
         Func<bool> isWindows10OrLater,
         Func<int, bool> isWindows10BuildOrLater)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isWindows81OrLater);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isWindows10OrLater);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isWindows10BuildOrLater);
-        Func<bool> previousIsWindows81OrLater = _isWindows81OrLater;
-        Func<bool> previousIsWindows10OrLater = _isWindows10OrLater;
-        Func<int, bool> previousIsWindows10BuildOrLater = _isWindows10BuildOrLater;
+        Throw.IfNull(isWindows81OrLater);
+        Throw.IfNull(isWindows10OrLater);
+        Throw.IfNull(isWindows10BuildOrLater);
+        var previousIsWindows81OrLater = _isWindows81OrLater;
+        var previousIsWindows10OrLater = _isWindows10OrLater;
+        var previousIsWindows10BuildOrLater = _isWindows10BuildOrLater;
         _isWindows81OrLater = isWindows81OrLater;
         _isWindows10OrLater = isWindows10OrLater;
         _isWindows10BuildOrLater = isWindows10BuildOrLater;
@@ -763,7 +749,7 @@ public static partial class NativeDpiMethods
                 return (int)dpiX;
             }
 
-            using SafeWindowDcHandle deviceContextHandle = _coreInterop.FromWindow(windowHandle);
+            using var deviceContextHandle = _coreInterop.FromWindow(windowHandle);
             return deviceContextHandle is null
                 ? DpiCalculator.DefaultScreenDpi
                 : _coreInterop.GetDeviceCaps(deviceContextHandle, DeviceCaps.LOGPIXELSX);

@@ -2,16 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native;
-using CP.ReactiveUI.Primitives.Windows.Native.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Extensions;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using log4net;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
 #else
@@ -79,7 +69,7 @@ public sealed class DpiHandler : IDisposable
             return true;
         }
 
-        Win32Error error = Win32.GetLastErrorCode();
+        var error = Win32.GetLastErrorCode();
         if (Log.IsDebugEnabled)
         {
             Log.DebugFormat("Error enabling non client dpi scaling : {0}", Win32.GetMessage(error));
@@ -238,8 +228,8 @@ public sealed class DpiHandler : IDisposable
     /// <returns>The previous availability check.</returns>
     internal static Func<bool> ExchangeWindows10Availability(Func<bool> isWindows10OrLater)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isWindows10OrLater);
-        Func<bool> previousIsWindows10OrLater = _isWindows10OrLater;
+        Throw.IfNull(isWindows10OrLater);
+        var previousIsWindows10OrLater = _isWindows10OrLater;
         _isWindows10OrLater = isWindows10OrLater;
         return previousIsWindows10OrLater;
     }
@@ -250,8 +240,8 @@ public sealed class DpiHandler : IDisposable
     internal static SetWindowPositionOperation ExchangeWindowPositionOperation(
         SetWindowPositionOperation setWindowPosition)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setWindowPosition);
-        SetWindowPositionOperation previousSetWindowPosition = _setWindowPosition;
+        Throw.IfNull(setWindowPosition);
+        var previousSetWindowPosition = _setWindowPosition;
         _setWindowPosition = setWindowPosition;
         return previousSetWindowPosition;
     }
@@ -278,7 +268,7 @@ public sealed class DpiHandler : IDisposable
     /// <returns><see langword="true" /> when the message was handled.</returns>
     internal bool HandleWindowMessages(WindowMessageInfo windowMessageInfo)
     {
-        DpiMessageResult result = ProcessWindowMessage(windowMessageInfo);
+        var result = ProcessWindowMessage(windowMessageInfo);
         return ApplyDpiChange(result.DpiChanged, result.CurrentDpi, result.Handled);
     }
 
@@ -287,7 +277,7 @@ public sealed class DpiHandler : IDisposable
     /// <returns>Zero.</returns>
     internal IntPtr HandleContextMenuMessages(WindowMessageInfo windowMessageInfo)
     {
-        DpiMessageResult result = ProcessContextMenuMessage(windowMessageInfo);
+        var result = ProcessContextMenuMessage(windowMessageInfo);
         _ = ApplyDpiChange(result.DpiChanged, result.CurrentDpi, handled: false);
         return IntPtr.Zero;
     }
@@ -323,7 +313,7 @@ public sealed class DpiHandler : IDisposable
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessNonClientCreate(WindowMessageInfo windowMessageInfo)
     {
-        nint windowHandle = (nint)windowMessageInfo.Handle;
+        var windowHandle = (nint)windowMessageInfo.Handle;
         LogVerbose("Processing {0} event, enabling DPI scaling for window {1}", windowMessageInfo.Message, windowHandle);
         _ = TryEnableNonClientDpiScaling(windowHandle);
         return default;
@@ -334,7 +324,7 @@ public sealed class DpiHandler : IDisposable
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessWindowCreate(WindowMessageInfo windowMessageInfo)
     {
-        nint windowHandle = (nint)windowMessageInfo.Handle;
+        var windowHandle = (nint)windowMessageInfo.Handle;
         LogVerbose("Processing {0} event, retrieving DPI for window {1}", windowMessageInfo.Message, windowHandle);
         _scopedThreadDpiAwarenessContext.Dispose();
         return new(DpiChanged: true, NativeDpiMethods.GetDpi(windowHandle), Handled: false);
@@ -345,9 +335,9 @@ public sealed class DpiHandler : IDisposable
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessWindowDpiChanged(WindowMessageInfo windowMessageInfo)
     {
-        nint windowHandle = (nint)windowMessageInfo.Handle;
+        var windowHandle = (nint)windowMessageInfo.Handle;
         LogVerbose("Processing {0} event, resizing / positioning window {1}", windowMessageInfo.Message, windowHandle);
-        NativeRect advisedRectangle = Marshal.PtrToStructure<NativeRect>((nint)windowMessageInfo.LongParam);
+        var advisedRectangle = Marshal.PtrToStructure<NativeRect>((nint)windowMessageInfo.LongParam);
         _ = _setWindowPosition(
             windowHandle,
             IntPtr.Zero,
@@ -358,7 +348,7 @@ public sealed class DpiHandler : IDisposable
             WindowPos.SWP_NOACTIVATE | WindowPos.SWP_NOOWNERZORDER | WindowPos.SWP_NOZORDER);
         checked
         {
-            int currentDpi = (int)unchecked((nint)windowMessageInfo.WordParam) & LowWordMask;
+            var currentDpi = (int)unchecked((nint)windowMessageInfo.WordParam) & LowWordMask;
             return new(DpiChanged: true, currentDpi, Handled: true);
         }
     }
@@ -411,7 +401,7 @@ public sealed class DpiHandler : IDisposable
     /// <returns>The DPI change result.</returns>
     private DpiMessageResult ProcessContextMenuShow(WindowMessageInfo windowMessageInfo)
     {
-        nint windowHandle = (nint)windowMessageInfo.Handle;
+        var windowHandle = (nint)windowMessageInfo.Handle;
         LogVerbose("Processing {0} event, retrieving DPI for ContextMenuStrip {1}", windowMessageInfo.Message, windowHandle);
         return new(DpiChanged: true, NativeDpiMethods.GetDpi(windowHandle), Handled: false);
     }
@@ -452,7 +442,7 @@ public sealed class DpiHandler : IDisposable
     /// <param name="currentDpi">The current DPI.</param>
     private void PublishDpiChange(int currentDpi)
     {
-        int beforeDpi = CurrentDpi;
+        var beforeDpi = CurrentDpi;
         LogVerbose("Changing DPI from {0} to {1}", beforeDpi, currentDpi);
         CurrentDpi = currentDpi;
         _onDpiChanged.OnNext(new(beforeDpi, currentDpi));

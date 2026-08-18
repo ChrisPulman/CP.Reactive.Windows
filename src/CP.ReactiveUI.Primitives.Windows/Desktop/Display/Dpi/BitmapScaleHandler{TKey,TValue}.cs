@@ -2,15 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Threading;
 using System.Windows.Forms;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
@@ -208,7 +200,7 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
                 return result;
             }
 
-            TValue image = _bitmapProvider(imageKey, _dpi);
+            var image = _bitmapProvider(imageKey, _dpi);
             if (image is null)
             {
                 return default;
@@ -246,7 +238,7 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
         try
         {
             _imagesLock.EnterWriteLock();
-            foreach (TValue image in _images.Values)
+            foreach (var image in _images.Values)
             {
                 imagesToDispose.Add(image);
             }
@@ -262,7 +254,7 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
         try
         {
             _actionsLock.EnterReadLock();
-            foreach (Action value in _applyActions.Values)
+            foreach (var value in _applyActions.Values)
             {
                 value();
             }
@@ -272,7 +264,7 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
             _actionsLock.ExitReadLock();
         }
 
-        foreach (TValue item in imagesToDispose)
+        foreach (var item in imagesToDispose)
         {
             item.Dispose();
         }
@@ -295,7 +287,7 @@ public sealed class BitmapScaleHandler<TKey, TValue> : IDisposable
         try
         {
             _imagesLock.EnterWriteLock();
-            foreach (TValue value in _images.Values)
+            foreach (var value in _images.Values)
             {
                 value.Dispose();
             }

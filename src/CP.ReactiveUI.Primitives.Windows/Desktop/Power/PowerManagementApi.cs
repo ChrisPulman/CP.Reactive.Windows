@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Power;
 #else
@@ -92,7 +87,7 @@ public static partial class PowerManagementApi
     /// <returns><c>true</c> if the operation was initiated successfully.</returns>
     public static bool Shutdown(bool force)
     {
-        ExitWindowsFlags flags = ExitWindowsFlags.EWX_SHUTDOWN;
+        var flags = ExitWindowsFlags.EWX_SHUTDOWN;
         if (force)
         {
             flags |= ExitWindowsFlags.EWX_FORCE;
@@ -110,7 +105,7 @@ public static partial class PowerManagementApi
     /// <returns><c>true</c> if the operation was initiated successfully.</returns>
     public static bool Restart(bool force)
     {
-        ExitWindowsFlags flags = ExitWindowsFlags.EWX_REBOOT;
+        var flags = ExitWindowsFlags.EWX_REBOOT;
         if (force)
         {
             flags |= ExitWindowsFlags.EWX_FORCE;
@@ -128,7 +123,7 @@ public static partial class PowerManagementApi
     /// <returns><c>true</c> if the operation was initiated successfully.</returns>
     public static bool LogOff(bool force)
     {
-        ExitWindowsFlags flags = ExitWindowsFlags.None;
+        var flags = ExitWindowsFlags.None;
         if (force)
         {
             flags |= ExitWindowsFlags.EWX_FORCE;
@@ -143,9 +138,9 @@ public static partial class PowerManagementApi
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(Func<bool, bool, bool, bool> setSuspendState, Func<ExitWindowsFlags, uint, bool> exitWindows)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(setSuspendState);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(exitWindows);
-        PowerManagementOperations operations = _operations;
+        Throw.IfNull(setSuspendState);
+        Throw.IfNull(exitWindows);
+        var operations = _operations;
         _operations = new(setSuspendState, exitWindows);
         return Scope.Create(operations, static previous =>
         {
