@@ -249,12 +249,12 @@ internal static unsafe partial class NativeMethods
     /// <param name="windowHandle">The listener window handle.</param>
     /// <returns><see langword="true" /> if the listener was added.</returns>
 #if NETFRAMEWORK
-    [DllImport("user32.dll", SetLastError = true)]
+    [DllImport("user32.dll", EntryPoint = "AddClipboardFormatListener", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool AddClipboardFormatListenerNative(IntPtr windowHandle);
 #else
-    [LibraryImport("user32.dll", SetLastError = true)]
+    [LibraryImport("user32.dll", EntryPoint = "AddClipboardFormatListener", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool AddClipboardFormatListenerNative(IntPtr windowHandle);
@@ -264,12 +264,12 @@ internal static unsafe partial class NativeMethods
     /// <param name="windowHandle">The listener window handle.</param>
     /// <returns><see langword="true" /> if the listener was removed.</returns>
 #if NETFRAMEWORK
-    [DllImport("user32.dll", SetLastError = true)]
+    [DllImport("user32.dll", EntryPoint = "RemoveClipboardFormatListener", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool RemoveClipboardFormatListenerNative(IntPtr windowHandle);
 #else
-    [LibraryImport("user32.dll", SetLastError = true)]
+    [LibraryImport("user32.dll", EntryPoint = "RemoveClipboardFormatListener", SetLastError = true)]
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool RemoveClipboardFormatListenerNative(IntPtr windowHandle);

@@ -3,8 +3,13 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Windows;
+using ReactiveUI.Builder;
 
-namespace CP.ReactiveUI.Primitives.Windows.Example.InstallerExample;
+namespace CPDeploymentStudio.Example;
 
 /// <summary>Provides the application entry point.</summary>
-public partial class App : Application;
+public partial class App : Application
+{
+    /// <summary>Initializes a new instance of the <see cref="App"/> class and configures ReactiveUI WPF services.</summary>
+    public App() => RxAppBuilder.CreateReactiveUIBuilder().WithWpf().BuildApp();
+}

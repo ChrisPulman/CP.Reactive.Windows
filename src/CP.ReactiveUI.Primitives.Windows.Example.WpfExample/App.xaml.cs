@@ -4,17 +4,19 @@
 
 using System.Windows;
 using CP.ReactiveUI.Primitives.Windows.Desktop.Display.Dpi;
-using log4net.Config;
+using ReactiveUI.Builder;
 
 namespace CP.ReactiveUI.Primitives.Windows.Example.WpfExample;
 
-/// <summary>Interaction logic for App.xaml.</summary>
+/// <summary>Starts the Windows Interaction Laboratory with DPI awareness enabled.</summary>
 public partial class App : Application
 {
-    /// <inheritdoc/>
+    /// <summary>Initializes a new instance of the <see cref="App"/> class and configures lean ReactiveUI WPF services.</summary>
+    public App() => RxAppBuilder.CreateReactiveUIBuilder().WithWpf().BuildApp();
+
+    /// <inheritdoc />
     protected override void OnStartup(StartupEventArgs e)
     {
-        _ = BasicConfigurator.Configure();
         _ = NativeDpiMethods.EnableDpiAware();
         base.OnStartup(e);
     }
