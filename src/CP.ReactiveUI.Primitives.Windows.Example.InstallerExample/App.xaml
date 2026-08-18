@@ -1,7 +1,6 @@
-<Application x:Class="CP.ReactiveUI.Primitives.Windows.Example.InstallerExample.App"
+<Application x:Class="CPDeploymentStudio.Example.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:CP.ReactiveUI.Primitives.Windows.Example.InstallerExample"
              StartupUri="InstallerWindow.xaml">
     <Application.Resources>
 

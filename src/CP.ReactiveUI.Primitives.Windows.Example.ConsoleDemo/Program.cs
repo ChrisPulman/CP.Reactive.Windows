@@ -2,26 +2,25 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Desktop.Input.Enums;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Input.Keyboard;
-using CP.ReactiveUI.Primitives.Windows.Desktop.Messaging;
+using ReactiveUI.Builder;
 
 namespace CP.ReactiveUI.Primitives.Windows.Example.ConsoleDemo;
 
-/// <summary>Provides the entry point for the console demonstration.</summary>
+/// <summary>Provides the entry point for the Windows diagnostics showcase.</summary>
 internal static class Program
 {
-    /// <summary>Starts the keyboard-hook demonstration message loop.</summary>
+    /// <summary>Starts the interactive dashboard.</summary>
+    /// <returns>The process exit code.</returns>
     [STAThread]
-    private static void Main()
+    private static async Task<int> Main()
     {
-        var key = new KeyCombinationHandler(VirtualKeyCode.KeyA);
-        using (KeyboardHook.KeyboardHookEvents.Where(key).Subscribe(static _ => Hit()))
-        {
-            MessageLoop.ProcessMessages();
-        }
+        _ = RxAppBuilder.CreateReactiveUIBuilder()
+            .WithCoreServices()
+            .BuildApp();
+        using var log = new DiagnosticLog();
+        using var viewModel = new DiagnosticsViewModel(log);
+        using var activation = viewModel.Activator.Activate();
+        using var dashboard = new ConsoleDashboard(viewModel, log);
+        return await dashboard.RunAsync().ConfigureAwait(false);
     }
-
-    /// <summary>Records that the configured key combination was pressed.</summary>
-    private static void Hit() => System.Diagnostics.Debug.WriteLine("Hit");
 }

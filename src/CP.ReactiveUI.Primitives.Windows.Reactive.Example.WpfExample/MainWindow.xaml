@@ -1,0 +1,236 @@
+<local:ReactiveLabWindow x:Class="CP.ReactiveUI.Primitives.Windows.Reactive.Example.WpfExample.MainWindow"
+                           x:TypeArguments="local:MainViewModel"
+                           xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:local="clr-namespace:CP.ReactiveUI.Primitives.Windows.Reactive.Example.WpfExample"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           Title="ReactiveUI 24 Rx · Windows Interaction Laboratory"
+                           Width="1260"
+                           Height="820"
+                           MinWidth="980"
+                           MinHeight="680"
+                           Background="{StaticResource PageBrush}"
+                           FontFamily="Segoe UI"
+                           WindowStartupLocation="CenterScreen"
+                           mc:Ignorable="d">
+    <Grid x:Name="DashboardRoot" Background="{StaticResource PageBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Margin="18,16,18,10" Padding="20,15" Background="{StaticResource PanelBrush}" CornerRadius="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock FontSize="25" FontWeight="SemiBold" Text="Windows Interaction Laboratory" />
+                    <TextBlock Margin="0,5,0,0" Foreground="{StaticResource MutedBrush}"
+                               Text="ReactiveUI 24 Rx + local CP.ReactiveUI.Primitives.Windows.Reactive · System.Reactive, safe, activation-scoped" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+                    <TextBlock HorizontalAlignment="Right" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"
+                               Text="{Binding ActivitySummary}" />
+                    <TextBlock Margin="0,4,0,0" HorizontalAlignment="Right" Foreground="{StaticResource MutedBrush}"
+                               Text="{Binding RuntimeSummary}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="18,0,18,12" Background="{StaticResource PanelBrush}" BorderThickness="0">
+            <TabItem Header="Laboratory">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.05*" />
+                            <ColumnDefinition Width="1.1*" />
+                            <ColumnDefinition Width="0.85*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Margin="0,0,12,0">
+                            <Border Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Window lifecycle &amp; positioning" />
+                                    <TextBlock Margin="0,5,0,13" Foreground="{StaticResource MutedBrush}"
+                                               Text="Inspect this HWND, save/restore native placement, or safely center the WPF window." />
+                                    <UniformGrid Columns="2">
+                                        <Button Command="{Binding SavePlacementCommand}" Content="Save placement" />
+                                        <Button Command="{Binding RestorePlacementCommand}" Content="Restore placement" />
+                                        <Button Command="{Binding CenterWindowCommand}" Content="Center window" />
+                                        <Button Command="{Binding RefreshEnvironmentCommand}" Content="Refresh metrics" />
+                                    </UniformGrid>
+                                    <Border Margin="0,7,0,0" Padding="11" Background="#10182A" CornerRadius="6">
+                                        <TextBlock Foreground="{StaticResource MutedBrush}" Text="{Binding WindowSummary}" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,12,0,0" Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Interactive move / resize guards" />
+                                    <TextBlock Margin="0,5,0,13" Foreground="{StaticResource MutedBrush}"
+                                               Text="Guards affect only this window and are removed automatically on mode change or deactivation." />
+                                    <WrapPanel>
+                                        <Button Command="{Binding DisableGuardCommand}" Content="Allow all" />
+                                        <Button Command="{Binding GuardMoveCommand}" Content="Block move" />
+                                        <Button Command="{Binding GuardMoveResizeCommand}" Content="Block move + resize" />
+                                    </WrapPanel>
+                                    <TextBlock Margin="0,5,0,0" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"
+                                               Text="{Binding GuardSummary}" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                            <Border Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Monitor &amp; per-window DPI" />
+                                    <TextBlock Margin="0,5,0,12" Foreground="{StaticResource MutedBrush}" Text="{Binding DisplaySummary}" />
+                                    <ItemsControl ItemsSource="{Binding Displays}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,7" Padding="10" Background="#10182A" CornerRadius="6">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <StackPanel>
+                                                            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                                            <TextBlock Foreground="{StaticResource MutedBrush}" Text="{Binding Bounds}" />
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource AccentBrush}"
+                                                                   Text="{Binding Role}" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,12,0,0" Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Opt-in global observation" />
+                                    <TextBlock Margin="0,5,0,10" Foreground="{StaticResource MutedBrush}"
+                                               Text="Read-only hooks never suppress input. Toggle off or close the window to unhook immediately." />
+                                    <CheckBox IsChecked="{Binding ObserveWindowEvents}" Content="Window create/destroy and title WinEvents" />
+                                    <CheckBox IsChecked="{Binding ObserveKeyboard}" Content="Keyboard hook (read-only)" />
+                                    <CheckBox IsChecked="{Binding ObserveMouse}" Content="Mouse hook (sampled, read-only)" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <Border Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Visual helpers" />
+                                    <TextBlock Margin="0,5,0,12" Foreground="{StaticResource MutedBrush}"
+                                               Text="Capture the current cursor through the local library, or render only this dashboard in memory." />
+                                    <WrapPanel>
+                                        <Button Command="{Binding CaptureCursorCommand}" Content="Capture cursor" />
+                                        <Button Command="{Binding CaptureDashboardCommand}" Content="Preview dashboard" />
+                                    </WrapPanel>
+                                    <Grid Height="175" Margin="0,6,0,0" Background="#0C1324">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="0.35*" />
+                                            <ColumnDefinition Width="0.65*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Margin="6" BorderBrush="#33446A" BorderThickness="1">
+                                            <Image Margin="12" Source="{Binding CursorPreview}" Stretch="Uniform" />
+                                        </Border>
+                                        <Border Grid.Column="1" Margin="0,6,6,6" BorderBrush="#33446A" BorderThickness="1">
+                                            <Image Source="{Binding DashboardPreview}" Stretch="Uniform" />
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Margin="0,12,0,0" Padding="16" Background="{StaticResource PanelAltBrush}" CornerRadius="10">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Foreground snapshot" />
+                                    <TextBlock Margin="0,6,0,10" Foreground="{StaticResource MutedBrush}" Text="{Binding ForegroundSummary}" />
+                                    <Button HorizontalAlignment="Left" Command="{Binding RefreshForegroundCommand}" Content="Refresh foreground" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Window explorer">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Margin="0,0,10,10" Text="{Binding WindowFilter, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Reactive caption, class, process or HWND filter" />
+                        <WrapPanel Grid.Column="1">
+                            <Button Command="{Binding DiscoverWindowsCommand}" Content="Discover top-level windows" />
+                            <Button Command="{Binding BringSelectedToForegroundCommand}" Content="Bring selected forward" />
+                        </WrapPanel>
+                    </Grid>
+                    <DataGrid Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                              SelectedItem="{Binding SelectedWindow}" ItemsSource="{Binding FilteredWindows}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="130" Binding="{Binding HandleText}" Header="HWND" />
+                            <DataGridTextColumn Width="2.2*" Binding="{Binding Caption}" Header="Caption" />
+                            <DataGridTextColumn Width="1.1*" Binding="{Binding ClassName}" Header="Class" />
+                            <DataGridTextColumn Width="90" Binding="{Binding ProcessId}" Header="PID" />
+                            <DataGridTextColumn Width="1.2*" Binding="{Binding Bounds}" Header="Bounds" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Grid.Row="2" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}"
+                               Text="{Binding ExplorerSummary}" />
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Reactive event stream">
+                <Grid Margin="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Margin="0,0,10,10" Text="{Binding EventFilter, UpdateSourceTrigger=PropertyChanged}"
+                                 ToolTip="Throttle-filtered across source and message" />
+                        <Button Grid.Column="1" Command="{Binding ClearEventsCommand}" Content="Clear log" />
+                    </Grid>
+                    <DataGrid Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" ItemsSource="{Binding FilteredEvents}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="95" Binding="{Binding Time}" Header="Time" />
+                            <DataGridTextColumn Width="125" Binding="{Binding Source}" Header="Source" />
+                            <DataGridTextColumn Width="*" Binding="{Binding Message}" Header="Event" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2" Padding="18,9" Background="#11182A">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Foreground="{StaticResource MutedBrush}" Text="{Binding StatusText}" />
+                <TextBlock Grid.Column="1" Foreground="{StaticResource AccentBrush}" Text="CP.ReactiveUI.Primitives.Windows.Reactive · Core · System.Reactive" />
+            </Grid>
+        </Border>
+    </Grid>
+</local:ReactiveLabWindow>

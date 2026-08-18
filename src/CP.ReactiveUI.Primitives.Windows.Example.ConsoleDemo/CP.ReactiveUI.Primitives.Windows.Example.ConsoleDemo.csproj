@@ -1,14 +1,24 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+    <TargetFrameworks>net48;net10.0-windows10.0.19041.0</TargetFrameworks>
     <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);SST1144;SST1147;SST1197;SST1202;SST1204;SST1402;SST1445;SST1449;SST1471;SST1516;SST1523;SST1525;SST1531;SST1600;SST1649;SST2010;SST2011;SST2101;SST2200;SST2204;SST2221;SST2251;SST2324;SST2445;PSH1000;PSH1004;PSH1011;PSH1100;PSH1300;PSH1414</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
+    <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Integrations\CP.ReactiveUI.Primitives.Windows.Integrations.csproj" />
     <ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="ReactiveUI" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="System" />
-    <Using Include="ReactiveUI.Primitives" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 </Project>

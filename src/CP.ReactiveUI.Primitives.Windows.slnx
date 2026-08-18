@@ -17,6 +17,12 @@
     <Project Path="CP.ReactiveUI.Primitives.Windows.Example.InstallerExample/CP.ReactiveUI.Primitives.Windows.Example.InstallerExample.csproj" />
     <Project Path="CP.ReactiveUI.Primitives.Windows.Example.WpfExample/CP.ReactiveUI.Primitives.Windows.Example.WpfExample.csproj" />
   </Folder>
+  <Folder Name="/Reactive Examples/">
+    <Project Path="CP.ReactiveUI.Primitives.Windows.Reactive.Example.ConsoleDemo/CP.ReactiveUI.Primitives.Windows.Reactive.Example.ConsoleDemo.csproj" />
+    <Project Path="CP.ReactiveUI.Primitives.Windows.Reactive.Example.FormsExample/CP.ReactiveUI.Primitives.Windows.Reactive.Example.FormsExample.csproj" />
+    <Project Path="CP.ReactiveUI.Primitives.Windows.Reactive.Example.InstallerExample/CP.ReactiveUI.Primitives.Windows.Reactive.Example.InstallerExample.csproj" />
+    <Project Path="CP.ReactiveUI.Primitives.Windows.Reactive.Example.WpfExample/CP.ReactiveUI.Primitives.Windows.Reactive.Example.WpfExample.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="CP.ReactiveUI.Primitives.Windows.Core/CP.ReactiveUI.Primitives.Windows.Core.csproj" />
     <Project Path="CP.ReactiveUI.Primitives.Windows.Integrations/CP.ReactiveUI.Primitives.Windows.Integrations.csproj" />

@@ -1,18 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
+		<TargetFrameworks>net48;net10.0-windows10.0.19041.0</TargetFrameworks>
 		<OutputType>WinExe</OutputType>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<UseWPF>true</UseWPF>
 		<UseWindowsForms>true</UseWindowsForms>
 		<GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
+		<NoWarn>$(NoWarn);PSH1100;PSH1223;SES1301;SST1116;SST1204;SST1402;SST1440;SST1445;SST1448;SST1463;SST1471;SST1472;SST1486;SST1516;SST1521;SST1531;SST1600;SST1611;SST2010;SST2200;SST2202;SST2221;SST2244;SST2249;SST2275</NoWarn>
 	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Core\CP.ReactiveUI.Primitives.Windows.Core.csproj" />
 		<ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows\CP.ReactiveUI.Primitives.Windows.csproj" />
-	</ItemGroup>
-	<ItemGroup>
-		<Using Include="System" />
-		<Using Include="CP.ReactiveUI.Primitives.Windows.Native.Kernel" Alias="Kernel32" />
+		<ProjectReference Include="..\CP.ReactiveUI.Primitives.Windows.Integrations\CP.ReactiveUI.Primitives.Windows.Integrations.csproj" />
+		<PackageReference Include="ReactiveUI" />
+		<PackageReference Include="ReactiveUI.WPF" />
 	</ItemGroup>
 </Project>

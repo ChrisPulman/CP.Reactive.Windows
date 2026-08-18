@@ -2,76 +2,49 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.IO;
-using System.Windows;
-using System.Windows.Documents;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
+using System;
+using System.Globalization;
+using CP.ReactiveUI.Primitives.Windows.Desktop.Windows;
+using ReactiveUI;
+using ReactiveUI.Primitives;
 
-namespace CP.ReactiveUI.Primitives.Windows.Example.InstallerExample;
+namespace CPDeploymentStudio.Example;
 
-/// <summary>Displays installation and restart progress for the example executable.</summary>
-public partial class InstallerWindow : Window
+/// <summary>Hosts the reactive, simulation-only deployment experience.</summary>
+public partial class InstallerWindow : ReactiveWindow<InstallerViewModel>
 {
-    /// <summary>Gets the executable installed by this example.</summary>
-    private const string ExeToInstall = @"..\..\..\..\CP.ReactiveUI.Primitives.Windows.Example.FormsExample\bin\Debug\net480\CP.ReactiveUI.Primitives.Windows.Example.FormsExample.exe";
-
     /// <summary>Initializes a new instance of the <see cref="InstallerWindow"/> class.</summary>
     public InstallerWindow()
     {
         InitializeComponent();
-        DataContext = this;
-        Start.IsEnabled = File.Exists(ExeToInstall);
-    }
+        ViewModel = new InstallerViewModel();
+        DataContext = ViewModel;
 
-    /// <summary>Adds a line to the installation log.</summary>
-    /// <param name="line">The line to add.</param>
-    private void AddLine(string line)
-    {
-        LogText.Inlines.Add(new Run(line));
-        LogText.Inlines.Add(new LineBreak());
-    }
-
-    /// <summary>Shuts down processes using the executable and restarts them.</summary>
-    private void TryRestart()
-    {
-        using var session = RestartManager.CreateSession();
-        session.RegisterFile(ExeToInstall);
-        var processes = session.GetProcessesUsingResources();
-
-        foreach (var process in processes)
+        this.WhenActivated(disposables =>
         {
-            AddLine($"Process {process.ApplicationName} (PID: {process.Process.ProcessId}) is using the file, status: {process.ApplicationStatus}");
-        }
-
-        try
-        {
-            session.Shutdown(Kernel32.Enums.RmShutdownType.RmShutdownOnlyRegistered, progress =>
+            var viewModel = ViewModel;
+            if (viewModel is null)
             {
-                _ = Dispatcher.BeginInvoke(() =>
-                {
-                    AddLine($"Shutdown progress {progress}");
-                });
-            });
-        }
-        catch (Exception)
-        {
-            processes = session.GetProcessesUsingResources();
-            foreach (var process in processes)
-            {
-                AddLine($"Process {process.ApplicationName} (Status: {process.ApplicationStatus})");
+                return;
             }
 
-            return;
-        }
+            disposables.Add(viewModel.Events.Subscribe(deploymentEvent =>
+            {
+                EventStreamText.Text = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0:HH:mm:ss}  {1,-10}  {2}  ·  {3:0}%",
+                    deploymentEvent.Timestamp,
+                    deploymentEvent.Stage,
+                    deploymentEvent.Message,
+                    deploymentEvent.Progress);
+            }));
 
-        session.Restart(progress =>
-        {
-            _ = Dispatcher.BeginInvoke(() => AddLine($"Restart progress {progress}"));
+            disposables.Add(EnvironmentMonitor.EnvironmentChangeEvents
+                .Subscribe(change => viewModel.RecordEnvironmentChange(change.Area)));
+
+            disposables.Add(viewModel.InspectEnvironment.Execute().Subscribe());
         });
-    }
 
-    /// <summary>Starts the restart workflow when the button is clicked.</summary>
-    /// <param name="sender">The event source.</param>
-    /// <param name="e">The event data.</param>
-    private void Button_Click(object sender, RoutedEventArgs e) => TryRestart();
+        Closed += (_, _) => ViewModel?.Dispose();
+    }
 }
