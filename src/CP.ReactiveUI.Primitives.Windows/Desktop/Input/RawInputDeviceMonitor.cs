@@ -2,10 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
@@ -54,12 +51,12 @@ public static class RawInputDeviceMonitor
 
         Func<IObserver<RawInputDeviceChangeEventArgs>, IDisposable> createObservable = observer =>
         {
-            IDisposable messageSubscription = RawInputMonitor.Infrastructure.MessageSource.Messages
+            var messageSubscription = RawInputMonitor.Infrastructure.MessageSource.Messages
                 .Where(static windowsMessage => windowsMessage.Msg == WindowsMessages.WM_INPUT_DEVICE_CHANGE)
                 .Subscribe(windowsMessage =>
             {
                 windowsMessage.Handled = true;
-                bool flag = checked((int)windowsMessage.WParam) == 1;
+                var flag = checked((int)windowsMessage.WParam) == 1;
                 IntPtr intPtr = new(windowsMessage.LParam);
                 lock (SyncRoot)
                 {
@@ -86,7 +83,7 @@ public static class RawInputDeviceMonitor
                 RefreshDeviceCache();
             }
 
-            IDisposable registrationSubscription = (from windowHandle in RawInputMonitor.Infrastructure.MessageSource.ObserveHandleChanges()
+            var registrationSubscription = (from windowHandle in RawInputMonitor.Infrastructure.MessageSource.ObserveHandleChanges()
                                                     where windowHandle != 0
                                                     select windowHandle).Take(1).Subscribe(windowHandle =>
                                                 {
@@ -122,7 +119,7 @@ public static class RawInputDeviceMonitor
     private static void RefreshDeviceCache()
     {
         DeviceCache.Clear();
-        foreach (RawInputDeviceInformation deviceInformation in RawInputApi.GetAllDevices())
+        foreach (var deviceInformation in RawInputApi.GetAllDevices())
         {
             DeviceCache[deviceInformation.Handle] = deviceInformation;
         }

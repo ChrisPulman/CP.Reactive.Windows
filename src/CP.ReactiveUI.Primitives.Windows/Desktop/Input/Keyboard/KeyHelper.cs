@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -74,16 +69,16 @@ public static partial class KeyHelper
     public static string VirtualCodeToLocaleDisplayText(VirtualKeyCode givenKey, bool doNotCare)
     {
         Span<char> keyName = stackalloc char[KeyNameCapacity];
-        uint scanCodeModifier = doNotCare ? DoNotCareLeftRight : 0U;
-        VirtualKeyCode virtualKey = NormalizeVirtualKey(givenKey, doNotCare);
-        INativeKeyboardDisplayApi displayApi = GetDisplayApi();
+        var scanCodeModifier = doNotCare ? DoNotCareLeftRight : 0U;
+        var virtualKey = NormalizeVirtualKey(givenKey, doNotCare);
+        var displayApi = GetDisplayApi();
         if (TryGetNumpadOperatorDisplayText(virtualKey, keyName, displayApi, out var numpadDisplayText))
         {
             return numpadDisplayText;
         }
 
-        IntPtr keyboardLayout = displayApi.GetKeyboardLayout(0U);
-        uint scanCode = GetDisplayTextScanCode(virtualKey, keyboardLayout, displayApi);
+        var keyboardLayout = displayApi.GetKeyboardLayout(0U);
+        var scanCode = GetDisplayTextScanCode(virtualKey, keyboardLayout, displayApi);
         return scanCode != 0
             ? GetDisplayText(scanCode | scanCodeModifier, keyName, givenKey, displayApi)
             : givenKey.ToString();
@@ -129,8 +124,8 @@ public static partial class KeyHelper
     /// <returns>The previous keyboard display API.</returns>
     internal static INativeKeyboardDisplayApi SetDisplayApiForTesting(INativeKeyboardDisplayApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        INativeKeyboardDisplayApi displayApi = GetDisplayApi();
+        Throw.IfNull(api);
+        var displayApi = GetDisplayApi();
         _displayApiOverride = ((api == WindowsNativeKeyboardDisplayApi.Instance) ? null : api);
         return displayApi;
     }
@@ -145,13 +140,13 @@ public static partial class KeyHelper
             yield break;
         }
 
-        string[] array = keyDescription.Split('+');
-        for (int i = 0; i < array.Length; i++)
+        var array = keyDescription.Split('+');
+        for (var i = 0; i < array.Length; i++)
         {
-            string trimmed = array[i].Trim();
+            var trimmed = array[i].Trim();
             if (!string.IsNullOrEmpty(trimmed))
             {
-                VirtualKeyCode virtualKeyCode = VirtualKeyCodeFromString(trimmed);
+                var virtualKeyCode = VirtualKeyCodeFromString(trimmed);
                 if (virtualKeyCode != VirtualKeyCode.None)
                 {
                     yield return virtualKeyCode;
@@ -197,10 +192,10 @@ public static partial class KeyHelper
     /// <returns>The localized display text.</returns>
     private static string GetNumpadOperatorDisplayText(string symbol, Span<char> keyName, INativeKeyboardDisplayApi displayApi)
     {
-        int characters = displayApi.GetKeyNameText(NumpadScanCode << KeyNameShift, keyName);
-        string keyString = CP.ReactiveUI.Primitives.Windows.PolyFills.SpanText.Create(keyName.Slice(0, characters)).Replace("*", string.Empty).Trim()
+        var characters = displayApi.GetKeyNameText(NumpadScanCode << KeyNameShift, keyName);
+        var keyString = SpanText.Create(keyName.Slice(0, characters)).Replace("*", string.Empty).Trim()
             .ToLowerInvariant();
-        return !CP.ReactiveUI.Primitives.Windows.PolyFills.SpanText.Contains(keyString, '(')
+        return !SpanText.Contains(keyString, '(')
             ? $"{CapitalizeFirstCharacter(keyString)} {symbol}"
             : $"{symbol} {keyString}";
     }
@@ -212,7 +207,7 @@ public static partial class KeyHelper
     /// <returns>The scan code value, or 0 when one cannot be resolved.</returns>
     private static uint GetDisplayTextScanCode(VirtualKeyCode virtualKey, IntPtr keyboardLayout, INativeKeyboardDisplayApi displayApi)
     {
-        uint scanCode = virtualKey switch
+        var scanCode = virtualKey switch
         {
             VirtualKeyCode.Print => PrintScreenScanCode,
             VirtualKeyCode.Pause => PauseScanCode,
@@ -239,10 +234,10 @@ public static partial class KeyHelper
     /// <returns>The display text.</returns>
     private static string GetDisplayText(uint scanCode, Span<char> keyName, VirtualKeyCode fallbackKey, INativeKeyboardDisplayApi displayApi)
     {
-        int characters = displayApi.GetKeyNameText(scanCode, keyName);
+        var characters = displayApi.GetKeyNameText(scanCode, keyName);
         return characters == 0
             ? fallbackKey.ToString()
-            : CapitalizeFirstCharacter(CP.ReactiveUI.Primitives.Windows.PolyFills.SpanText.Create(keyName.Slice(0, characters)));
+            : CapitalizeFirstCharacter(SpanText.Create(keyName.Slice(0, characters)));
     }
 
     /// <summary>Capitalizes the first character and lowers the rest of a display string.</summary>
@@ -252,7 +247,7 @@ public static partial class KeyHelper
     {
         0 => value,
         1 => value.ToUpperInvariant(),
-        _ => $"{char.ToUpperInvariant(value[0])}{CP.ReactiveUI.Primitives.Windows.PolyFills.SpanText.Slice(value, 1).ToLowerInvariant()}",
+        _ => $"{char.ToUpperInvariant(value[0])}{SpanText.Slice(value, 1).ToLowerInvariant()}",
     };
 
     /// <summary>Gets the active keyboard display-name API.</summary>

@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Mouse;
 #else
@@ -39,7 +35,7 @@ public sealed class MouseHook
     /// <returns>The mouse hook event arguments.</returns>
     private static MouseHookEventArgs CreateMouseEventArgs(IntPtr parameter, IntPtr data)
     {
-        MouseLowLevelHookStruct mouseLowLevelHookStruct = Marshal.PtrToStructure<MouseLowLevelHookStruct>(data);
+        var mouseLowLevelHookStruct = Marshal.PtrToStructure<MouseLowLevelHookStruct>(data);
         return new MouseHookEventArgs { WindowsMessage = (WindowsMessages)checked((uint)parameter.ToInt32()), Point = mouseLowLevelHookStruct.Pt };
     }
 
@@ -48,12 +44,12 @@ public sealed class MouseHook
     /// <returns>The hook lifetime.</returns>
     private ActionDisposable CreateSubscription(IObserver<MouseHookEventArgs> observer)
     {
-        IntPtr hookId = IntPtr.Zero;
+        var hookId = IntPtr.Zero;
         _callback = (code, parameter, data) =>
         {
             if (code >= 0)
             {
-                MouseHookEventArgs e = CreateMouseEventArgs(parameter, data);
+                var e = CreateMouseEventArgs(parameter, data);
                 observer.OnNext(e);
                 if (e.Handled)
                 {

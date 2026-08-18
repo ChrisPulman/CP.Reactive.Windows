@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
 #else
@@ -79,7 +76,7 @@ public static class DpiCalculator
     /// <returns>NativeSize scaled.</returns>
     public static NativeSize ScaleWithDpi(NativeSize size, int dpi, Func<float, float> scaleModifier)
     {
-        float scaleFactor = ScaleFactor(dpi, scaleModifier);
+        var scaleFactor = ScaleFactor(dpi, scaleModifier);
         return checked(new NativeSize((int)(scaleFactor * (float)size.Width), (int)(scaleFactor * (float)size.Height)));
     }
 
@@ -96,7 +93,7 @@ public static class DpiCalculator
     /// <returns>NativePoint scaled.</returns>
     public static NativePoint ScaleWithDpi(NativePoint size, int dpi, Func<float, float> scaleModifier)
     {
-        float scaleFactor = ScaleFactor(dpi, scaleModifier);
+        var scaleFactor = ScaleFactor(dpi, scaleModifier);
         return checked(new NativePoint((int)(scaleFactor * (float)size.X), (int)(scaleFactor * (float)size.Y)));
     }
 
@@ -113,7 +110,7 @@ public static class DpiCalculator
     /// <returns>NativeSize scaled.</returns>
     public static NativeSizeFloat ScaleWithDpi(NativeSizeFloat size, int dpi, Func<float, float> scaleModifier)
     {
-        float scaleFactor = ScaleFactor(dpi, scaleModifier);
+        var scaleFactor = ScaleFactor(dpi, scaleModifier);
         return new(scaleFactor * size.Width, scaleFactor * size.Height);
     }
 
@@ -130,7 +127,7 @@ public static class DpiCalculator
     /// <returns>NativePointFloat scaled.</returns>
     public static NativePointFloat ScaleWithDpi(NativePointFloat point, int dpi, Func<float, float> scaleModifier)
     {
-        float scaleFactor = ScaleFactor(dpi, scaleModifier);
+        var scaleFactor = ScaleFactor(dpi, scaleModifier);
         return new(scaleFactor * point.X, scaleFactor * point.Y);
     }
 
@@ -158,7 +155,7 @@ public static class DpiCalculator
     /// <returns>float with the unscaled number.</returns>
     public static double UnscaleWithDpi(double someNumber, int dpi, Func<float, float> scaleModifier)
     {
-        float dpiUnscaleFactor = DpiUnscaleFactor(dpi);
+        var dpiUnscaleFactor = DpiUnscaleFactor(dpi);
         if (scaleModifier is not null)
         {
             dpiUnscaleFactor = scaleModifier(dpiUnscaleFactor);
@@ -180,7 +177,7 @@ public static class DpiCalculator
     /// <returns>Unscaled width.</returns>
     public static int UnscaleWithDpi(int number, int dpi, Func<float, float> scaleModifier)
     {
-        float dpiUnscaleFactor = DpiUnscaleFactor(dpi);
+        var dpiUnscaleFactor = DpiUnscaleFactor(dpi);
         if (scaleModifier is not null)
         {
             dpiUnscaleFactor = scaleModifier(dpiUnscaleFactor);
@@ -202,7 +199,7 @@ public static class DpiCalculator
     /// <returns>NativeSize unscaled.</returns>
     public static NativeSize UnscaleWithDpi(NativeSize size, int dpi, Func<float, float> scaleModifier)
     {
-        float dpiUnscaleFactor = DpiUnscaleFactor(dpi);
+        var dpiUnscaleFactor = DpiUnscaleFactor(dpi);
         if (scaleModifier is not null)
         {
             dpiUnscaleFactor = scaleModifier(dpiUnscaleFactor);
@@ -224,7 +221,7 @@ public static class DpiCalculator
     /// <returns>NativePoint unscaled.</returns>
     public static NativePoint UnscaleWithDpi(NativePoint size, int dpi, Func<float, float> scaleModifier)
     {
-        float dpiUnscaleFactor = DpiUnscaleFactor(dpi);
+        var dpiUnscaleFactor = DpiUnscaleFactor(dpi);
         if (scaleModifier is not null)
         {
             dpiUnscaleFactor = scaleModifier(dpiUnscaleFactor);
@@ -246,7 +243,7 @@ public static class DpiCalculator
     /// <returns>NativeSize unscaled.</returns>
     public static NativeSizeFloat UnscaleWithDpi(NativeSizeFloat size, int dpi, Func<float, float> scaleModifier)
     {
-        float unscaleFactor = UnscaleFactor(dpi, scaleModifier);
+        var unscaleFactor = UnscaleFactor(dpi, scaleModifier);
         return new(unscaleFactor * size.Width, unscaleFactor * size.Height);
     }
 
@@ -263,7 +260,7 @@ public static class DpiCalculator
     /// <returns>NativePointFloat unscaled.</returns>
     public static NativePointFloat UnscaleWithDpi(NativePointFloat point, int dpi, Func<float, float> scaleModifier)
     {
-        float unscaleFactor = UnscaleFactor(dpi, scaleModifier);
+        var unscaleFactor = UnscaleFactor(dpi, scaleModifier);
         return new(unscaleFactor * point.X, unscaleFactor * point.Y);
     }
 

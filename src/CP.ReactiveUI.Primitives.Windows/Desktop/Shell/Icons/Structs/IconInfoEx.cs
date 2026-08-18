@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons.Structs;
 #else
@@ -140,7 +134,7 @@ public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
     /// <returns>The initialized extended icon information.</returns>
     internal static IconInfoEx CreateWithUnterminatedModuleNameForTesting(char value)
     {
-        IconInfoEx iconInfo = Create();
+        var iconInfo = Create();
         iconInfo._moduleName.Fill(value);
         return iconInfo;
     }
@@ -164,8 +158,8 @@ public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
         {
             fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
             {
-                char* name = (char*)ptr;
-                int length = 0;
+                var name = (char*)ptr;
+                var length = 0;
                 while (length < IconNameLength
                     && *(ushort*)((byte*)name + checked(unchecked((nint)length) * WideCharacterSize)) != 0)
                 {
@@ -191,8 +185,8 @@ public readonly struct IconInfoEx : IEquatable<IconInfoEx>, IDisposable
         {
             fixed (byte* ptr = &Unsafe.AsRef(in _firstByte))
             {
-                char* characters = (char*)ptr;
-                for (int index = 0; index < IconNameLength; index = checked(index + 1))
+                var characters = (char*)ptr;
+                for (var index = 0; index < IconNameLength; index = checked(index + 1))
                 {
                     *(char*)((byte*)characters + checked(unchecked((nint)index) * WideCharacterSize)) = value;
                 }

@@ -6,7 +6,7 @@ The library collection exposes Windows operating-system state, callbacks, and co
 
 ## Packages
 
-Install the smallest package that owns the functionality you need.
+Install the package based on your needs, CP.ReactiveUI.Primitives.Windows is the lean desktop package, CP.ReactiveUI.Primitives.Windows.Reactive is the System.Reactive-first variant. The other packages are optional and provide additional native interop, desktop, or integration features.
 
 ```powershell
 dotnet add package CP.ReactiveUI.Primitives.Windows
@@ -18,7 +18,7 @@ dotnet add package CP.ReactiveUI.Primitives.Windows.Reactive
 | Package | Use when | Main namespaces |
 | --- | --- | --- |
 | `CP.ReactiveUI.Primitives.Windows.Core` | You need native value types, safe handles, COM contracts, registry monitoring, GDI, Kernel32, Shell32, or User32 helpers. | `CP.ReactiveUI.Primitives.Windows.Native`, `CP.ReactiveUI.Primitives.Windows.Interop` |
-| `CP.ReactiveUI.Primitives.Windows` | You need desktop features: clipboard, devices, DPI, dialogs, icons, input, messages, windows, display, power, lifecycle, or multimedia. | `CP.ReactiveUI.Primitives.Windows.Desktop` |
+| `CP.ReactiveUI.Primitives.Windows` | You need desktop features: clipboard, devices, DPI, dialogs, icons, input, messages, windows, display, power, lifecycle, or multimedia compiled against `ReactiveUI.Primitives`. | `CP.ReactiveUI.Primitives.Windows.Desktop` |
 | `CP.ReactiveUI.Primitives.Windows.Integrations` | You need optional Citrix WFAPI helpers or the legacy WinForms `WebBrowser` integration. | `CP.ReactiveUI.Primitives.Windows.Integrations` |
 | `CP.ReactiveUI.Primitives.Windows.Reactive` | Your app is System.Reactive-first and wants the same desktop capabilities compiled against `ReactiveUI.Primitives.Reactive`. | `CP.ReactiveUI.Primitives.Windows.Reactive.Desktop` |
 
@@ -26,7 +26,7 @@ The lean and `.Reactive` desktop packages compile the same source. The lean buil
 
 ## Requirements
 
-The packages target `net462`, `net472`, `net48`, `net481`, `net10.0-windows`, and `net11.0-windows`. Stable local and Visual Studio builds select the four .NET Framework targets plus `net10.0-windows`; the `net11.0-windows` preview target is enabled explicitly for preview-SDK and CI builds. They are intended for Windows desktop processes and use Windows Forms/WPF-capable TFMs where required by the underlying operating-system feature.
+The packages target `net462`, `net472`, `net48`, `net481`, `net8.0-windows`, `net9.0-windows`, `net10.0-windows`, and `net11.0-windows`. Stable local and Visual Studio builds select the four .NET Framework targets plus `net10.0-windows`; the `net11.0-windows` preview target is enabled explicitly for preview-SDK and CI builds. They are intended for Windows desktop processes and use Windows Forms/WPF-capable TFMs where required by the underlying operating-system feature.
 
 The implementation logs through Apache `log4net`. Libraries never configure appenders on the consumer's behalf. Configure the repository once in the application startup path when diagnostic output is required:
 

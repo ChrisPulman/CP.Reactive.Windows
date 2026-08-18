@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -56,10 +52,10 @@ public sealed class KeyboardHook
     /// <returns>The keyboard hook event arguments.</returns>
     private static KeyboardHookEventArgs CreateKeyboardEventArgs(IntPtr parameter, IntPtr data)
     {
-        bool isKeyDown = parameter == WmKeyDownParameter || parameter == WmSysKeyDownParameter;
-        KeyboardLowLevelHookStruct keyboardLowLevelHookStruct = Marshal.PtrToStructure<KeyboardLowLevelHookStruct>(data);
-        VirtualKeyCode key = keyboardLowLevelHookStruct.VirtualKeyCode;
-        KeyboardState keyState = GetKeyboardState(key, isKeyDown);
+        var isKeyDown = parameter == WmKeyDownParameter || parameter == WmSysKeyDownParameter;
+        var keyboardLowLevelHookStruct = Marshal.PtrToStructure<KeyboardLowLevelHookStruct>(data);
+        var key = keyboardLowLevelHookStruct.VirtualKeyCode;
+        var keyState = GetKeyboardState(key, isKeyDown);
         KeyboardHookEventArgs keyEventArgs = new KeyboardHookEventArgs
         {
             TimeStamp = keyboardLowLevelHookStruct.TimeStamp,
@@ -139,12 +135,12 @@ public sealed class KeyboardHook
     /// <returns>The hook lifetime.</returns>
     private ActionDisposable CreateSubscription(IObserver<KeyboardHookEventArgs> observer)
     {
-        IntPtr hookId = IntPtr.Zero;
+        var hookId = IntPtr.Zero;
         _callback = (code, parameter, data) =>
         {
             if (code >= 0)
             {
-                KeyboardHookEventArgs e = CreateKeyboardEventArgs(parameter, data);
+                var e = CreateKeyboardEventArgs(parameter, data);
                 observer.OnNext(e);
                 if (e.Handled)
                 {

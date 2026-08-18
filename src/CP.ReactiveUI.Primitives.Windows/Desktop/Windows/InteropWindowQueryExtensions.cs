@@ -18,8 +18,8 @@ public static class InteropWindowQueryExtensions
         /// <returns>bool.</returns>
         public bool CanIgnoreClass()
         {
-            string className = interopWindow.GetClassname();
-            foreach (string ignoreClass in IgnoreClasses)
+            var className = interopWindow.GetClassname();
+            foreach (var ignoreClass in IgnoreClasses)
             {
                 if (string.Equals(ignoreClass, className, StringComparison.Ordinal))
                 {
@@ -54,14 +54,14 @@ public static class InteropWindowQueryExtensions
                 return false;
             }
 
-            WindowInfo windowInfo = interopWindow.GetInfo();
-            WindowStyleFlags windowStyle = windowInfo.Style;
+            var windowInfo = interopWindow.GetInfo();
+            var windowStyle = windowInfo.Style;
             if ((windowStyle & WindowStyleFlags.WS_POPUP) == 0)
             {
                 return false;
             }
 
-            ExtendedWindowStyleFlags extendedWindowStyle = windowInfo.ExtendedStyle;
+            var extendedWindowStyle = windowInfo.ExtendedStyle;
             return (interopWindow.IsWin8App()
                     || (extendedWindowStyle & ExtendedWindowStyleFlags.WS_EX_NOREDIRECTIONBITMAP) == 0)
                 && !interopWindow.IsBackgroundWin10App()
@@ -83,7 +83,7 @@ public static class InteropWindowQueryExtensions
                 return false;
             }
 
-            WindowInfo info = interopWindow.GetInfo();
+            var info = interopWindow.GetInfo();
             if (info.Bounds.IsEmpty)
             {
                 return false;
@@ -94,7 +94,7 @@ public static class InteropWindowQueryExtensions
                 return false;
             }
 
-            ExtendedWindowStyleFlags extendedWindowStyle = info.ExtendedStyle;
+            var extendedWindowStyle = info.ExtendedStyle;
             return HasTopLevelStyle(interopWindow, info, extendedWindowStyle);
         }
     }
@@ -121,9 +121,9 @@ public static class InteropWindowQueryExtensions
         using Process process = Process.GetProcessById(processId);
         foreach (ProcessThread thread in process.Threads)
         {
-            List<IntPtr> handles = User32Api.EnumThreadWindows(thread.Id);
+            var handles = User32Api.EnumThreadWindows(thread.Id);
             thread.Dispose();
-            foreach (IntPtr handle in handles)
+            foreach (var handle in handles)
             {
                 yield return InteropWindowFactory.CreateFor(handle);
             }
@@ -139,7 +139,7 @@ public static class InteropWindowQueryExtensions
     /// <returns>IEnumerable with all the top level windows.</returns>
     public static IEnumerable<IInteropWindow> GetTopLevelWindows(bool ignoreKnownClasses)
     {
-        foreach (IInteropWindow possibleTopLevel in GetTopWindows())
+        foreach (var possibleTopLevel in GetTopWindows())
         {
             if (possibleTopLevel.IsTopLevel(ignoreKnownClasses))
             {
@@ -157,7 +157,7 @@ public static class InteropWindowQueryExtensions
     /// <returns>IEnumerable with all the top level windows.</returns>
     public static IEnumerable<IInteropWindow> GetTopWindows(IInteropWindow parent)
     {
-        IntPtr windowPtr = parent is null
+        var windowPtr = parent is null
             ? User32Api.GetTopWindow(IntPtr.Zero)
             : User32Api.GetWindow(parent.Handle, GetWindowCommands.GW_CHILD);
         while (windowPtr != IntPtr.Zero)

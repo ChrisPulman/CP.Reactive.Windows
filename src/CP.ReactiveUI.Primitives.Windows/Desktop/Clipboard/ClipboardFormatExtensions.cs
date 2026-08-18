@@ -2,14 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
@@ -44,16 +38,16 @@ public static class ClipboardFormatExtensions
     static ClipboardFormatExtensions()
     {
         Lock = new();
-        Id2Format = new();
-        Format2Id = new();
+        Id2Format = [];
+        Format2Id = [];
         _operations = new(NativeMethods.EnumClipboardFormats, NativeMethods.RegisterClipboardFormat, GetNativeFormatName, Marshal.GetLastWin32Error);
-        StandardClipboardFormats[] array = CP.ReactiveUI.Primitives.Windows.PolyFills.EnumValues.Get<StandardClipboardFormats>();
-        foreach (StandardClipboardFormats enumValue in array)
+        var array = EnumValues.Get<StandardClipboardFormats>();
+        foreach (var enumValue in array)
         {
-            string formatName = enumValue.AsString();
+            var formatName = enumValue.AsString();
             if (!string.IsNullOrEmpty(formatName))
             {
-                uint id = (uint)enumValue;
+                var id = (uint)enumValue;
                 Format2Id[formatName] = id;
                 Id2Format[id] = formatName;
             }
@@ -69,9 +63,9 @@ public static class ClipboardFormatExtensions
         public IEnumerable<string> AvailableFormats()
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            foreach (uint item in clipboardAccessToken.AvailableFormatIds())
+            foreach (var item in clipboardAccessToken.AvailableFormatIds())
             {
-                string format = MapIdToFormat(item);
+                var format = MapIdToFormat(item);
                 if (!string.IsNullOrEmpty(format))
                 {
                     yield return format;
@@ -84,7 +78,7 @@ public static class ClipboardFormatExtensions
         public IEnumerable<uint> AvailableFormatIds()
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            uint clipboardFormatId = 0U;
+            var clipboardFormatId = 0U;
             while (true)
             {
                 clipboardFormatId = _operations.EnumFormats(clipboardFormatId);
@@ -113,7 +107,7 @@ public static class ClipboardFormatExtensions
         /// <returns>The clipboard format string.</returns>
         public string AsString()
         {
-            MemberInfo[] member = typeof(StandardClipboardFormats).GetMember(format.ToString());
+            var member = typeof(StandardClipboardFormats).GetMember(format.ToString());
             return member.Length != 0 ? member[0].GetCustomAttribute<DisplayAttribute>()?.Name : null;
         }
     }
@@ -172,11 +166,11 @@ public static class ClipboardFormatExtensions
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(Func<uint, uint> enumFormats, Func<string, uint> registerFormat, Func<uint, string> getFormatName, Func<int> getLastError)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(enumFormats);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registerFormat);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getFormatName);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getLastError);
-        ClipboardFormatOperations operations = _operations;
+        Throw.IfNull(enumFormats);
+        Throw.IfNull(registerFormat);
+        Throw.IfNull(getFormatName);
+        Throw.IfNull(getLastError);
+        var operations = _operations;
         _operations = new(enumFormats, registerFormat, getFormatName, getLastError);
         return Scope.Create(operations, static previous => _operations = previous);
     }
@@ -203,8 +197,8 @@ public static class ClipboardFormatExtensions
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideNativeFormatNameForTesting(NativeFormatNameOperation getFormatName)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getFormatName);
-        NativeFormatNameOperation previous = _nativeFormatNameOperation;
+        Throw.IfNull(getFormatName);
+        var previous = _nativeFormatNameOperation;
         _nativeFormatNameOperation = getFormatName;
         return Scope.Create(previous, static previousOperation => _nativeFormatNameOperation = previousOperation);
     }
@@ -214,8 +208,8 @@ public static class ClipboardFormatExtensions
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideNativeClipboardFormatNameForTesting(NativeClipboardFormatNamePointerOperation getFormatName)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getFormatName);
-        NativeClipboardFormatNamePointerOperation previous = _nativeClipboardFormatNameOperation;
+        Throw.IfNull(getFormatName);
+        var previous = _nativeClipboardFormatNameOperation;
         _nativeClipboardFormatNameOperation = getFormatName;
         return Scope.Create(previous, static previousOperation => _nativeClipboardFormatNameOperation = previousOperation);
     }
@@ -226,9 +220,9 @@ public static class ClipboardFormatExtensions
     private static string GetNativeFormatName(uint formatId)
     {
         Span<char> clipboardFormatName = stackalloc char[FormatNameCapacity];
-        int characterCount = _nativeFormatNameOperation(formatId, clipboardFormatName);
+        var characterCount = _nativeFormatNameOperation(formatId, clipboardFormatName);
         return characterCount > 0
-            ? CP.ReactiveUI.Primitives.Windows.PolyFills.SpanText.Create(
+            ? SpanText.Create(
                 clipboardFormatName.Slice(0, characterCount))
             : null;
     }

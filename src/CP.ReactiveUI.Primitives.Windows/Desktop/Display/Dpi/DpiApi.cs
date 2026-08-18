@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi;
 #else
@@ -41,7 +36,7 @@ public static class DpiApi
     /// <returns>The requested system metric or configuration setting scaled for the window's DPI.</returns>
     public static int GetSystemMetricsForWindow(SystemMetric metric, IntPtr windowHandle)
     {
-        uint dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
+        var dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
         return NativeDpiMethods.GetSystemMetricsForDpi(metric, dpi);
     }
 
@@ -99,7 +94,7 @@ public static class DpiApi
     /// <returns>The calculated window rectangle, or null if the function fails.</returns>
     public static NativeRect? AdjustWindowRect(NativeRect clientRect, WindowStyleFlags style, bool hasMenu, ExtendedWindowStyleFlags extendedStyle, uint dpi)
     {
-        NativeRect rect = clientRect;
+        var rect = clientRect;
         return NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi) ? rect : null;
     }
 
@@ -150,8 +145,8 @@ public static class DpiApi
         bool hasMenu,
         ExtendedWindowStyleFlags extendedStyle)
     {
-        uint dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
-        NativeRect rect = clientRect;
+        var dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
+        var rect = clientRect;
         return NativeDpiMethods.AdjustWindowRectExForDpi(ref rect, style, hasMenu, extendedStyle, dpi) ? rect : null;
     }
 
@@ -190,7 +185,7 @@ public static class DpiApi
     public static bool TryGetSystemParametersInfoForWindow<T>(SystemParametersInfoActions action, IntPtr windowHandle, out T value)
         where T : struct
     {
-        uint dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
+        var dpi = checked((uint)NativeDpiMethods.GetDpi(windowHandle));
         return TryGetSystemParametersInfoInternal(action, dpi, out value);
     }
 
@@ -203,8 +198,8 @@ public static class DpiApi
     private static bool TryGetSystemParametersInfoInternal<T>(SystemParametersInfoActions action, uint dpi, out T value)
         where T : struct
     {
-        int size = Marshal.SizeOf<T>();
-        IntPtr ptr = Marshal.AllocHGlobal(size);
+        var size = Marshal.SizeOf<T>();
+        var ptr = Marshal.AllocHGlobal(size);
         try
         {
             if (NativeDpiMethods.SystemParametersInfoForDpi(action, checked((uint)size), ptr, SystemParametersInfoBehaviors.None, dpi))

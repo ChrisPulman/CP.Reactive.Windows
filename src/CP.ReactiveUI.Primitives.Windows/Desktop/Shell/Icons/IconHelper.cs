@@ -2,21 +2,12 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Runtime.InteropServices;
 using System.Windows.Media.Imaging;
 using System.Xml.Linq;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell.Enums;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
@@ -81,7 +72,7 @@ public static class IconHelper
     public static TIcon ExtractAssociatedIcon<TIcon>(string filePath, TIcon iconType, int index, bool useLargeIcon)
         where TIcon : class
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(filePath);
+        Throw.IfNull(filePath);
         if (!Uri.TryCreate(filePath, UriKind.Absolute, out var uri))
         {
             filePath = Path.GetFullPath(filePath);
@@ -169,7 +160,7 @@ public static class IconHelper
         where TIcon : class
     {
         ShellFileInfo shellFileInfo = default;
-        ShellGetFileInfoFlags flags = ShellGetFileInfoFlags.Icon | ShellGetFileInfoFlags.UseFileAttributes;
+        var flags = ShellGetFileInfoFlags.Icon | ShellGetFileInfoFlags.UseFileAttributes;
         if (linkOverlay)
         {
             flags |= ShellGetFileInfoFlags.LinkOverlay;
@@ -177,7 +168,7 @@ public static class IconHelper
 
         flags = (ShellGetFileInfoFlags)((int)flags | ((IconSize.Small == size) ? 1 : 0));
         _ = Shell32Api.SHGetFileInfo(Path.GetFileName(filename), ShellFileAttributeFlags.Normal, ref shellFileInfo, checked((uint)Marshal.SizeOf<ShellFileInfo>()), flags);
-        using SafeIconHandle iconHandle = shellFileInfo.IconHandle;
+        using var iconHandle = shellFileInfo.IconHandle;
         return IconHandleTo(iconHandle, iconType);
     }
 
@@ -190,7 +181,7 @@ public static class IconHelper
     public static TIcon GetFolderIcon<TIcon>(TIcon iconType, IconSize size, FolderIconType folderIconType)
         where TIcon : class
     {
-        ShellGetFileInfoFlags flags = ShellGetFileInfoFlags.Icon | ShellGetFileInfoFlags.UseFileAttributes;
+        var flags = ShellGetFileInfoFlags.Icon | ShellGetFileInfoFlags.UseFileAttributes;
         if (folderIconType == FolderIconType.Open)
         {
             flags |= ShellGetFileInfoFlags.OpenIcon;
@@ -199,7 +190,7 @@ public static class IconHelper
         flags = (ShellGetFileInfoFlags)((int)flags | ((IconSize.Small == size) ? 1 : 0));
         ShellFileInfo shellFileInfo = default;
         _ = Shell32Api.SHGetFileInfo(null, ShellFileAttributeFlags.Directory, ref shellFileInfo, checked((uint)Marshal.SizeOf<ShellFileInfo>()), flags);
-        using SafeIconHandle iconHandle = shellFileInfo.IconHandle;
+        using var iconHandle = shellFileInfo.IconHandle;
         return IconHandleTo(iconHandle, iconType);
     }
 
@@ -294,31 +285,31 @@ public static class IconHelper
             return null;
         }
 
-        string directory = Path.GetDirectoryName(exePath);
+        var directory = Path.GetDirectoryName(exePath);
         if (!Directory.Exists(directory))
         {
             return null;
         }
 
-        string manifestPath = Path.Combine(directory, "AppxManifest.xml");
+        var manifestPath = Path.Combine(directory, "AppxManifest.xml");
         if (!File.Exists(manifestPath))
         {
             return null;
         }
 
-        string pathToLogo = ReadLogoPath(manifestPath);
+        var pathToLogo = ReadLogoPath(manifestPath);
         if (pathToLogo is null)
         {
             return null;
         }
 
-        string finalLogoPath = FindLogoPath(directory, pathToLogo, scale);
+        var finalLogoPath = FindLogoPath(directory, pathToLogo, scale);
         if (finalLogoPath is null || !File.Exists(finalLogoPath))
         {
             return null;
         }
 
-        using FileStream fileStream = File.OpenRead(finalLogoPath);
+        using var fileStream = File.OpenRead(finalLogoPath);
         if (typeof(BitmapSource).IsAssignableFrom(typeof(TBitmap)))
         {
             BitmapImage bitmapImage = new();
@@ -343,8 +334,8 @@ public static class IconHelper
     /// <returns>The previous extraction operation.</returns>
     internal static ExtractAssociatedIconOperation SetAssociatedIconExtractorForTesting(ExtractAssociatedIconOperation extractor)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(extractor);
-        ExtractAssociatedIconOperation previous = _extractAssociatedIcon;
+        Throw.IfNull(extractor);
+        var previous = _extractAssociatedIcon;
         _extractAssociatedIcon = extractor;
         return previous;
     }
@@ -354,7 +345,7 @@ public static class IconHelper
     /// <returns>The logo path, or <see langword="null" /> when no logo is declared.</returns>
     internal static string ReadLogoPath(XDocument manifestDocument)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(manifestDocument);
+        Throw.IfNull(manifestDocument);
         XName propertiesNamespace = XName.Get("Properties", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
         XName logoNamespace = XName.Get("Logo", "http://schemas.microsoft.com/appx/manifest/foundation/windows10");
         return manifestDocument.Root?.Element(propertiesNamespace)?.Element(logoNamespace)?.Value;
@@ -401,19 +392,19 @@ public static class IconHelper
             return null;
         }
 
-        string logoDirectoryName = Path.GetDirectoryName(pathToLogo);
+        var logoDirectoryName = Path.GetDirectoryName(pathToLogo);
         if (logoDirectoryName is null)
         {
             return null;
         }
 
-        string path = Path.Combine(directory, logoDirectoryName);
-        string logoExtension = Path.GetExtension(pathToLogo);
-        string logoName = Path.GetFileNameWithoutExtension(pathToLogo);
-        string scaleSuffix = $".scale-{scale}{logoExtension}";
+        var path = Path.Combine(directory, logoDirectoryName);
+        var logoExtension = Path.GetExtension(pathToLogo);
+        var logoName = Path.GetFileNameWithoutExtension(pathToLogo);
+        var scaleSuffix = $".scale-{scale}{logoExtension}";
         string firstLogoPath = null;
-        string[] files = Directory.GetFiles(path, $"{logoName}*{logoExtension}");
-        foreach (string logoFile in files)
+        var files = Directory.GetFiles(path, $"{logoName}*{logoExtension}");
+        foreach (var logoFile in files)
         {
             firstLogoPath ??= logoFile;
 
@@ -445,7 +436,7 @@ public static class IconHelper
     /// <returns>The process id, or zero.</returns>
     private static int GetAppChildProcessId(IInteropWindow interopWindow)
     {
-        foreach (IInteropWindow child in interopWindow.GetChildren())
+        foreach (var child in interopWindow.GetChildren())
         {
             if (string.Equals(AppQueryExtensions.AppWindowClass, child.GetClassname(), StringComparison.Ordinal))
             {
@@ -464,7 +455,7 @@ public static class IconHelper
     private static TIcon LoadOwnedIcon<TIcon>(TIcon iconType, IconLoader iconLoader)
         where TIcon : class
     {
-        int result = iconLoader(out var iconHandle);
+        var result = iconLoader(out var iconHandle);
         using SafeIconHandle safeIconHandle = new(iconHandle);
         return (result != 0 || safeIconHandle.IsInvalid) ? null : IconHandleTo(safeIconHandle, iconType);
     }
@@ -474,7 +465,7 @@ public static class IconHelper
     /// <returns>The logo path, or null.</returns>
     private static string ReadLogoPath(string manifestPath)
     {
-        using FileStream fileStream = File.OpenRead(manifestPath);
+        using var fileStream = File.OpenRead(manifestPath);
         XDocument manifestDocument = XDocument.Load((Stream)fileStream);
         return ReadLogoPath(manifestDocument);
     }

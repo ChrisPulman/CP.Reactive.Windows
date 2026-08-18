@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
 #else
@@ -46,8 +43,8 @@ public static class NativeInput
     /// <returns>The previous native input API.</returns>
     internal static INativeInputApi SetApiForTesting(INativeInputApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        INativeInputApi currentApi = GetCurrentApi();
+        Throw.IfNull(api);
+        var currentApi = GetCurrentApi();
         _apiOverride = ((api == WindowsNativeInputApi.Instance) ? null : api);
         return currentApi;
     }

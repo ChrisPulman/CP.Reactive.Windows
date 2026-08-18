@@ -86,18 +86,18 @@ public static class InternetExplorerVersion
     /// <returns>The IE feature version.</returns>
     internal static int GetEmbVersion(bool ignoreDoctype, int browserVersion)
     {
-        const int internetExplorerNine = 9;
-        const int internetExplorerSeven = 7;
-        const int doctypeMultiplier = 1000;
-        const int compatibilityMultiplier = 1111;
-        const int fallbackVersion = 7000;
+        const int InternetExplorerNine = 9;
+        const int InternetExplorerSeven = 7;
+        const int DoctypeMultiplier = 1000;
+        const int CompatibilityMultiplier = 1111;
+        const int FallbackVersion = 7000;
 
-        if (browserVersion > internetExplorerNine)
+        if (browserVersion > InternetExplorerNine)
         {
-            return (browserVersion * doctypeMultiplier) + (ignoreDoctype ? 1 : 0);
+            return (browserVersion * DoctypeMultiplier) + (ignoreDoctype ? 1 : 0);
         }
 
-        return browserVersion > internetExplorerSeven ? browserVersion * compatibilityMultiplier : fallbackVersion;
+        return browserVersion > InternetExplorerSeven ? browserVersion * CompatibilityMultiplier : FallbackVersion;
     }
 
     /// <summary>Changes an embedded browser version through a registry adapter.</summary>

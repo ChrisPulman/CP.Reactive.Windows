@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -20,11 +17,7 @@ public class ClipboardUpdateInformation
     /// <param name="clipboardAccessToken">The clipboard access token.</param>
     private ClipboardUpdateInformation(IClipboardAccessToken clipboardAccessToken)
     {
-        List<uint> formatIds = new();
-        foreach (uint formatId in clipboardAccessToken.AvailableFormatIds())
-        {
-            formatIds.Add(formatId);
-        }
+        List<uint> formatIds = [.. clipboardAccessToken.AvailableFormatIds()];
 
         FormatIds = formatIds;
     }
@@ -43,9 +36,9 @@ public class ClipboardUpdateInformation
     {
         get
         {
-            foreach (uint formatId in FormatIds)
+            foreach (var formatId in FormatIds)
             {
-                string format = ClipboardFormatExtensions.MapIdToFormat(formatId);
+                var format = ClipboardFormatExtensions.MapIdToFormat(formatId);
                 if (!string.IsNullOrEmpty(format))
                 {
                     yield return format;
@@ -71,7 +64,7 @@ public class ClipboardUpdateInformation
             windowHandle = _getSharedMessageWindowHandle();
         }
 
-        using IClipboardAccessToken clipboard = ClipboardNative.Access(windowHandle);
+        using var clipboard = ClipboardNative.Access(windowHandle);
         return new(clipboard);
     }
 
@@ -80,8 +73,8 @@ public class ClipboardUpdateInformation
     /// <returns>A scope that restores the previous lookup.</returns>
     internal static IDisposable OverrideSharedMessageWindowHandleForTesting(Func<IntPtr> getSharedMessageWindowHandle)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getSharedMessageWindowHandle);
-        Func<IntPtr> previous = _getSharedMessageWindowHandle;
+        Throw.IfNull(getSharedMessageWindowHandle);
+        var previous = _getSharedMessageWindowHandle;
         _getSharedMessageWindowHandle = getSharedMessageWindowHandle;
         return Scope.Create(previous, static operation => _getSharedMessageWindowHandle = operation);
     }

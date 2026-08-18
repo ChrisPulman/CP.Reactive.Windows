@@ -24,8 +24,8 @@ public static class KeyboardInputGenerator
         }
 
         KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length];
-        int index = 0;
-        foreach (VirtualKeyCode virtualKeyCode in keycodes)
+        var index = 0;
+        foreach (var virtualKeyCode in keycodes)
         {
             keyboardInputs[index] = KeyboardInput.ForKeyDown(virtualKeyCode);
             index = checked(index + 1);
@@ -47,16 +47,16 @@ public static class KeyboardInputGenerator
         checked
         {
             KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * KeyTransitionInputCount];
-            int index = 0;
-            VirtualKeyCode[] array = keycodes;
-            foreach (VirtualKeyCode virtualKeyCode in array)
+            var index = 0;
+            var array = keycodes;
+            foreach (var virtualKeyCode in array)
             {
                 keyboardInputs[index] = KeyboardInput.ForKeyDown(virtualKeyCode);
                 index++;
             }
 
             array = keycodes;
-            foreach (VirtualKeyCode virtualKeyCode2 in array)
+            foreach (var virtualKeyCode2 in array)
             {
                 keyboardInputs[index] = KeyboardInput.ForKeyUp(virtualKeyCode2);
                 index++;
@@ -79,8 +79,8 @@ public static class KeyboardInputGenerator
         checked
         {
             KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length * KeyTransitionInputCount];
-            int index = 0;
-            foreach (VirtualKeyCode virtualKeyCode in keycodes)
+            var index = 0;
+            foreach (var virtualKeyCode in keycodes)
             {
                 keyboardInputs[index] = KeyboardInput.ForKeyDown(virtualKeyCode);
                 index++;
@@ -103,8 +103,8 @@ public static class KeyboardInputGenerator
         }
 
         KeyboardInput[] keyboardInputs = new KeyboardInput[keycodes.Length];
-        int index = 0;
-        foreach (VirtualKeyCode virtualKeyCode in keycodes)
+        var index = 0;
+        foreach (var virtualKeyCode in keycodes)
         {
             keyboardInputs[index] = KeyboardInput.ForKeyUp(virtualKeyCode);
             index = checked(index + 1);

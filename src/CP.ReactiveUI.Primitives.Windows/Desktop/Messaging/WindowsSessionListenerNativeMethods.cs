@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 #else
@@ -40,8 +37,8 @@ internal static partial class WindowsSessionListenerNativeMethods
     /// <returns>A scope that restores the production operations.</returns>
     internal static IDisposable OverrideForTesting(Func<IntPtr, int, bool> register, Func<IntPtr, bool> unregister)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(register);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregister);
+        Throw.IfNull(register);
+        Throw.IfNull(unregister);
         (Func<IntPtr, int, bool> Register, Func<IntPtr, bool> Unregister) previous = (_registerOperation, _unregisterOperation);
         (_registerOperation, _unregisterOperation) = (register, unregister);
         return Scope.Create(previous, static previousOperations =>

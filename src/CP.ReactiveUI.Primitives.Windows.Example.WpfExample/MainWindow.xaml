@@ -8,7 +8,7 @@
     <Grid>
         <Menu x:Name="menu" HorizontalAlignment="Left" VerticalAlignment="Top" Width="306">
             <Menu.Items>
-               <MenuItem Header="Hallo" >
+               <MenuItem Header="Hello" >
                    <MenuItem.Icon>
                         <Image Source="pack://application:,,,/CP.ReactiveUI.Primitives.Windows.Example.WpfExample;component/Icons/delete.png" Width="16" Height="16"></Image>
                    </MenuItem.Icon>

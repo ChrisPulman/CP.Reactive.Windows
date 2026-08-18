@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
 #else
@@ -29,7 +26,7 @@ public readonly record struct RawHID
     /// <returns>The raw input data bytes.</returns>
     public byte[] GetData()
     {
-        byte[] data = new byte[checked(_inputSize * _inputCount)];
+        var data = new byte[checked(_inputSize * _inputCount)];
         if (data.Length == 0 || _rawData == IntPtr.Zero)
         {
             return data;

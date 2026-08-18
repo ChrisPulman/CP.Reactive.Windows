@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Lifecycle;
 #else
@@ -70,7 +64,7 @@ public static partial class ApplicationRestartManager
             throw new ArgumentException($"Command line arguments cannot exceed {MaxCommandLineLength} characters", nameof(commandLineArgs));
         }
 
-        int result = _restartOperations.Register(commandLineArgs, flags);
+        var result = _restartOperations.Register(commandLineArgs, flags);
         if (result != 0)
         {
             throw new Win32Exception(result, "Failed to register application for restart");
@@ -84,7 +78,7 @@ public static partial class ApplicationRestartManager
     /// <exception cref="T:System.ComponentModel.Win32Exception">Thrown when unregistration fails.</exception>
     public static void UnregisterForRestart()
     {
-        int result = _restartOperations.Unregister();
+        var result = _restartOperations.Unregister();
         if (result != 0)
         {
             throw new Win32Exception(result, "Failed to unregister application from restart");
@@ -145,13 +139,13 @@ public static partial class ApplicationRestartManager
     /// <returns>Array of command-line arguments, excluding the executable path.</returns>
     internal static string[] GetRestartCommandLineArgs(string[] args)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(args);
+        Throw.IfNull(args);
         if (args.Length <= 1)
         {
             return [];
         }
 
-        string[] restartArgs = new string[checked(args.Length - 1)];
+        var restartArgs = new string[checked(args.Length - 1)];
         Array.Copy(args, 1, restartArgs, 0, restartArgs.Length);
         return restartArgs;
     }
@@ -168,7 +162,7 @@ public static partial class ApplicationRestartManager
         Func<EndSessionReasons, bool> onEndSession,
         bool connect)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(observer);
+        Throw.IfNull(observer);
         EndSessionMessageObserver endSessionObserver = new(observer, new EndSessionHandlers(onQuerySession, onEndSession));
         return (Observer: endSessionObserver, Lifetime: connect ? endSessionObserver.Connect() : endSessionObserver);
     }
@@ -181,9 +175,9 @@ public static partial class ApplicationRestartManager
         Func<string, ApplicationRestartFlags, int> register,
         Func<int> unregister)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(register);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregister);
-        ApplicationRestartOperations restartOperations = _restartOperations;
+        Throw.IfNull(register);
+        Throw.IfNull(unregister);
+        var restartOperations = _restartOperations;
         _restartOperations = new(register, unregister);
         return Scope.Create(restartOperations, static previous =>
         {
@@ -196,7 +190,7 @@ public static partial class ApplicationRestartManager
     /// <returns>True when one of the arguments requests restart handling; otherwise, false.</returns>
     internal static bool WasRestartRequested(string[] args)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(args);
+        Throw.IfNull(args);
         return Array.Exists(args, IsRestartArgument);
     }
 
@@ -295,7 +289,7 @@ public static partial class ApplicationRestartManager
         {
             if (value.Msg == WindowsMessages.WM_QUERYENDSESSION || value.Msg == WindowsMessages.WM_ENDSESSION)
             {
-                WindowMessage message = value;
+                var message = value;
                 EndSessionReasons endSessionReason = (EndSessionReasons)checked((uint)message.LParam);
                 if (message.Msg == WindowsMessages.WM_QUERYENDSESSION)
                 {
@@ -326,7 +320,7 @@ public static partial class ApplicationRestartManager
                 return message;
             }
 
-            bool canEndSession = handler(reason);
+            var canEndSession = handler(reason);
             message.Result = (ulong)((!canEndSession) ? 1 : 0);
             message.Handled = true;
             return message;

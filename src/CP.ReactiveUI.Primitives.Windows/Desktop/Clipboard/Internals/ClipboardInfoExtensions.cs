@@ -2,12 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
 using CP.ReactiveUI.Primitives.Windows.Native.Kernel.Enums;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals;
@@ -41,13 +36,13 @@ internal static class ClipboardInfoExtensions
                 return false;
             }
 
-            IntPtr globalHandle = _operations.GetClipboardData(formatId);
+            var globalHandle = _operations.GetClipboardData(formatId);
             if (globalHandle == IntPtr.Zero)
             {
                 return false;
             }
 
-            IntPtr memoryPtr = _operations.GlobalLock(globalHandle);
+            var memoryPtr = _operations.GlobalLock(globalHandle);
             if (memoryPtr == IntPtr.Zero)
             {
                 return false;
@@ -63,7 +58,7 @@ internal static class ClipboardInfoExtensions
         internal ClipboardNativeInfo ReadInfo(uint formatId)
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            IntPtr globalHandle = _operations.GetClipboardData(formatId);
+            var globalHandle = _operations.GetClipboardData(formatId);
             if (globalHandle == IntPtr.Zero)
             {
                 if (_operations.IsFormatAvailable(formatId))
@@ -74,7 +69,7 @@ internal static class ClipboardInfoExtensions
                 throw new Win32Exception();
             }
 
-            IntPtr memoryPtr = _operations.GlobalLock(globalHandle);
+            var memoryPtr = _operations.GlobalLock(globalHandle);
             if (memoryPtr == IntPtr.Zero)
             {
                 _ = _operations.GlobalFree(globalHandle);
@@ -91,7 +86,7 @@ internal static class ClipboardInfoExtensions
         internal ClipboardNativeInfo WriteInfo(uint formatId, long size)
         {
             clipboardAccessToken.ThrowWhenNoAccess();
-            IntPtr globalHandle = _operations.GlobalAlloc(
+            var globalHandle = _operations.GlobalAlloc(
                 GlobalMemorySettings.Movable | GlobalMemorySettings.ZeroInit,
                 new(checked((ulong)size)));
             if (globalHandle == IntPtr.Zero)
@@ -99,7 +94,7 @@ internal static class ClipboardInfoExtensions
                 throw new Win32Exception();
             }
 
-            IntPtr memoryPtr = _operations.GlobalLock(globalHandle);
+            var memoryPtr = _operations.GlobalLock(globalHandle);
             if (memoryPtr == IntPtr.Zero)
             {
                 _ = _operations.GlobalFree(globalHandle);
@@ -142,12 +137,12 @@ internal static class ClipboardInfoExtensions
         Func<IntPtr, IntPtr> globalLock,
         Func<IntPtr, IntPtr> globalFree)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getClipboardData);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isFormatAvailable);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalAlloc);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalLock);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalFree);
-        ClipboardInfoOperations operations = _operations;
+        Throw.IfNull(getClipboardData);
+        Throw.IfNull(isFormatAvailable);
+        Throw.IfNull(globalAlloc);
+        Throw.IfNull(globalLock);
+        Throw.IfNull(globalFree);
+        var operations = _operations;
         _operations = new(getClipboardData, isFormatAvailable, globalAlloc, globalLock, globalFree);
         return Scope.Create(operations, static previous => _operations = previous);
     }

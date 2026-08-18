@@ -196,7 +196,7 @@ public static class AppQueryExtensions
             return true;
         }
 
-        foreach (DisplayInfo screen in displays)
+        foreach (var screen in displays)
         {
             if (screen.Bounds.Contains(windowBounds))
             {
@@ -205,7 +205,7 @@ public static class AppQueryExtensions
                     return true;
                 }
 
-                IntPtr monitor = monitorFromBounds(screen.Bounds);
+                var monitor = monitorFromBounds(screen.Bounds);
                 if (monitor != IntPtr.Zero && getVisibilityOnMonitor(monitor) == MonitorAppVisibility.MAV_APP_VISIBLE)
                 {
                     return true;
@@ -223,7 +223,7 @@ public static class AppQueryExtensions
     /// <returns>The app launcher window, or null.</returns>
     internal static IInteropWindow GetAppLauncher(bool isLauncherVisible, Func<IntPtr> findLauncher, Func<IntPtr, IInteropWindow> createWindow)
     {
-        IntPtr appLauncher = isLauncherVisible ? IntPtr.Zero : findLauncher();
+        var appLauncher = isLauncherVisible ? IntPtr.Zero : findLauncher();
         return appLauncher == IntPtr.Zero ? null : createWindow(appLauncher);
     }
 
@@ -257,7 +257,7 @@ public static class AppQueryExtensions
             yield break;
         }
 
-        foreach (IInteropWindow currentAppWindow in appWindows)
+        foreach (var currentAppWindow in appWindows)
         {
             if (currentAppWindow.IsApp())
             {
@@ -265,7 +265,7 @@ public static class AppQueryExtensions
             }
         }
 
-        IntPtr gutterHandle = findGutter();
+        var gutterHandle = findGutter();
         if (gutterHandle != IntPtr.Zero)
         {
             yield return createWindow(gutterHandle);
@@ -337,7 +337,7 @@ public static class AppQueryExtensions
     /// <returns>The candidate app windows.</returns>
     private static IEnumerable<IInteropWindow> EnumerateAppWindows()
     {
-        IntPtr nextHandle = User32Api.FindWindow(AppWindowIdentifierClass, null);
+        var nextHandle = User32Api.FindWindow(AppWindowIdentifierClass, null);
         while (nextHandle != IntPtr.Zero)
         {
             yield return InteropWindowFactory.CreateFor(nextHandle);
@@ -369,7 +369,7 @@ public static class AppQueryExtensions
     /// <returns>true when a child with the class name is found.</returns>
     private static bool HasChildClass(IInteropWindow interopWindow, string className)
     {
-        foreach (IInteropWindow child in interopWindow.GetChildren())
+        foreach (var child in interopWindow.GetChildren())
         {
             if (string.Equals(child.GetClassname(), className, StringComparison.Ordinal))
             {

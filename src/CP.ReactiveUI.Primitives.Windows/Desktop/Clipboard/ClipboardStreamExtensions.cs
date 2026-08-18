@@ -2,12 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -120,7 +114,7 @@ public static class ClipboardStreamExtensions
         /// <returns>MemoryStream.</returns>
         public Stream GetAsStream(uint formatId)
         {
-            using ClipboardNativeInfo readInfo = clipboardAccessToken.ReadInfo(formatId);
+            using var readInfo = clipboardAccessToken.ReadInfo(formatId);
             return CreateManagedReadStream(readInfo);
         }
     }
@@ -131,9 +125,9 @@ public static class ClipboardStreamExtensions
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(Action<IClipboardAccessToken, uint, Stream, long> copyToClipboard, Func<ClipboardNativeInfo, int> getSize)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(copyToClipboard);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getSize);
-        ClipboardStreamOperations operations = _operations;
+        Throw.IfNull(copyToClipboard);
+        Throw.IfNull(getSize);
+        var operations = _operations;
         _operations = new(copyToClipboard, getSize);
         return Scope.Create(operations, static previous => _operations = previous);
     }
@@ -143,7 +137,7 @@ public static class ClipboardStreamExtensions
     /// <returns>A readable stream containing the clipboard data.</returns>
     private static MemoryStream CreateManagedReadStream(ClipboardNativeInfo readInfo)
     {
-        byte[] bytes = new byte[_operations.GetSize(readInfo)];
+        var bytes = new byte[_operations.GetSize(readInfo)];
         Marshal.Copy(readInfo.MemoryPtr, bytes, 0, bytes.Length);
         return new(bytes, writable: false);
     }
@@ -195,7 +189,7 @@ public static class ClipboardStreamExtensions
     /// <param name="length">The number of bytes to copy.</param>
     private static unsafe void CopyToClipboardMemory(IClipboardAccessToken clipboardAccessToken, uint formatId, Stream stream, long length)
     {
-        using ClipboardNativeInfo writeInfo = clipboardAccessToken.WriteInfo(formatId, length);
+        using var writeInfo = clipboardAccessToken.WriteInfo(formatId, length);
         using UnmanagedMemoryStream unsafeMemoryStream = new((byte*)(void*)writeInfo.MemoryPtr, length, length, FileAccess.Write);
         stream.CopyTo(unsafeMemoryStream);
     }

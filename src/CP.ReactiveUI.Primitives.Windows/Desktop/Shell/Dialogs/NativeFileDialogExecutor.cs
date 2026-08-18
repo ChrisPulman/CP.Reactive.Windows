@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs;
 #else
@@ -45,13 +42,13 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
     /// <inheritdoc />
     public FileDialogResult ShowOpen(FileOpenDialogRequest request)
     {
-        using IFileOpenDialog dialog = _createOpenDialog();
+        using var dialog = _createOpenDialog();
         if (request.Title is not null)
         {
             dialog.SetTitle(request.Title);
         }
 
-        FileOpenOptions options = FileOpenOptions.FileMustExist;
+        var options = FileOpenOptions.FileMustExist;
         if (request.AllowMultiSelect)
         {
             options |= FileOpenOptions.AllowMultiSelect;
@@ -66,7 +63,7 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
 
         ComDialogHelper.ApplyInitialDirectory(dialog.SetFolder, request.InitialDirectory);
         ComDialogHelper.ApplyPlaces(dialog.AddPlace, request.Places);
-        int num = dialog.Show((IntPtr)request.OwnerHandle);
+        var num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
         if (num == ComDialogHelper.HResultCancelled)
         {
@@ -78,14 +75,14 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
             return FileDialogResult.FromPaths(ComDialogHelper.CollectPaths(dialog.GetResults()));
         }
 
-        using IShellItem item = dialog.GetResult();
+        using var item = dialog.GetResult();
         return FileDialogResult.FromPath(ComDialogHelper.GetFileSysPath(item));
     }
 
     /// <inheritdoc />
     public FileDialogResult ShowSave(FileSaveDialogRequest request)
     {
-        using IFileSaveDialog dialog = _createSaveDialog();
+        using var dialog = _createSaveDialog();
         if (request.Title is not null)
         {
             dialog.SetTitle(request.Title);
@@ -105,21 +102,21 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
 
         ComDialogHelper.ApplyInitialDirectory(dialog.SetFolder, request.InitialDirectory);
         ComDialogHelper.ApplyPlaces(dialog.AddPlace, request.Places);
-        int num = dialog.Show((IntPtr)request.OwnerHandle);
+        var num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
         if (num == ComDialogHelper.HResultCancelled)
         {
             return FileDialogResult.Cancelled();
         }
 
-        using IShellItem item = dialog.GetResult();
+        using var item = dialog.GetResult();
         return FileDialogResult.FromPath(ComDialogHelper.GetFileSysPath(item));
     }
 
     /// <inheritdoc />
     public FileDialogResult ShowFolder(FolderPickerDialogRequest request)
     {
-        using IFileOpenDialog dialog = _createOpenDialog();
+        using var dialog = _createOpenDialog();
         if (request.Title is not null)
         {
             dialog.SetTitle(request.Title);
@@ -127,14 +124,14 @@ internal sealed class NativeFileDialogExecutor : IFileDialogExecutor
 
         dialog.SetOptions(FileOpenOptions.PickFolders);
         ComDialogHelper.ApplyInitialDirectory(dialog.SetFolder, request.InitialDirectory);
-        int num = dialog.Show((IntPtr)request.OwnerHandle);
+        var num = dialog.Show((IntPtr)request.OwnerHandle);
         ThrowIfUnexpectedResult(num);
         if (num == ComDialogHelper.HResultCancelled)
         {
             return FileDialogResult.Cancelled();
         }
 
-        using IShellItem item = dialog.GetResult();
+        using var item = dialog.GetResult();
         return FileDialogResult.FromPath(ComDialogHelper.GetFileSysPath(item));
     }
 

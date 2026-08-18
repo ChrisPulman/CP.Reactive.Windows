@@ -2,11 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Windows;
 using System.Windows.Media;
-using ReactiveUI.Primitives.Disposables;
-using log4net;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Wpf;
@@ -41,7 +38,7 @@ public static class WindowDpiExtensions
                 return;
             }
 
-            DependencyObject child = VisualTreeHelper.GetChild(frameworkElement, 0);
+            var child = VisualTreeHelper.GetChild(frameworkElement, 0);
             if (Math.Abs(scaleFactor - 1.0) > double.Epsilon)
             {
                 ScaleTransform scaleTransform = new(scaleFactor, scaleFactor);
@@ -85,11 +82,11 @@ public static class WindowDpiExtensions
             Log.DebugFormat("Registering the UpdateLayoutTransform subscription for {0}", window.GetType());
         }
 
-        IDisposable transformSubscription = dpiHandler.ObserveDpiChanges().Subscribe(dpiChangeInfo =>
+        var transformSubscription = dpiHandler.ObserveDpiChanges().Subscribe(dpiChangeInfo =>
         {
             updateLayoutTransform(window, (double)dpiChangeInfo.NewDpi / (double)DpiCalculator.DefaultScreenDpi);
         });
-        IDisposable messageSubscription = windowMessages.Subscribe(message =>
+        var messageSubscription = windowMessages.Subscribe(message =>
         {
             _ = dpiHandler.HandleWindowMessages(message);
             if (message.Message == WindowsMessages.WM_NCCREATE)
@@ -123,8 +120,8 @@ public static class WindowDpiExtensions
     internal static Func<Window, IObservable<WindowMessageInfo>> ExchangeWindowMessageSource(
         Func<Window, IObservable<WindowMessageInfo>> windowMessageSource)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(windowMessageSource);
-        Func<Window, IObservable<WindowMessageInfo>> previousWindowMessageSource = _windowMessageSource;
+        Throw.IfNull(windowMessageSource);
+        var previousWindowMessageSource = _windowMessageSource;
         _windowMessageSource = windowMessageSource;
         return previousWindowMessageSource;
     }

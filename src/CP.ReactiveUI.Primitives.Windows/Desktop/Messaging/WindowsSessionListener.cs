@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 #else
@@ -62,9 +58,9 @@ public class WindowsSessionListener : IDisposable
         SessionRegistrationOperation register,
         SessionUnregistrationOperation unregister)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messageSource);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(register);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregister);
+        Throw.IfNull(messageSource);
+        Throw.IfNull(register);
+        Throw.IfNull(unregister);
         _listenerOperations = new(messageSource, register, unregister);
         _sessionChanges = CreateSessionChanges().Publish().RefCount();
     }
@@ -73,7 +69,7 @@ public class WindowsSessionListener : IDisposable
     /// <returns>An observable sequence of session change notifications.</returns>
     public IObservable<SessionChangeEventArgs> ObserveSessionChanges()
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_isDisposed, this);
+        Throw.IfDisposed(_isDisposed, this);
         return _sessionChanges.Where((_) => !_isPaused);
     }
 
@@ -94,12 +90,12 @@ public class WindowsSessionListener : IDisposable
     /// <summary>Starts listening for session change events.</summary>
     public void Start()
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_isDisposed, this);
+        Throw.IfDisposed(_isDisposed, this);
         lock (_lock)
         {
             if (_subscription is null)
             {
-                CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_isDisposed, this);
+                Throw.IfDisposed(_isDisposed, this);
                 _isPaused = false;
                 _subscription = ObserveSessionChanges().Subscribe(static _ => { });
             }
@@ -144,10 +140,10 @@ public class WindowsSessionListener : IDisposable
         SessionRegistrationOperation register,
         SessionUnregistrationOperation unregister)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messageSource);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(register);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregister);
-        SessionListenerOperations operations = _operations;
+        Throw.IfNull(messageSource);
+        Throw.IfNull(register);
+        Throw.IfNull(unregister);
+        var operations = _operations;
         _operations = new(messageSource, register, unregister);
         return Scope.Create(operations, static previous =>
         {

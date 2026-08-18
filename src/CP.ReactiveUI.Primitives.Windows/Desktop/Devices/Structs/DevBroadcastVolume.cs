@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using System.Text;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Structs;
 #else
@@ -56,9 +52,9 @@ public readonly struct DevBroadcastVolume : IEquatable<DevBroadcastVolume>
         get
         {
             StringBuilder drives = new();
-            for (int letter = 0; letter < DriveLetterCount; letter = checked(letter + 1))
+            for (var letter = 0; letter < DriveLetterCount; letter = checked(letter + 1))
             {
-                uint bit = (uint)(1 << letter);
+                var bit = (uint)(1 << letter);
                 if ((_unitMask & bit) != 0)
                 {
                     _ = drives.Append((char)checked((ushort)(FirstDriveLetter + letter)));

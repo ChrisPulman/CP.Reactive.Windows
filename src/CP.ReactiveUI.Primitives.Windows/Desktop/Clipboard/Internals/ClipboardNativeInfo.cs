@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard.Internals;
 #else
@@ -55,9 +52,9 @@ internal sealed class ClipboardNativeInfo : IDisposable
     /// <returns>A scope that restores the previous operation.</returns>
     internal static IDisposable OverrideGlobalUnlockForTesting(Func<IntPtr, bool> globalUnlock)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(globalUnlock);
-        Func<IntPtr, bool> previous = _globalUnlock;
+        Throw.IfNull(globalUnlock);
+        var previous = _globalUnlock;
         _globalUnlock = globalUnlock;
-        return global::ReactiveUI.Primitives.Disposables.Scope.Create(previous, static previousOperation => _globalUnlock = previousOperation);
+        return Scope.Create(previous, static previousOperation => _globalUnlock = previousOperation);
     }
 }

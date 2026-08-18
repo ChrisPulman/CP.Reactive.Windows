@@ -2,14 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Threading;
-using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
 #else
@@ -116,11 +108,11 @@ public static class SharedMessageWindow
     /// <returns>A scope that restores the native message-window streams.</returns>
     internal static IDisposable OverrideStreamsForTesting(IObservable<WindowMessage> messages, IObservable<nint> handleChanges, nint currentHandle)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messages);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(handleChanges);
-        IObservable<WindowMessage> previousMessages = _messageStreamOverride;
+        Throw.IfNull(messages);
+        Throw.IfNull(handleChanges);
+        var previousMessages = _messageStreamOverride;
         IObservable<IntPtr> previousHandleChanges = _handleChangesOverride;
-        nint? previousHandle = _handleOverride;
+        var previousHandle = _handleOverride;
         lock (SyncRoot)
         {
             _messageStreamOverride = messages;
@@ -145,8 +137,8 @@ public static class SharedMessageWindow
         Func<nint, WindowsMessages, nint, nint, nuint> defaultWindowProcedure,
         Action<int> postQuitMessage)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(defaultWindowProcedure);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(postQuitMessage);
+        Throw.IfNull(defaultWindowProcedure);
+        Throw.IfNull(postQuitMessage);
         (Func<nint, WindowsMessages, nint, nint, nuint> DefaultWindowProcedure, Action<int> PostQuitMessage) previous =
             (_defaultWindowProcedureOverride, _postQuitMessageOverride);
         _defaultWindowProcedureOverride = defaultWindowProcedure;
@@ -183,11 +175,11 @@ public static class SharedMessageWindow
     private static IObservable<WindowMessage> ListenCore(Action<nint> onSetup, Action<nint> onTeardown) => ReactiveSignal.Create<WindowMessage>(observer =>
         {
             ListenState state = new(onSetup, onTeardown);
-            IDisposable handleSubscription = ObserveNativeHandleChanges().Subscribe(windowHandle =>
+            var handleSubscription = ObserveNativeHandleChanges().Subscribe(windowHandle =>
             {
                 state.UpdateWindowHandle(windowHandle);
             });
-            IDisposable messageSubscription = WindowMessageEvents.Subscribe(observer);
+            var messageSubscription = WindowMessageEvents.Subscribe(observer);
             state.SetSubscriptions(handleSubscription, messageSubscription);
             return Scope.Create(state, static listenState =>
             {
@@ -222,12 +214,12 @@ public static class SharedMessageWindow
     /// <param name="state">The message subscription state.</param>
     private static void RunMessageLoop(MessageSubscriptionState state)
     {
-        IObserver<WindowMessage> observer = state.Observer;
-        string className = state.ClassName;
+        var observer = state.Observer;
+        var className = state.ClassName;
         WndProc windowProcedure = (windowHandle2, message2, wordParam, longParam) => ProcessWindowMessage(observer, windowHandle2, message2, wordParam, longParam);
         nint instanceHandle = Kernel32Api.GetModuleHandle(null);
         _ = NativeMethods.RegisterClassEx(windowProcedure, instanceHandle, className);
-        nint windowHandle = NativeMethods.CreateWindowEx(new()
+        var windowHandle = NativeMethods.CreateWindowEx(new()
         {
             ExtendedStyle = MessageOnlyWindowExtendedStyle,
             ClassName = className,
@@ -381,25 +373,25 @@ public static class SharedMessageWindow
         private const string User32Dll = "user32.dll";
 
         /// <summary>The User32 module handle.</summary>
-        private static readonly Lazy<nint> User32Module = new(static () => System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, "user32.dll")));
+        private static readonly Lazy<nint> User32Module = new(static () => NativeLibrary.Load(Path.Combine(Environment.SystemDirectory, "user32.dll")));
 
         /// <summary>The RegisterClassExW export pointer.</summary>
-        private static readonly Lazy<nint> RegisterClassExExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, "RegisterClassExW"));
+        private static readonly Lazy<nint> RegisterClassExExport = new(static () => NativeLibrary.GetExport(User32Module.Value, "RegisterClassExW"));
 
         /// <summary>The UnregisterClassW export pointer.</summary>
-        private static readonly Lazy<nint> UnregisterClassExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, "UnregisterClassW"));
+        private static readonly Lazy<nint> UnregisterClassExport = new(static () => NativeLibrary.GetExport(User32Module.Value, "UnregisterClassW"));
 
         /// <summary>The CreateWindowExW export pointer.</summary>
-        private static readonly Lazy<nint> CreateWindowExExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, "CreateWindowExW"));
+        private static readonly Lazy<nint> CreateWindowExExport = new(static () => NativeLibrary.GetExport(User32Module.Value, "CreateWindowExW"));
 
         /// <summary>The DefWindowProcW export pointer.</summary>
-        private static readonly Lazy<nint> DefWindowProcExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, "DefWindowProcW"));
+        private static readonly Lazy<nint> DefWindowProcExport = new(static () => NativeLibrary.GetExport(User32Module.Value, "DefWindowProcW"));
 
         /// <summary>The PostQuitMessage export pointer.</summary>
-        private static readonly Lazy<nint> PostQuitMessageExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, nameof(PostQuitMessage)));
+        private static readonly Lazy<nint> PostQuitMessageExport = new(static () => NativeLibrary.GetExport(User32Module.Value, nameof(PostQuitMessage)));
 
         /// <summary>The PostMessageW export pointer.</summary>
-        private static readonly Lazy<nint> PostMessageExport = new(static () => System.Runtime.InteropServices.NativeLibrary.GetExport(User32Module.Value, "PostMessageW"));
+        private static readonly Lazy<nint> PostMessageExport = new(static () => NativeLibrary.GetExport(User32Module.Value, "PostMessageW"));
 
         /// <summary>The class-registration operation.</summary>
         private static Func<nint, ushort> _registerClassExOperation = InvokeRegisterClassEx;
@@ -420,9 +412,9 @@ public static class SharedMessageWindow
             Func<nint, nint, bool> unregisterClass,
             Func<CreateWindowArguments, nint> createWindowEx)
         {
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(registerClassEx);
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(unregisterClass);
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(createWindowEx);
+            Throw.IfNull(registerClassEx);
+            Throw.IfNull(unregisterClass);
+            Throw.IfNull(createWindowEx);
             (Func<nint, ushort> RegisterClassEx, Func<nint, nint, bool> UnregisterClass, Func<CreateWindowArguments, nint> CreateWindowEx) previous =
                 (_registerClassExOperation, _unregisterClassOperation, _createWindowExOperation);
             (_registerClassExOperation, _unregisterClassOperation, _createWindowExOperation) = (registerClassEx, unregisterClass, createWindowEx);

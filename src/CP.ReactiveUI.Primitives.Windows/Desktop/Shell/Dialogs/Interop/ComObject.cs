@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -56,7 +53,7 @@ internal class ComObject : IDisposable
     /// <returns>The native function pointer address.</returns>
     protected virtual unsafe IntPtr GetMethod(int slot)
     {
-        nint slotOffset = checked((nint)slot * (nint)sizeof(IntPtr));
+        var slotOffset = checked((nint)slot * (nint)sizeof(IntPtr));
         return *(IntPtr*)((*(IntPtr*)(void*)Handle) + slotOffset);
     }
 }

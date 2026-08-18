@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs;
 #else
@@ -61,7 +56,7 @@ internal static partial class ComDialogHelper
     internal static T CreateDialog<T>(Guid clsid)
         where T : ComObject
     {
-        Guid interfaceId = GetInterfaceId<T>();
+        var interfaceId = GetInterfaceId<T>();
         var (resultCode, dialog) = CreateDialogInstance(clsid, interfaceId);
         Marshal.ThrowExceptionForHR(resultCode);
         return typeof(T) == typeof(IFileOpenDialog)
@@ -85,7 +80,7 @@ internal static partial class ComDialogHelper
         }
 
         FilterSpec[] specs = new FilterSpec[filters.Count];
-        for (int i = 0; i < filters.Count; i = checked(i + 1))
+        for (var i = 0; i < filters.Count; i = checked(i + 1))
         {
             specs[i] = new(filters[i].Name, filters[i].Pattern);
         }
@@ -106,7 +101,7 @@ internal static partial class ComDialogHelper
 
         try
         {
-            using IShellItem shellItem = ShellItemFromPath(path);
+            using var shellItem = ShellItemFromPath(path);
             setFolder(shellItem);
         }
         catch (COMException)
@@ -130,7 +125,7 @@ internal static partial class ComDialogHelper
             {
                 try
                 {
-                    using IShellItem shellItem = ShellItemFromPath(path);
+                    using var shellItem = ShellItemFromPath(path);
                     addPlace(shellItem, atTop ? FileDialogAddPlaceFlags.Top : FileDialogAddPlaceFlags.Bottom);
                 }
                 catch (COMException)
@@ -158,13 +153,13 @@ internal static partial class ComDialogHelper
     {
         using (items)
         {
-            uint count = items.GetCount();
+            var count = items.GetCount();
             checked
             {
                 List<string> result = new((int)count);
-                for (uint i = 0U; i < count; i++)
+                for (var i = 0U; i < count; i++)
                 {
-                    using IShellItem item = items.GetItemAt(i);
+                    using var item = items.GetItemAt(i);
                     result.Add(GetFileSysPath(item));
                 }
 
@@ -178,7 +173,7 @@ internal static partial class ComDialogHelper
     /// <returns>The created shell item.</returns>
     internal static IShellItem ShellItemFromPath(string path)
     {
-        Guid iid = IidIShellItem;
+        var iid = IidIShellItem;
         var (resultCode, item) = CreateShellItemInstance(path, iid);
         Marshal.ThrowExceptionForHR(resultCode);
         return WrapShellItem(item);
@@ -228,7 +223,7 @@ internal static partial class ComDialogHelper
     /// <returns>The native result and interface pointer.</returns>
     private static (int ResultCode, IntPtr Dialog) ActivateNativeDialog(Guid clsid, Guid interfaceId)
     {
-        int resultCode = CoCreateInstance(
+        var resultCode = CoCreateInstance(
             ref clsid,
             IntPtr.Zero,
             NativeMethods.ClsctxInprocServer,
@@ -250,8 +245,8 @@ internal static partial class ComDialogHelper
     /// <returns>The native result and shell item pointer.</returns>
     private static (int ResultCode, IntPtr Item) CreateNativeShellItem(string path, Guid interfaceId)
     {
-        Guid iid = interfaceId;
-        int resultCode = CreateShellItem(path, IntPtr.Zero, ref iid, out var item);
+        var iid = interfaceId;
+        var resultCode = CreateShellItem(path, IntPtr.Zero, ref iid, out var item);
         return (ResultCode: resultCode, Item: item);
     }
 

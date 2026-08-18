@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
 
 #if REACTIVE_SHIM
@@ -98,9 +93,9 @@ public static class RawInputApi
     public static void RegisterRawInput(IntPtr windowHandle, RawInputDeviceFlags flags, params RawInputDevices[] devices)
     {
         RawInputDevice[] rawInputDevices = new RawInputDevice[devices.Length];
-        for (int index = 0; index < devices.Length; index = checked(index + 1))
+        for (var index = 0; index < devices.Length; index = checked(index + 1))
         {
-            IntPtr targetWindowHandle = (((flags & RawInputDeviceFlags.Remove) == RawInputDeviceFlags.Remove) ? IntPtr.Zero : windowHandle);
+            var targetWindowHandle = (((flags & RawInputDeviceFlags.Remove) == RawInputDeviceFlags.Remove) ? IntPtr.Zero : windowHandle);
             rawInputDevices[index] = CreateRawInputDevice(targetWindowHandle, devices[index], flags);
         }
 
@@ -131,7 +126,7 @@ public static class RawInputApi
     public static RawInputDeviceInformation GetDeviceInformation(IntPtr handle)
     {
         RawInputDeviceInformation result = new RawInputDeviceInformation { Handle = handle };
-        uint pcbSize = 0U;
+        var pcbSize = 0U;
         if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceName, IntPtr.Zero, ref pcbSize) == uint.MaxValue)
         {
             throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
@@ -141,7 +136,7 @@ public static class RawInputApi
         {
             if (pcbSize != 0)
             {
-                IntPtr deviceNamePtr = Marshal.AllocHGlobal((int)pcbSize * UnicodeCharacterSize);
+                var deviceNamePtr = Marshal.AllocHGlobal((int)pcbSize * UnicodeCharacterSize);
                 try
                 {
                     if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceName, deviceNamePtr, ref pcbSize) == uint.MaxValue)
@@ -163,7 +158,7 @@ public static class RawInputApi
                 throw new Win32Exception(GetRawInputDeviceInfoFailureMessage);
             }
 
-            IntPtr deviceInfoPtr = Marshal.AllocHGlobal((int)pcbSize);
+            var deviceInfoPtr = Marshal.AllocHGlobal((int)pcbSize);
             try
             {
                 if (_nativeApi.GetRawInputDeviceInfo(handle, RawInputDeviceInfoCommands.DeviceInfo, deviceInfoPtr, ref pcbSize) == uint.MaxValue)
@@ -189,8 +184,8 @@ public static class RawInputApi
     /// <returns>The currently registered raw input devices.</returns>
     public static IEnumerable<RawInputDeviceInformation> GetAllDevices()
     {
-        uint deviceCount = 0U;
-        uint deviceListSize = checked((uint)Marshal.SizeOf<RawInputDeviceList>());
+        var deviceCount = 0U;
+        var deviceListSize = checked((uint)Marshal.SizeOf<RawInputDeviceList>());
         if (_nativeApi.GetRawInputDeviceList(null, ref deviceCount, deviceListSize) == 0 && deviceCount != 0)
         {
             RawInputDeviceList[] deviceList = new RawInputDeviceList[deviceCount];
@@ -199,8 +194,8 @@ public static class RawInputApi
                 throw new Win32Exception("Exception when calling GetRawInputDeviceList");
             }
 
-            RawInputDeviceList[] array = deviceList;
-            foreach (RawInputDeviceList rawInputDeviceList in array)
+            var array = deviceList;
+            foreach (var rawInputDeviceList in array)
             {
                 yield return GetDeviceInformation(rawInputDeviceList.Handle);
             }
@@ -229,8 +224,8 @@ public static class RawInputApi
     /// <returns>The previous raw-input API.</returns>
     internal static IRawInputNativeApi SetNativeApiForTesting(IRawInputNativeApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        IRawInputNativeApi nativeApi = _nativeApi;
+        Throw.IfNull(api);
+        var nativeApi = _nativeApi;
         _nativeApi = api;
         return nativeApi;
     }
@@ -245,15 +240,15 @@ public static class RawInputApi
             return null;
         }
 
-        string[] split = deviceName.Substring(DeviceNamePrefixLength).Split('#');
+        var split = deviceName.Substring(DeviceNamePrefixLength).Split('#');
         if (split.Length <= 2)
         {
             return deviceName;
         }
 
-        using RegistryKey registryKey = Registry.LocalMachine.OpenSubKey($"System\\CurrentControlSet\\Enum\\{split[0]}\\{split[1]}\\{split[2]}");
-        string deviceDescription = (string)registryKey?.GetValue("DeviceDesc");
-        int? startOfDisplayName = deviceDescription?.LastIndexOf(";", StringComparison.Ordinal);
+        using var registryKey = Registry.LocalMachine.OpenSubKey($"System\\CurrentControlSet\\Enum\\{split[0]}\\{split[1]}\\{split[2]}");
+        var deviceDescription = (string)registryKey?.GetValue("DeviceDesc");
+        var startOfDisplayName = deviceDescription?.LastIndexOf(";", StringComparison.Ordinal);
         return (startOfDisplayName >= 0) ? deviceDescription.Substring(checked(startOfDisplayName.Value + 1)) : null;
     }
 }

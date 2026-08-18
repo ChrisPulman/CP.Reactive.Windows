@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -30,7 +28,7 @@ internal class IShellItemArray : ComObject
     internal virtual unsafe uint GetCount()
     {
         uint count = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out uint, int>)(void*)GetMethod(GetCountSlot))(Handle, out count));
+        ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, out uint, int>)(void*)GetMethod(GetCountSlot))(Handle, out count));
         return count;
     }
 
@@ -40,7 +38,7 @@ internal class IShellItemArray : ComObject
     internal virtual unsafe IShellItem GetItemAt(uint index)
     {
         IntPtr item = default;
-        ComObject.ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, uint, out IntPtr, int>)(void*)GetMethod(GetItemAtSlot))(Handle, index, out item));
+        ThrowIfFailed(((delegate* unmanaged[Stdcall]<IntPtr, uint, out IntPtr, int>)(void*)GetMethod(GetItemAtSlot))(Handle, index, out item));
         return new(item);
     }
 }

@@ -2,10 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
 using CP.ReactiveUI.Primitives.Windows.Native.Shell.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
@@ -181,8 +178,8 @@ public static partial class NativeIconMethods
     /// <returns>The previous icon API.</returns>
     internal static INativeIconApi SetApiForTesting(INativeIconApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        INativeIconApi api2 = _api;
+        Throw.IfNull(api);
+        var api2 = _api;
         _api = api;
         return api2;
     }
@@ -343,13 +340,13 @@ public static partial class NativeIconMethods
 #endif
     {
         /// <summary>The loaded user32 module.</summary>
-        private static readonly IntPtr User32Module = System.Runtime.InteropServices.NativeLibrary.Load(
+        private static readonly IntPtr User32Module = NativeLibrary.Load(
             "user32.dll",
             typeof(NativeMethods).Assembly,
             DllImportSearchPath.System32);
 
         /// <summary>The GetIconInfoExW export pointer.</summary>
-        private static readonly IntPtr GetIconInfoExExport = System.Runtime.InteropServices.NativeLibrary.GetExport(
+        private static readonly IntPtr GetIconInfoExExport = NativeLibrary.GetExport(
             User32Module,
             "GetIconInfoExW");
 

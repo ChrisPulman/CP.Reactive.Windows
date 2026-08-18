@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Dialogs.Interop;
 #else
@@ -31,10 +28,10 @@ internal sealed class NativeFilterSpecs : IDisposable
         {
             _strings = new SafeHGlobalHandle[filters.Length * PointersPerFilter];
             _handle = new(IntPtr.Size * _strings.Length);
-            for (int index = 0; index < filters.Length; index++)
+            for (var index = 0; index < filters.Length; index++)
             {
-                int nameIndex = index * PointersPerFilter;
-                int specIndex = nameIndex + 1;
+                var nameIndex = index * PointersPerFilter;
+                var specIndex = nameIndex + 1;
                 _strings[nameIndex] = SafeHGlobalHandle.FromString(filters[index].Name);
                 _strings[specIndex] = SafeHGlobalHandle.FromString(filters[index].Spec);
                 _handle.WritePointer(nameIndex * IntPtr.Size, _strings[nameIndex]);
@@ -49,8 +46,8 @@ internal sealed class NativeFilterSpecs : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        SafeHGlobalHandle[] strings = _strings;
-        for (int i = 0; i < strings.Length; i++)
+        var strings = _strings;
+        for (var i = 0; i < strings.Length; i++)
         {
             strings[i].Dispose();
         }
@@ -106,7 +103,7 @@ internal sealed class NativeFilterSpecs : IDisposable
         /// <returns>The function result.</returns>
         internal T UseHandle<T>(Func<IntPtr, T> action)
         {
-            bool addedReference = false;
+            var addedReference = false;
             try
             {
                 DangerousAddRef(ref addedReference);
@@ -126,8 +123,8 @@ internal sealed class NativeFilterSpecs : IDisposable
         /// <param name="value">The native pointer owner to write.</param>
         internal void WritePointer(int offset, SafeHGlobalHandle value)
         {
-            bool thisReference = false;
-            bool valueReference = false;
+            var thisReference = false;
+            var valueReference = false;
             try
             {
                 DangerousAddRef(ref thisReference);

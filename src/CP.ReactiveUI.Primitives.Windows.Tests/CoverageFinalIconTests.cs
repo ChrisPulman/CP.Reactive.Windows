@@ -45,7 +45,7 @@ public sealed class CoverageFinalIconTests
         try
         {
             var exePath = Path.Combine(tempDirectory.FullName, "app.exe");
-            File.WriteAllBytes(exePath, []);
+            await WriteAllBytesAsync(exePath, []);
 
             await Assert.That(Icons.IconHelper.GetAppLogoFromProcessPath(exePath, default(Bitmap), Hundred)).IsNull();
 
@@ -117,7 +117,7 @@ public sealed class CoverageFinalIconTests
         try
         {
             var emptyExecutable = Path.Combine(tempDirectory.FullName, "empty.exe");
-            File.WriteAllBytes(emptyExecutable, []);
+            await WriteAllBytesAsync(emptyExecutable, []);
             using var defaultAssociatedIcon = Icons.IconHelper.ExtractAssociatedIcon(emptyExecutable, default(Icon));
             using var smallAssociatedIcon = Icons.IconHelper.ExtractAssociatedIcon(emptyExecutable, default(Icon), Zero, useLargeIcon: false);
             await Assert.That(defaultAssociatedIcon).IsNull();
@@ -506,6 +506,21 @@ public sealed class CoverageFinalIconTests
     /// <returns>The created directory.</returns>
     private static DirectoryInfo CreateTemporaryDirectory(string prefix) =>
         Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), prefix + Guid.NewGuid().ToString("N")));
+
+    /// <summary>Writes bytes asynchronously across all target frameworks.</summary>
+    /// <param name="path">The target file path.</param>
+    /// <param name="bytes">The bytes to write.</param>
+    /// <returns>A task representing the asynchronous write.</returns>
+    private static async Task WriteAllBytesAsync(string path, byte[] bytes)
+    {
+#if NETFRAMEWORK
+        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+        await stream.WriteAsync(bytes, 0, bytes.Length);
+#else
+        await using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true);
+        await stream.WriteAsync(bytes.AsMemory(), CancellationToken.None);
+#endif
+    }
 
     /// <summary>Sets operations that return an icon for a matching resource parameter.</summary>
     /// <param name="expectedResourceParameter">The resource parameter that produces an icon.</param>

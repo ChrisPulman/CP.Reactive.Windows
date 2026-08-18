@@ -2,11 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input;
 #else
@@ -34,18 +29,18 @@ public static class RawInputMonitor
 
         Func<IObserver<RawInputEventArgs>, IDisposable> createObservable = observer =>
         {
-            IDisposable messageSubscription = Infrastructure.MessageSource.Messages
+            var messageSubscription = Infrastructure.MessageSource.Messages
                 .Where(static windowsMessage => windowsMessage.Msg == WindowsMessages.WM_INPUT)
                 .Subscribe(windowsMessage =>
             {
                 windowsMessage.Handled = true;
-                int dataSize = Marshal.SizeOf<RawInput>();
+                var dataSize = Marshal.SizeOf<RawInput>();
                 if (RawInputApi.GetRawInputData((nint)windowsMessage.LParam, RawInputDataCommands.Input, out var data, ref dataSize, Marshal.SizeOf<RawInputHeader>()) != -1)
                 {
                     Notify(observer, new RawInputEventArgs { IsForeground = (checked((int)windowsMessage.WParam) == 0), RawInput = data });
                 }
             });
-            IDisposable registrationSubscription = (from windowHandle in Infrastructure.MessageSource.ObserveHandleChanges()
+            var registrationSubscription = (from windowHandle in Infrastructure.MessageSource.ObserveHandleChanges()
                                                     where windowHandle != 0
                                                     select windowHandle).Take(1).Subscribe(windowHandle =>
                                                 {
@@ -87,8 +82,8 @@ public static class RawInputMonitor
         /// <returns>A scope that restores the previous source.</returns>
         internal static IDisposable OverrideMessageSourceForTesting(IRawInputMessageSource messageSource)
         {
-            CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(messageSource);
-            IRawInputMessageSource messageSource2 = _messageSource;
+            Throw.IfNull(messageSource);
+            var messageSource2 = _messageSource;
             _messageSource = messageSource;
             ResetMonitorCaches();
             return Scope.Create(messageSource2, static source =>

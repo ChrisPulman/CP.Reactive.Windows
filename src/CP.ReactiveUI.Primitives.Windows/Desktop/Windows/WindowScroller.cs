@@ -2,17 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Threading;
-using CP.ReactiveUI.Primitives.Windows.Native;
-using CP.ReactiveUI.Primitives.Windows.Native.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.Structs;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Structs;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
-using log4net;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Windows;
@@ -60,7 +50,7 @@ public class WindowScroller
     {
         get
         {
-            string wheelScrollLines = Volatile.Read(ref _operations).GetScrollWheelLines();
+            var wheelScrollLines = Volatile.Read(ref _operations).GetScrollWheelLines();
             return int.TryParse(wheelScrollLines, out var scrollLines) ? scrollLines : DefaultScrollWheelLines;
         }
     }
@@ -80,7 +70,7 @@ public class WindowScroller
 
             checked
             {
-                long currentEnd = Math.Max(scrollInfo.Position, scrollInfo.TrackingPosition) + scrollInfo.PageSize;
+                var currentEnd = Math.Max(scrollInfo.Position, scrollInfo.TrackingPosition) + scrollInfo.PageSize;
                 return (KeepInitialBounds ? InitialScrollInfo.Maximum : scrollInfo.Maximum) <= currentEnd - 1;
             }
         }
@@ -96,7 +86,7 @@ public class WindowScroller
                 return false;
             }
 
-            int currentStart = Math.Max(scrollInfo.Position, scrollInfo.TrackingPosition);
+            var currentStart = Math.Max(scrollInfo.Position, scrollInfo.TrackingPosition);
             return (KeepInitialBounds ? InitialScrollInfo.Minimum : scrollInfo.Minimum) >= currentStart;
         }
     }
@@ -159,11 +149,11 @@ public class WindowScroller
             return ScrollBar;
         }
 
-        ObjectIdentifiers objectId = GetObjectIdentifier();
+        var objectId = GetObjectIdentifier();
         ScrollBarInfo scrollbarInfo = ScrollBarInfo.Create();
         if (!Volatile.Read(ref _operations).GetScrollBarInfo(ScrollBarWindow.Handle, objectId, ref scrollbarInfo))
         {
-            Win32Error error = Win32.GetLastErrorCode();
+            var error = Win32.GetLastErrorCode();
             if (Log.IsDebugEnabled)
             {
                 Log.DebugFormat("Error retrieving Scrollbar info : {0}", Win32.GetMessage(error));
@@ -206,7 +196,7 @@ public class WindowScroller
     /// <returns>true if this worked.</returns>
     public bool Reset()
     {
-        ScrollInfo initialScrollInfo = InitialScrollInfo;
+        var initialScrollInfo = InitialScrollInfo;
         return ApplyPosition(ref initialScrollInfo);
     }
 
@@ -226,7 +216,7 @@ public class WindowScroller
     /// <returns>A scope that restores the previous operations when disposed.</returns>
     internal static IDisposable OverrideOperationsForTesting(WindowScrollerOperations operations)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(operations);
+        Throw.IfNull(operations);
         return new OperationsOverride(Interlocked.Exchange(ref _operations, operations));
     }
 
@@ -235,7 +225,7 @@ public class WindowScroller
     /// <returns><see langword="true" /> after the key sequence is sent.</returns>
     private static bool SendControlKey(VirtualKeyCode key)
     {
-        WindowScrollerOperations operations = Volatile.Read(ref _operations);
+        var operations = Volatile.Read(ref _operations);
         _ = operations.KeyDown(VirtualKeyCode.Control);
         _ = operations.KeyPresses(key);
         _ = operations.KeyUp(VirtualKeyCode.Control);
@@ -256,15 +246,15 @@ public class WindowScroller
         {
             if (ScrollBarType == ScrollBarTypes.Horizontal)
             {
-                int position = checked(HorizontalThumbPositionBase + (HorizontalThumbPositionScale * scrollInfo.Position));
+                var position = checked(HorizontalThumbPositionBase + (HorizontalThumbPositionScale * scrollInfo.Position));
                 _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_HSCROLL, position, 0);
                 return true;
             }
 
-            ScrollBarTypes scrollBarType = ScrollBarType;
+            var scrollBarType = ScrollBarType;
             if (unchecked((uint)(scrollBarType - 1)) <= 1U)
             {
-                int position = unchecked(HorizontalThumbPositionBase + (scrollInfo.Position << VerticalThumbPositionShift));
+                var position = unchecked(HorizontalThumbPositionBase + (scrollInfo.Position << VerticalThumbPositionShift));
                 _ = Volatile.Read(ref _operations).SendIntegerMessage(ScrollingWindow.Handle, WindowsMessages.WM_VSCROLL, position, 0);
                 return true;
             }
@@ -292,7 +282,7 @@ public class WindowScroller
     /// <returns>The middle point.</returns>
     private NativePoint GetScrollMiddlePoint()
     {
-        NativeRect bounds = ScrollingWindow.GetInfo().Bounds;
+        var bounds = ScrollingWindow.GetInfo().Bounds;
         checked
         {
             return new(bounds.X + unchecked(bounds.Width / CoordinateCenterDivisor), bounds.Y + unchecked(bounds.Height / CoordinateCenterDivisor));
@@ -309,7 +299,7 @@ public class WindowScroller
             return false;
         }
 
-        int pageSize = checked((int)scrollInfo.PageSize);
+        var pageSize = checked((int)scrollInfo.PageSize);
         scrollInfo.Position = checked(forward
             ? Math.Min(scrollInfo.Maximum, scrollInfo.Position + pageSize)
             : Math.Max(scrollInfo.Minimum, scrollInfo.Position - pageSize));
@@ -353,13 +343,13 @@ public class WindowScroller
     /// <returns>true if this was possible.</returns>
     private bool SendScrollMessage(ScrollBarCommands scrollBarCommand)
     {
-        ScrollBarTypes scrollBarType = ScrollBarType;
+        var scrollBarType = ScrollBarType;
         if ((uint)scrollBarType > 1U)
         {
             return false;
         }
 
-        WindowsMessages message = ScrollBarType == ScrollBarTypes.Horizontal ? WindowsMessages.WM_HSCROLL : WindowsMessages.WM_VSCROLL;
+        var message = ScrollBarType == ScrollBarTypes.Horizontal ? WindowsMessages.WM_HSCROLL : WindowsMessages.WM_VSCROLL;
         _ = Volatile.Read(ref _operations).SendCommandMessage(ScrollingWindow.Handle, message, scrollBarCommand, 0);
         return true;
     }
@@ -369,7 +359,7 @@ public class WindowScroller
     /// <returns>bool.</returns>
     private bool TryRetrievePosition(out ScrollInfo scrollInfo)
     {
-        bool hasScrollInfo = GetPosition(out scrollInfo);
+        var hasScrollInfo = GetPosition(out scrollInfo);
         if (Log.IsDebugEnabled)
         {
             if (hasScrollInfo)
@@ -471,7 +461,7 @@ public class WindowScroller
         /// <returns>The registry value text, or <see langword="null" /> when unavailable.</returns>
         internal virtual string GetScrollWheelLines()
         {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", writable: false);
+            using var key = Registry.CurrentUser.OpenSubKey("Control Panel\\Desktop", writable: false);
             return RegistryValueReader.GetValue(key, "WheelScrollLines") as string;
         }
 

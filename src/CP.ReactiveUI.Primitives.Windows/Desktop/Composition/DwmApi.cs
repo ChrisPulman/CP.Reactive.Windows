@@ -2,7 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using CP.ReactiveUI.Primitives.Windows.Native.Enums;
 using Microsoft.Win32;
 
 #if REACTIVE_SHIM
@@ -113,7 +112,7 @@ public static partial class DwmApi
         /// <returns>The operation result.</returns>
         internal static unsafe HResult DwmEnableBlurBehindWindow(IntPtr windowHandle, ref DwmBlurBehind blurBehind)
         {
-            NativeDwmBlurBehind nativeBlurBehind = blurBehind.ToNative();
+            var nativeBlurBehind = blurBehind.ToNative();
             return ((delegate* unmanaged[Stdcall]<IntPtr, NativeDwmBlurBehind*, HResult>)(void*)DwmEnableBlurBehindWindowExport)(windowHandle, &nativeBlurBehind);
         }
 
@@ -151,7 +150,7 @@ public static partial class DwmApi
         internal static unsafe HResult DwmGetWindowAttribute(IntPtr windowHandle, DwmWindowAttributes attribute, out bool value, int size)
         {
             Unsafe.SkipInit<int>(out var nativeValue);
-            HResult result =
+            var result =
                 ((delegate* unmanaged[Stdcall]<IntPtr, DwmWindowAttributes, int*, int, HResult>)
                     (void*)DwmGetWindowAttributeExport)(windowHandle, attribute, &nativeValue, size);
             value = nativeValue != 0;
@@ -180,7 +179,7 @@ public static partial class DwmApi
         internal static unsafe HResult DwmIsCompositionEnabled(out bool enabled)
         {
             Unsafe.SkipInit<int>(out var nativeEnabled);
-            HResult result = ((delegate* unmanaged[Stdcall]<int*, HResult>)(void*)DwmIsCompositionEnabledExport)(&nativeEnabled);
+            var result = ((delegate* unmanaged[Stdcall]<int*, HResult>)(void*)DwmIsCompositionEnabledExport)(&nativeEnabled);
             enabled = nativeEnabled != 0;
             return result;
         }
@@ -289,7 +288,7 @@ public static partial class DwmApi
         /// <returns>The operation result.</returns>
         internal static unsafe HResult DwmUpdateThumbnailProperties(IntPtr thumbnailId, ref DwmThumbnailProperties props)
         {
-            NativeDwmThumbnailProperties nativeProperties = props.ToNative();
+            var nativeProperties = props.ToNative();
             return ((delegate* unmanaged[Stdcall]<IntPtr, NativeDwmThumbnailProperties*, HResult>)
                 (void*)DwmUpdateThumbnailPropertiesExport)(thumbnailId, &nativeProperties);
         }
@@ -354,7 +353,7 @@ public static partial class DwmApi
         private static IntPtr TryGetExport(string exportName)
         {
             var found = NativeLibrary.TryGetExport(DwmApiModule, exportName, out var exportAddress);
-            return DwmApi.ResolveOptionalExport(found, exportAddress);
+            return ResolveOptionalExport(found, exportAddress);
         }
 
         /// <summary>Represents optional DWM export addresses.</summary>
@@ -460,7 +459,7 @@ public static partial class DwmApi
     {
         get
         {
-            object dwordValue = _colorizationValueProvider();
+            var dwordValue = _colorizationValueProvider();
             return dwordValue is null ? DrawingColor.White : DrawingColor.FromArgb((int)dwordValue);
         }
     }
@@ -693,7 +692,7 @@ public static partial class DwmApi
         return _getUIntWindowAttributeOperation(
                 windowHandle,
                 DwmWindowAttributes.WindowCornerPreference,
-                out uint cornerPreference,
+                out var cornerPreference,
                 DwordSize).Succeeded()
             ? (DwmWindowCornerPreference)cornerPreference
             : DwmWindowCornerPreference.Default;
@@ -942,7 +941,7 @@ public static partial class DwmApi
     /// <returns>The colorization value, or <see langword="null" /> when unavailable.</returns>
     private static object ReadColorizationValue()
     {
-        using RegistryKey key = Registry.CurrentUser.OpenSubKey(ColorizationColorKey, writable: false);
+        using var key = Registry.CurrentUser.OpenSubKey(ColorizationColorKey, writable: false);
         return GetColorizationValue(key);
     }
 

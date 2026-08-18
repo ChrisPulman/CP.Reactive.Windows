@@ -2,11 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Windows;
 using System.Windows.Interop;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Messaging;
@@ -72,7 +69,7 @@ public static class WinProcWindowsExtensions
         Func<long, TState> before,
         Action<TState> disposeAction)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(hookSource);
+        Throw.IfNull(hookSource);
         return CreateHookSourceMessages(hookSource, before, disposeAction).ShareLatest();
     }
 
@@ -98,7 +95,7 @@ public static class WinProcWindowsExtensions
             EventHandler eventHandler = (_, _) => observer.OnCompleted();
             hookSource.Disposed += eventHandler;
             hookSource.AddHook(WindowMessageHandler);
-            TState state = before is null ? default : before(hookSource.Handle);
+            var state = before is null ? default : before(hookSource.Handle);
             return Scope.Create(
                 new HookSourceDisposalState<TState>(disposeAction, state, hookSource, eventHandler, WindowMessageHandler),
                 static stateToDispose =>
@@ -204,7 +201,7 @@ public static class WinProcWindowsExtensions
         /// <returns>HwndSource.</returns>
         private static HwndSource ToHwndSource(Window window)
         {
-            IntPtr windowHandle = new WindowInteropHelper(window).Handle;
+            var windowHandle = new WindowInteropHelper(window).Handle;
             return windowHandle != IntPtr.Zero ? HwndSource.FromHwnd(windowHandle) : null;
         }
 
@@ -260,7 +257,7 @@ public static class WinProcWindowsExtensions
             ActiveHwndSource.AddHook(_windowMessageHandler);
             if (_before is not null)
             {
-                long sourceHandle = SelectSourceHandle(_initialHwndSourceHandle, ActiveHwndSource.Handle.ToInt64());
+                var sourceHandle = SelectSourceHandle(_initialHwndSourceHandle, ActiveHwndSource.Handle.ToInt64());
                 _state = _before(sourceHandle);
             }
         }

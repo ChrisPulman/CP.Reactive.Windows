@@ -2,9 +2,7 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
 using System.Windows.Forms;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Display.Dpi.Forms;
@@ -46,5 +44,5 @@ public sealed class DpiUnawareFormBehavior : IDisposable
     }
 
     /// <summary>Throws when this behavior has been disposed.</summary>
-    private void ThrowIfDisposed() => CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfDisposed(_disposed, this);
+    private void ThrowIfDisposed() => Throw.IfDisposed(_disposed, this);
 }

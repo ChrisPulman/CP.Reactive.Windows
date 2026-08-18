@@ -2,14 +2,9 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 using Microsoft.Win32;
-using ReactiveUI.Primitives.Disposables;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Devices.Structs;
@@ -95,8 +90,8 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
                 return _name;
             }
 
-            string displayName = SpanText.Slice(_name, DevicePathPrefixLength);
-            int classMarkerIndex = displayName.LastIndexOf("#{", StringComparison.Ordinal);
+            var displayName = SpanText.Slice(_name, DevicePathPrefixLength);
+            var classMarkerIndex = displayName.LastIndexOf("#{", StringComparison.Ordinal);
             if (classMarkerIndex >= 0)
             {
                 displayName = SpanText.Create(displayName.AsSpan(0, classMarkerIndex));
@@ -126,7 +121,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     {
         get
         {
-            Match match = DeviceTypeExpression.Match(_name);
+            var match = DeviceTypeExpression.Match(_name);
             return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
@@ -142,7 +137,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     {
         get
         {
-            Match match = DeviceIdExpression.Match(_name);
+            var match = DeviceIdExpression.Match(_name);
             return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
@@ -152,7 +147,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     {
         get
         {
-            Match match = VendorExpression.Match(_name);
+            var match = VendorExpression.Match(_name);
             return match.Groups.Count == VendorGroupCount ? match.Groups[2].Value : null;
         }
     }
@@ -162,7 +157,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     {
         get
         {
-            Match match = ProductExpression.Match(_name);
+            var match = ProductExpression.Match(_name);
             return match.Groups.Count == IdentifierGroupCount ? match.Groups[1].Value : null;
         }
     }
@@ -176,7 +171,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
         get => GetDeviceClass();
         set
         {
-            DescriptionAttribute descriptionAttribute = GetDescriptionAttribute(value);
+            var descriptionAttribute = GetDescriptionAttribute(value);
             if (!string.IsNullOrEmpty(descriptionAttribute?.Description))
             {
                 _classGuid = Guid.Parse(descriptionAttribute.Description);
@@ -204,7 +199,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     public static DevBroadcastDeviceInterface Test(string deviceName, DeviceInterfaceClass deviceClass)
     {
         Guid deviceClassGuid = default;
-        DescriptionAttribute descriptionAttribute = GetDescriptionAttribute(deviceClass);
+        var descriptionAttribute = GetDescriptionAttribute(deviceClass);
         if (!string.IsNullOrEmpty(descriptionAttribute?.Description))
         {
             deviceClassGuid = Guid.Parse(descriptionAttribute.Description);
@@ -249,8 +244,8 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <returns>A lifetime that restores the previous reader.</returns>
     internal static IDisposable OverrideRegistryValueReaderForTesting(Func<string, string, object> readRegistryValue)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(readRegistryValue);
-        Func<string, string, object> previousReadRegistryValue = _readRegistryValue;
+        Throw.IfNull(readRegistryValue);
+        var previousReadRegistryValue = _readRegistryValue;
         _readRegistryValue = readRegistryValue;
         return new ActionDisposable(() => _readRegistryValue = previousReadRegistryValue);
     }
@@ -268,13 +263,13 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
             return null;
         }
 
-        string[] parts = name.Split('#');
+        var parts = name.Split('#');
         if (parts.Length < MinimumRegistryPathParts)
         {
             return null;
         }
 
-        int startIndex = parts[0].IndexOf("?\\", StringComparison.Ordinal);
+        var startIndex = parts[0].IndexOf("?\\", StringComparison.Ordinal);
         checked
         {
             if (startIndex < 0 || startIndex + DeviceRegistryPrefixLength >= parts[0].Length)
@@ -282,15 +277,15 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
                 return null;
             }
 
-            string devType = parts[0].Substring(startIndex + DeviceRegistryPrefixLength);
-            string deviceInstanceId = parts[1];
-            string deviceUniqueId = parts[2];
+            var devType = parts[0].Substring(startIndex + DeviceRegistryPrefixLength);
+            var deviceInstanceId = parts[1];
+            var deviceUniqueId = parts[2];
             if (string.IsNullOrWhiteSpace(devType) || string.IsNullOrWhiteSpace(deviceInstanceId) || string.IsNullOrWhiteSpace(deviceUniqueId))
             {
                 return null;
             }
 
-            string regPath = $"SYSTEM\\CurrentControlSet\\Enum\\{devType}\\{deviceInstanceId}\\{deviceUniqueId}";
+            var regPath = $"SYSTEM\\CurrentControlSet\\Enum\\{devType}\\{deviceInstanceId}\\{deviceUniqueId}";
             return Registry.LocalMachine.OpenSubKey(regPath);
         }
     }
@@ -301,7 +296,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <returns>The registry value, or <see langword="null"/> when it is unavailable.</returns>
     private static object ReadRegistryValue(string name, string valueName)
     {
-        using RegistryKey key = TryOpenDeviceRegistryKey(name);
+        using var key = TryOpenDeviceRegistryKey(name);
         return RegistryValueReader.GetValue(key, valueName);
     }
 
@@ -310,7 +305,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <returns>The description attribute, or <c>null</c> when the value has none.</returns>
     private static DescriptionAttribute GetDescriptionAttribute(DeviceInterfaceClass deviceClass)
     {
-        MemberInfo[] members = typeof(DeviceInterfaceClass).GetMember(deviceClass.ToString());
+        var members = typeof(DeviceInterfaceClass).GetMember(deviceClass.ToString());
         return members.Length != 0 ? members[0].GetCustomAttribute<DescriptionAttribute>(inherit: false) : null;
     }
 
@@ -318,11 +313,11 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
     /// <returns>The device interface class.</returns>
     private readonly DeviceInterfaceClass GetDeviceClass()
     {
-        string guidToFind = _classGuid.ToString();
-        DeviceInterfaceClass[] array = CP.ReactiveUI.Primitives.Windows.PolyFills.EnumValues.Get<DeviceInterfaceClass>();
-        foreach (DeviceInterfaceClass deviceClass in array)
+        var guidToFind = _classGuid.ToString();
+        var array = EnumValues.Get<DeviceInterfaceClass>();
+        foreach (var deviceClass in array)
         {
-            DescriptionAttribute descriptionAttribute = GetDescriptionAttribute(deviceClass);
+            var descriptionAttribute = GetDescriptionAttribute(deviceClass);
             if (!string.IsNullOrEmpty(descriptionAttribute?.Description) && string.Equals(guidToFind, descriptionAttribute.Description, StringComparison.OrdinalIgnoreCase))
             {
                 return deviceClass;
@@ -343,7 +338,7 @@ public struct DevBroadcastDeviceInterface : IEquatable<DevBroadcastDeviceInterfa
 
         if (_readRegistryValue(_name, "DeviceDesc") is string result2)
         {
-            int semiColonIndex = result2.LastIndexOf(';');
+            var semiColonIndex = result2.LastIndexOf(';');
             return (semiColonIndex >= 0) ? result2.Substring(checked(semiColonIndex + 1)) : result2;
         }
 

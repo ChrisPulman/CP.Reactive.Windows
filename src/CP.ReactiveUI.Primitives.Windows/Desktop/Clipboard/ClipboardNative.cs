@@ -2,13 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.ComponentModel;
-using System.Threading;
-using System.Threading.Tasks;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-using ReactiveUI.Primitives.Disposables;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -44,7 +37,7 @@ public static class ClipboardNative
             SharedMessageWindow.ObserveWindowMessages(
                 hwnd =>
                 {
-                    nint windowHandle = (nint)hwnd;
+                    var windowHandle = (nint)hwnd;
                     if (!NativeMethods.AddClipboardFormatListener(windowHandle))
                     {
                         observer.OnError(new Win32Exception());
@@ -203,10 +196,10 @@ public static class ClipboardNative
     /// <returns>A scope that restores the previous operations.</returns>
     internal static IDisposable OverrideOperationsForTesting(Func<IntPtr> getOwner, Func<uint> getSequenceNumber, Func<uint, bool> isFormatAvailable)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getOwner);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(getSequenceNumber);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(isFormatAvailable);
-        ClipboardNativeOperations operations = _operations;
+        Throw.IfNull(getOwner);
+        Throw.IfNull(getSequenceNumber);
+        Throw.IfNull(isFormatAvailable);
+        var operations = _operations;
         _operations = new(getOwner, getSequenceNumber, isFormatAvailable);
         return Scope.Create(operations, static previous => _operations = previous);
     }

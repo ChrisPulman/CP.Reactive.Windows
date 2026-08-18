@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Runtime.InteropServices;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
 #else
@@ -31,8 +29,8 @@ public readonly record struct Input
     public static Input[] CreateMouseInputs(params MouseInput[] mouseInputs)
     {
         Input[] result = new Input[mouseInputs.Length];
-        int index = 0;
-        foreach (MouseInput mouseInput in mouseInputs)
+        var index = 0;
+        foreach (var mouseInput in mouseInputs)
         {
             result[index] = new Input { InputType = InputTypes.Mouse, InputUnion = new InputUnion { MouseInput = mouseInput } };
             index = checked(index + 1);
@@ -47,8 +45,8 @@ public readonly record struct Input
     public static Input[] CreateKeyboardInputs(params KeyboardInput[] keyboardInputs)
     {
         Input[] result = new Input[keyboardInputs.Length];
-        int index = 0;
-        foreach (KeyboardInput keyboardInput in keyboardInputs)
+        var index = 0;
+        foreach (var keyboardInput in keyboardInputs)
         {
             result[index] = new Input { InputType = InputTypes.Keyboard, InputUnion = new InputUnion { KeyboardInput = keyboardInput } };
             index = checked(index + 1);

@@ -2,14 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Text;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
 #else
@@ -26,9 +18,9 @@ public static class IconFileWriter
     /// <param name="images">Collection of images to include in the icon.</param>
     public static void WriteIconFile(Stream stream, IEnumerable<Image> images)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(stream);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(images);
-        List<Image> imageList = MaterializeImages(images);
+        Throw.IfNull(stream);
+        Throw.IfNull(images);
+        var imageList = MaterializeImages(images);
         if (imageList.Count == 0)
         {
             throw new ArgumentException("At least one image is required", nameof(images));
@@ -40,7 +32,7 @@ public static class IconFileWriter
             List<EncodedIconImage> encodedImages = new();
             try
             {
-                foreach (Image image in imageList)
+                foreach (var image in imageList)
                 {
                     MemoryStream imageStream = new();
                     image.Save(imageStream, ImageFormat.Png);
@@ -49,8 +41,8 @@ public static class IconFileWriter
                 }
 
                 WriteIconDir(binaryWriter, IconDir.CreateIcon((ushort)encodedImages.Count));
-                uint offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
-                foreach (EncodedIconImage encodedImage in encodedImages)
+                var offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
+                foreach (var encodedImage in encodedImages)
                 {
                     IconDirEntry entry = IconDirEntry.CreateForIcon(
                         encodedImage.Size.Width,
@@ -62,7 +54,7 @@ public static class IconFileWriter
                     offset += (uint)encodedImage.Data.Length;
                 }
 
-                foreach (EncodedIconImage item in encodedImages)
+                foreach (var item in encodedImages)
                 {
                     item.Data.WriteTo(stream);
                 }
@@ -79,7 +71,7 @@ public static class IconFileWriter
     /// <param name="images">Collection of images to include in the icon.</param>
     public static void WriteIconFile(string filePath, IEnumerable<Image> images)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(filePath);
+        Throw.IfNull(filePath);
         using FileStream fileStream = new(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
         WriteIconFile(fileStream, images);
     }
@@ -89,9 +81,9 @@ public static class IconFileWriter
     /// <param name="images">Collection of images with hotspot information.</param>
     public static void WriteCursorFile(Stream stream, IEnumerable<(Image Image, Point Hotspot)> images)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(stream);
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(images);
-        List<CursorImage> imageList = MaterializeCursorImages(images);
+        Throw.IfNull(stream);
+        Throw.IfNull(images);
+        var imageList = MaterializeCursorImages(images);
         if (imageList.Count == 0)
         {
             throw new ArgumentException("At least one image is required", nameof(images));
@@ -103,7 +95,7 @@ public static class IconFileWriter
             List<EncodedCursorImage> encodedImages = new();
             try
             {
-                foreach (CursorImage cursorImage in imageList)
+                foreach (var cursorImage in imageList)
                 {
                     MemoryStream imageStream = new();
                     cursorImage.Image.Save(imageStream, ImageFormat.Png);
@@ -112,8 +104,8 @@ public static class IconFileWriter
                 }
 
                 WriteIconDir(binaryWriter, IconDir.CreateCursor((ushort)encodedImages.Count));
-                uint offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
-                foreach (EncodedCursorImage encodedImage in encodedImages)
+                var offset = (uint)(IconDir.Size + (encodedImages.Count * IconDirEntry.Size));
+                foreach (var encodedImage in encodedImages)
                 {
                     IconDirEntry entry = IconDirEntry.CreateForCursor(
                         encodedImage.Size.Width,
@@ -126,7 +118,7 @@ public static class IconFileWriter
                     offset += (uint)encodedImage.Data.Length;
                 }
 
-                foreach (EncodedCursorImage item in encodedImages)
+                foreach (var item in encodedImages)
                 {
                     item.Data.WriteTo(stream);
                 }
@@ -143,7 +135,7 @@ public static class IconFileWriter
     /// <param name="images">Collection of images with hotspot information.</param>
     public static void WriteCursorFile(string filePath, IEnumerable<(Image Image, Point Hotspot)> images)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(filePath);
+        Throw.IfNull(filePath);
         using FileStream fileStream = new(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
         WriteCursorFile(fileStream, images);
     }
@@ -153,7 +145,7 @@ public static class IconFileWriter
     /// <param name="grpIconDir">GrpIconDir structure to write.</param>
     public static void WriteGrpIconDir(BinaryWriter writer, GrpIconDir grpIconDir)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(writer);
+        Throw.IfNull(writer);
         writer.Write(grpIconDir.Reserved);
         writer.Write(grpIconDir.Type);
         writer.Write(grpIconDir.Count);
@@ -164,7 +156,7 @@ public static class IconFileWriter
     /// <param name="entry">GrpIconDirEntry structure to write.</param>
     public static void WriteGrpIconDirEntry(BinaryWriter writer, GrpIconDirEntry entry)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(writer);
+        Throw.IfNull(writer);
         writer.Write(entry.Width);
         writer.Write(entry.Height);
         writer.Write(entry.ColorCount);
@@ -206,7 +198,7 @@ public static class IconFileWriter
     private static List<Image> MaterializeImages(IEnumerable<Image> images)
     {
         List<Image> imageList = new();
-        foreach (Image image in images)
+        foreach (var image in images)
         {
             imageList.Add(image);
         }
@@ -232,7 +224,7 @@ public static class IconFileWriter
     /// <param name="encodedImages">Encoded icon images.</param>
     private static void DisposeEncodedImages(IEnumerable<EncodedIconImage> encodedImages)
     {
-        foreach (EncodedIconImage encodedImage2 in encodedImages)
+        foreach (var encodedImage2 in encodedImages)
         {
             encodedImage2.Data.Dispose();
         }
@@ -242,7 +234,7 @@ public static class IconFileWriter
     /// <param name="encodedImages">Encoded cursor images.</param>
     private static void DisposeEncodedImages(IEnumerable<EncodedCursorImage> encodedImages)
     {
-        foreach (EncodedCursorImage encodedImage2 in encodedImages)
+        foreach (var encodedImage2 in encodedImages)
         {
             encodedImage2.Data.Dispose();
         }

@@ -40,8 +40,8 @@ public class EnvironmentMonitor
     /// <returns>The translated environment-change arguments.</returns>
     internal static EnvironmentChangedEventArgs CreateChangedEventArgs(WindowMessage message)
     {
-        uint systemParametersInfoAction = checked((uint)(int)message.WParam);
-        string area = Marshal.PtrToStringAuto(new(message.LParam));
+        var systemParametersInfoAction = checked((uint)(int)message.WParam);
+        var area = Marshal.PtrToStringAuto(new(message.LParam));
         return EnvironmentChangedEventArgs.Create((SystemParametersInfoActions)systemParametersInfoAction, area);
     }
 }

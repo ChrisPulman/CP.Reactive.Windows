@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Structs;
 #else
@@ -92,7 +90,7 @@ public readonly record struct KeyboardInput
     /// <returns>KeyboardInput.</returns>
     public static KeyboardInput ForKeyDown(VirtualKeyCode virtualKeyCode, uint? timestamp)
     {
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(virtualKeyCode, 0, KeyEventFlags.None, messageTime);
     }
 
@@ -107,7 +105,7 @@ public readonly record struct KeyboardInput
     /// <returns>KeyboardInput.</returns>
     public static KeyboardInput ForKeyUp(VirtualKeyCode virtualKeyCode, uint? timestamp)
     {
-        uint messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
+        var messageTime = timestamp ?? unchecked((uint)Environment.TickCount);
         return new(virtualKeyCode, 0, KeyEventFlags.KeyUp, messageTime);
     }
 }

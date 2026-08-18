@@ -2,15 +2,9 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Diagnostics;
-using System.Drawing;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
-using CP.ReactiveUI.Primitives.Windows.Native.Gdi.SafeHandles;
-using CP.ReactiveUI.Primitives.Windows.Native.UserInterface.Enums;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
 
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
@@ -44,14 +38,14 @@ public static class IconExtensions
                 return IconHelper.GetAppLogo(window, iconType, IconHelper.DefaultLogoScale);
             }
 
-            TIcon icon = window.GetIconFromWindow(iconType, useLargeIcons);
+            var icon = window.GetIconFromWindow(iconType, useLargeIcons);
             if (icon is not null)
             {
                 return icon;
             }
 
-            int processId = _operations.GetProcessId(window);
-            string processPath = _operations.GetProcessPath(processId);
+            var processId = _operations.GetProcessId(window);
+            var processPath = _operations.GetProcessPath(processId);
             if (processPath is not null)
             {
                 return IconHelper.ExtractAssociatedIcon(processPath, iconType, 0, useLargeIcons);
@@ -86,7 +80,7 @@ public static class IconExtensions
         public BitmapSource ToBitmapSource()
         {
             using Bitmap bitmap = icon.ToBitmap();
-            IntPtr nativeBitmapHandle = bitmap.GetHbitmap();
+            var nativeBitmapHandle = bitmap.GetHbitmap();
             using (new SafeHBitmapHandle(nativeBitmapHandle))
             {
                 return Imaging.CreateBitmapSourceFromHBitmap(nativeBitmapHandle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
@@ -128,8 +122,8 @@ public static class IconExtensions
     /// <returns>The previous operations.</returns>
     internal static IconWindowOperations SetOperationsForTesting(IconWindowOperations operations)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(operations);
-        IconWindowOperations operations2 = _operations;
+        Throw.IfNull(operations);
+        var operations2 = _operations;
         _operations = operations;
         return operations2;
     }
@@ -143,14 +137,14 @@ public static class IconExtensions
     private static TIcon GetIconFromSiblingProcessWindow<TIcon>(int processId, bool useLargeIcons, TIcon iconType)
         where TIcon : class
     {
-        using Process process = _operations.GetProcessById(processId);
-        string processName = process.ProcessName;
-        Process[] array = _operations.GetProcessesByName(processName);
-        foreach (Process possibleParentProcess in array)
+        using var process = _operations.GetProcessById(processId);
+        var processName = process.ProcessName;
+        var array = _operations.GetProcessesByName(processName);
+        foreach (var possibleParentProcess in array)
         {
             using (possibleParentProcess)
             {
-                TIcon icon = _operations.CreateWindow(possibleParentProcess.MainWindowHandle).GetIconFromWindow(iconType, useLargeIcons);
+                var icon = _operations.CreateWindow(possibleParentProcess.MainWindowHandle).GetIconFromWindow(iconType, useLargeIcons);
                 if (icon is not null)
                 {
                     return icon;
@@ -171,11 +165,11 @@ public static class IconExtensions
     private static TIcon GetIconFromSiblingTopLevelWindow<TIcon>(IInteropWindow window, int processId, bool useLargeIcons, TIcon iconType)
         where TIcon : class
     {
-        foreach (IInteropWindow otherWindow in _operations.GetTopWindows())
+        foreach (var otherWindow in _operations.GetTopWindows())
         {
             if (otherWindow.Handle != window.Handle && _operations.GetProcessId(otherWindow) == processId)
             {
-                TIcon icon = otherWindow.GetIconFromWindow(iconType, useLargeIcons);
+                var icon = otherWindow.GetIconFromWindow(iconType, useLargeIcons);
                 if (icon is not null)
                 {
                     return icon;
@@ -192,7 +186,7 @@ public static class IconExtensions
     /// <returns>The icon handle, or zero.</returns>
     private static IntPtr GetIconHandle(IntPtr windowHandle, bool useLargeIcons)
     {
-        IntPtr iconHandle = IntPtr.Zero;
+        var iconHandle = IntPtr.Zero;
         if (useLargeIcons)
         {
             iconHandle = GetLargeIconHandle(windowHandle);

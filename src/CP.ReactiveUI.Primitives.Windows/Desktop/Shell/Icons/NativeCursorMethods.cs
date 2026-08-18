@@ -2,10 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Runtime.InteropServices;
-using CP.ReactiveUI.Primitives.Windows.PolyFills;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Shell.Icons;
 #else
@@ -70,8 +66,8 @@ public static partial class NativeCursorMethods
     /// <returns>The previous cursor API.</returns>
     internal static INativeCursorApi SetApiForTesting(INativeCursorApi api)
     {
-        CP.ReactiveUI.Primitives.Windows.PolyFills.Throw.IfNull(api);
-        INativeCursorApi api2 = _api;
+        Throw.IfNull(api);
+        var api2 = _api;
         _api = api;
         return api2;
     }

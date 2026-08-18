@@ -2,8 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System.Text;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Clipboard;
 #else
@@ -42,7 +40,7 @@ public static class ClipboardStringExtensions
         /// <param name="formatId">uint with the clipboard format id.</param>
         public void SetAsUnicodeString(string text, uint formatId)
         {
-            byte[] unicodeBytes = Encoding.Unicode.GetBytes($"{text}\u0000");
+            var unicodeBytes = Encoding.Unicode.GetBytes($"{text}\u0000");
             clipboardAccessToken.SetAsBytes(unicodeBytes, formatId);
         }
 
@@ -75,7 +73,7 @@ public static class ClipboardStringExtensions
         /// <returns>string.</returns>
         public string GetAsUnicodeString(uint formatId)
         {
-            byte[] bytes = clipboardAccessToken.GetAsBytes(formatId);
+            var bytes = clipboardAccessToken.GetAsBytes(formatId);
             return Encoding.Unicode.GetString(bytes, 0, bytes.Length).TrimEnd(default(char));
         }
     }

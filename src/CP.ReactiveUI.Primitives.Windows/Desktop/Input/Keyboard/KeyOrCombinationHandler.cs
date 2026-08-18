@@ -2,9 +2,6 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections.Generic;
-
 #if REACTIVE_SHIM
 namespace CP.ReactiveUI.Primitives.Windows.Reactive.Desktop.Input.Keyboard;
 #else
@@ -41,9 +38,9 @@ public class KeyOrCombinationHandler : IKeyboardHookEventHandler
     /// <returns><see langword="true" /> when any handler handled the event.</returns>
     public bool Handle(KeyboardHookEventArgs keyboardHookEventArgs)
     {
-        bool handled = false;
-        IKeyboardHookEventHandler[] keyCombinations = _keyCombinations;
-        foreach (IKeyboardHookEventHandler keyboardHookEventHandler in keyCombinations)
+        var handled = false;
+        var keyCombinations = _keyCombinations;
+        foreach (var keyboardHookEventHandler in keyCombinations)
         {
             handled |= keyboardHookEventHandler.Handle(keyboardHookEventArgs);
         }
@@ -57,7 +54,7 @@ public class KeyOrCombinationHandler : IKeyboardHookEventHandler
     private static IKeyboardHookEventHandler[] CopyHandlers(IEnumerable<IKeyboardHookEventHandler> handlers)
     {
         List<IKeyboardHookEventHandler> copy = new();
-        foreach (IKeyboardHookEventHandler handler in handlers)
+        foreach (var handler in handlers)
         {
             copy.Add(handler);
         }
