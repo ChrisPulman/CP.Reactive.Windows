@@ -24,9 +24,6 @@ public class IconTests
     /// <summary>Defines the TestValue2048 test value.</summary>
     private const int TestValue2048 = 2048;
 
-    /// <summary>Defines the TestValue4000 test value.</summary>
-    private const int TestValue4000 = 4000;
-
     /// <summary>Defines the TestValue512 test value.</summary>
     private const int TestValue512 = 512;
 
@@ -101,28 +98,14 @@ public class IconTests
     [Test]
     public async Task TestIcon_GetIconAsync()
     {
-        // Start a process to test against
-        using var process = Process.Start("charmap.exe");
+        using var sourceIcon = (Icon)SystemIcons.Application.Clone();
+        using var form = new Form { Icon = sourceIcon, ShowInTaskbar = false, Text = "TestIcon_GetIcon", };
+        form.Show();
 
-        // Make sure it's started
-        await Assert.That(process).IsNotNull();
+        var window = InteropWindowFactory.CreateFor(form.Handle);
+        var windowIcon = window.GetIcon(default(BitmapSource));
 
-        // Wait until the process started it's message pump (listening for input)
-        var processReady = process.WaitForInputIdle(TestValue4000);
-        await Assert.That(processReady).IsTrue();
-        if (!processReady)
-        {
-            return;
-        }
-
-        _ = User32Api.SetWindowText(process.MainWindowHandle, "TestIcon_GetIcon");
-
-        var window = InteropWindowFactory.CreateFor(process.MainWindowHandle);
-        var icon = window.GetIcon(default(BitmapSource));
-        await Assert.That(icon).IsNotNull();
-
-        // Kill the process
-        process.Kill();
+        await Assert.That(windowIcon).IsNotNull();
     }
 
     /// <summary>Test getting an Icon for the desktop, which doesn't have one.</summary>
