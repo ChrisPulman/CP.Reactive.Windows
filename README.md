@@ -778,6 +778,28 @@ if (WinFrame.IsAvailabe)
 }
 ```
 
+Additional Citrix integrations are split into composable, testable surfaces:
+
+| Namespace | Surface |
+| --- | --- |
+| `.Citrix.Lifecycle` | Typed `OnConnect`, `OnDisconnect`, `OnLogin`, window, ICA-file parse, and session-state observables. `OnWindowDestroyed` is the preferred spelling; `OnWindowDistroyed` is retained as an alias. |
+| `.Citrix.Ipc` | `DriverOpen`, `DriverClose`, `DriverWrite`, `VdRegisterFeature`, incoming-data, and driver-event streams over an injected virtual-driver adapter. |
+| `.Citrix.Host` | Reactive CCM session information, disconnect, logoff, and disposable WTS session-notification registration. |
+| `.Citrix.Telemetry` | Polling streams for sessions, machine resource utilization, connection failures, and application failures through an injected Citrix Monitor transport. |
+
+The SDK-dependent surfaces accept interfaces or delegates so tests can use deterministic adapters. Host-management overloads without an adapter securely load the architecture-matched CCM SDK from the registered Citrix Workspace installation. Disposing a native CCM adapter, IPC session, WTS registration, or telemetry subscription also disposes its underlying lifetime.
+
+```csharp
+using CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Host;
+using CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Ipc;
+using CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Lifecycle;
+using CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Telemetry;
+
+using IDisposable connected = lifecycleSource.OnConnect().Subscribe(HandleConnect);
+using IDisposable channel = CitrixVirtualChannelIpc.DriverOpen(driver, openRequest).Subscribe(HandleChannel);
+using IDisposable sessions = telemetry.Sessions.Subscribe(HandleSnapshot);
+```
+
 Namespace: `CP.ReactiveUI.Primitives.Windows.Integrations.Browser`
 
 `InternetExplorerVersion` configures the legacy WinForms `WebBrowser` emulation mode. `ExtendedWebBrowser` hosts a `WebBrowser` control that suppresses script-error command handling through `IOleCommandTarget`.

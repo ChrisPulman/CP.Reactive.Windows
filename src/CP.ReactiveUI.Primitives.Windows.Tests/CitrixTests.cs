@@ -7,7 +7,7 @@ using CP.ReactiveUI.Primitives.Windows.Integrations.Citrix;
 namespace CP.ReactiveUI.Primitives.Windows.Tests;
 
 /// <summary>Tests Citrix Tests behavior.</summary>
-public class CitrixTests
+public partial class CitrixTests
 {
     /// <summary>Assume that we are not running on Citrix.</summary>
     /// <returns>A task representing the asynchronous test.</returns>

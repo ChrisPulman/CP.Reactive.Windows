@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Optional Windows integrations for Citrix WFAPI and the legacy WinForms WebBrowser control.</Description>
+    <Description>Optional Windows integrations for Citrix lifecycle, virtual-channel IPC, CCM/WTS session management, Monitor telemetry, WFAPI, and the legacy WinForms WebBrowser control.</Description>
     <IsPackable>true</IsPackable>
-    <PackageTags>windows citrix webbrowser integration</PackageTags>
+    <PackageTags>windows citrix reactive lifecycle ipc ccm wts telemetry webbrowser integration</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetFrameworks>$(WindowsPackageTargetFrameworks)</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
