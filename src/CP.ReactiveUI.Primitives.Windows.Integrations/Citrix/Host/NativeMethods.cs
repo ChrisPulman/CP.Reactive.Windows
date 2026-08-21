@@ -53,25 +53,6 @@ internal static partial class NativeMethods
         string procedureName);
 #endif
 
-    /// <summary>Releases a native module.</summary>
-    /// <param name="module">The native module.</param>
-    /// <returns><see langword="true"/> on success.</returns>
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-#if NETFRAMEWORK
-    [DllImport("kernel32", ExactSpelling = true, SetLastError = true)]
-#else
-    [LibraryImport("kernel32", SetLastError = true)]
-#endif
-    [return: MarshalAs(UnmanagedType.Bool)]
-    internal static
-#if NETFRAMEWORK
-        extern
-#else
-        partial
-#endif
-        bool FreeLibrary(
-        IntPtr module);
-
     /// <summary>Registers a window to receive session change notifications.</summary>
     /// <param name="windowHandle">The window handle to register.</param>
     /// <param name="flags">The notification flags.</param>

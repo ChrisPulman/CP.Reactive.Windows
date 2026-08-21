@@ -2,6 +2,8 @@
 // Chris Pulman and Contributors licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
+using CP.ReactiveUI.Primitives.Windows.Native.Kernel;
+
 namespace CP.ReactiveUI.Primitives.Windows.Integrations.Citrix.Host;
 
 /// <summary>Production Citrix CCM host-session adapter loaded from the installed Workspace SDK.</summary>
@@ -233,7 +235,7 @@ public sealed class NativeCitrixCcmHostSessionApi : ICitrixCcmHostSessionApi, ID
     {
         if (_module != IntPtr.Zero)
         {
-            _ = NativeMethods.FreeLibrary(_module);
+            _ = Kernel32Api.FreeLibrary(_module);
             _module = IntPtr.Zero;
         }
     }
