@@ -12,7 +12,7 @@
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.10.0" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Nuke.Common" Version="10.1.0" />
-    <PackageVersion Include="PerformanceSharp.Analyzers" Version="3.45.0" />
+    <PackageVersion Include="PerformanceSharp.Analyzers" Version="3.46.2" />
     <PackageVersion Include="ReactiveUI" Version="24.2.0" />
     <PackageVersion Include="ReactiveUI.Reactive" Version="24.2.0" />
     <PackageVersion Include="ReactiveUI.WinForms" Version="24.2.0" />
