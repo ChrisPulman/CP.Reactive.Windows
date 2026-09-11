@@ -18,7 +18,7 @@
     <PackageVersion Include="ReactiveUI.WinForms" Version="24.2.0" />
     <PackageVersion Include="ReactiveUI.WinForms.Reactive" Version="24.1.0" />
     <PackageVersion Include="ReactiveUI.WPF" Version="24.1.0" />
-    <PackageVersion Include="ReactiveUI.WPF.Reactive" Version="24.1.0" />
+    <PackageVersion Include="ReactiveUI.WPF.Reactive" Version="24.2.0" />
     <PackageVersion Include="ReactiveUI.Primitives" Version="7.4.0" />
     <PackageVersion Include="ReactiveUI.Primitives.Reactive" Version="7.4.0" />
     <PackageVersion Include="SecuritySharp.Analyzers" Version="3.46.2" />
